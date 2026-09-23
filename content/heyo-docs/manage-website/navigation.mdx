@@ -1,0 +1,235 @@
+---
+title: Navigation
+description: Build ordered documentation, external-link, changelog, nested, and OpenAPI navigation from heyo-docs.config.ts.
+---
+
+# Navigation
+
+Heyo Docs scans MDX files to create routes. With no `groups` configured, it
+also creates a stable, alphabetical **Documentation** sidebar automatically.
+That makes the minimal starter useful with only `content/index.mdx`.
+
+Add `groups` when you need to choose which pages appear in the sidebar, their
+group, and their reading order. That explicit order drives breadcrumbs and the
+previous/next links at the end of an article.
+
+## Start with automatic navigation
+
+This is a complete configuration for a conventional `content/` directory:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  title: "Acme Docs",
+  branding: { name: "Acme" },
+});
+```
+
+Every scanned MDX page is available as a route and appears in the generated
+Documentation group. Once you add `groups`, only the page references and
+OpenAPI sections in those groups define the sidebar order.
+
+## Create a documentation group
+
+A documentation group is the top-level view in the sidebar switcher. Its
+sections are shown in the listed order:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  groups: [
+    {
+      group: "Guides",
+      icon: "book",
+      sections: [
+        {
+          section: "Get started",
+          icon: "lightbulb",
+          pages: ["index", "quickstart"],
+        },
+      ],
+    },
+  ],
+});
+```
+
+Groups default to `type: "documentation"`. `group` labels the selector,
+`icon` selects a semantic icon from the application icon set, and every
+section has a label, optional icon, expanded state, and ordered `pages` list.
+Sections start expanded unless `expanded: false` is supplied.
+
+The group switcher takes readers to its first page. Put a useful landing page
+first rather than an empty section.
+
+## Link to an external destination
+
+Use `src` on a documentation group to make the group switcher entry a regular
+external link:
+
+```ts title="heyo-docs.config.ts"
+{
+  group: "Product documentation",
+  icon: "book",
+  src: "https://docs.acme.com",
+}
+```
+
+`src` must be an HTTP(S) URL. A link group cannot define `sections`, so it
+cannot mix an external destination with local MDX or OpenAPI navigation. Keep
+local guides in a separate documentation group. External group links open as
+normal browser anchors; internal groups continue to use the configured router.
+
+## Add pages without a section
+
+For a short, flat navigation list, omit both `section` and `icon`. Grain
+renders these pages directly as articles in the sidebar: there is no section
+heading, icon, or collapsible control. They keep their configured order for
+the group switcher and previous/next article links.
+
+```ts title="heyo-docs.config.ts"
+{
+  group: "Getting started",
+  sections: [
+    {
+      pages: ["index", "quickstart", "guides/first-page"],
+    },
+  ],
+}
+```
+
+An unsectioned page list can be placed alongside ordinary named sections. It
+does not add an item to the breadcrumb trail.
+
+## Add an icon to one page
+
+Use an object with both `page` and `icon` to show a semantic icon beside one
+MDX page in the Grain sidebar. The page title still comes from the MDX
+frontmatter or heading.
+
+```ts title="heyo-docs.config.ts"
+{
+  section: "Get started",
+  pages: [
+    "introduction",
+    { page: "quickstart", icon: "lightbulb" },
+    { page: "guides/first-page", icon: "book" },
+  ],
+}
+```
+
+This object form is deliberately strict: `page` and `icon` are both required.
+`{ page: "quickstart" }` and `{ icon: "lightbulb" }` are invalid
+configuration. Use the normal string form for an article without an icon.
+
+`page` resolves exactly like a string page reference: an extension-free file
+is preferred over a directory, and a trailing slash explicitly selects a
+directory. When a directory resolves to several pages, the icon is shown for
+each resolved article. A page is only rendered once; if it is configured more
+than once, the first reference determines its position and whether it has an
+icon.
+
+## Order pages and folders
+
+Use an extension-free file reference for one page:
+
+```ts
+pages: ["quickstart", "guides/install"];
+```
+
+Use a directory reference to include every page under that directory:
+
+```ts
+pages: ["guides"];
+```
+
+Heyo Docs first attempts to resolve an exact MDX file and then a directory. Add
+a trailing slash, such as `"guides/"`, when both a file and a directory named
+`guides` exist and the directory is intended. A configured reference must
+resolve inside `content`; a missing reference stops a production build with
+the group and section that need attention.
+
+The sequence in `pages` is meaningful. It controls the sidebar order and the
+previous/next sequence for pages in that group.
+
+## Nest sections
+
+Nested sections organize a longer guide tree without forcing the file system
+to mirror the sidebar exactly:
+
+```ts title="heyo-docs.config.ts"
+{
+  section: "Guides",
+  icon: "book",
+  pages: [
+    "guides/overview",
+    {
+      section: "Authentication",
+      expanded: false,
+      pages: [
+        "guides/authentication/api-keys",
+        "guides/authentication/oauth",
+      ],
+    },
+  ],
+}
+```
+
+Nested sections can be repeated to any depth. Grain renders them as indented,
+collapsible groups; their pages retain depth-first order for adjacent-page
+links.
+
+## Add an OpenAPI section
+
+An OpenAPI section is placed exactly where generated endpoint navigation
+should appear:
+
+```ts title="heyo-docs.config.ts"
+{
+  group: "API Reference",
+  icon: "code",
+  sections: [
+    {
+      section: "Overview",
+      pages: ["api-overview"],
+    },
+    { schema: "./openapi.json" },
+    {
+      section: "Support",
+      pages: ["api/errors"],
+    },
+  ],
+}
+```
+
+The schema object has only `schema`. At build time it expands into sections
+based on the API tags, and generated endpoint links display HTTP-method
+badges. Keep conceptual guides before or after the schema object according to
+the flow readers should follow.
+
+Read [OpenAPI](https://heyo.sh/heyo-docs/manage-website/openapi) for schema
+sources and the required `Try it` request endpoint configuration.
+
+## Add a changelog group
+
+Changelog groups use `updates` rather than `sections`:
+
+```ts title="heyo-docs.config.ts"
+{
+  type: "changelog",
+  group: "Changelog",
+  icon: "changelog",
+  description: "Product updates and fixes.",
+  updates: ["changelog"],
+}
+```
+
+Each update reference resolves like a normal MDX page or directory. The
+changelog view replaces ordinary navigation with the update table of contents
+for the selected page. A changelog group needs at least one update reference.
+
+## Review the finished tree
+
+Keep group labels broad, section labels task-oriented, and titles short enough
+to scan in a narrow sidebar. Test external group links as well as the desktop
+sidebar, group switcher, mobile sheet, breadcrumb, and adjacent-page buttons
+after a structural change. Those surfaces all consume the same navigation
+model, so one corrected configuration change updates the complete site.

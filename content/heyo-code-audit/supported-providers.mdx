@@ -1,0 +1,63 @@
+---
+title: Supported providers
+description: Choose a supported Pi provider, model, and authentication method for an audit.
+---
+
+# Supported providers
+
+Heyo Code Audit uses the Pi version bundled in the released Action. Choose a
+Pi provider identifier, an explicit model identifier, and the authentication
+method required by that provider. The Action does not select a model for you.
+
+| Provider type       | `auth-type`      | Credential                                    |
+| ------------------- | ---------------- | --------------------------------------------- |
+| Pi API-key provider | `api-key`        | Provider API key in `auth-token`.             |
+| GitHub Copilot      | `oauth`          | A valid Copilot access token in `auth-token`. |
+| OpenAI Codex        | `oauth`          | A valid Codex access token in `auth-token`.   |
+| Amazon Bedrock      | `aws`            | Ambient AWS credentials on the runner.        |
+| Amazon Bedrock      | `bedrock-bearer` | Bedrock bearer token in `auth-token`.         |
+
+## Pi compatibility
+
+The Action includes Pi's provider catalog, rather than the local Pi
+installation on a developer machine. It does not read `~/.pi/agent/auth.json`,
+run `/login`, load `models.json`, or load Pi extensions and skills. Configure
+credentials in GitHub Actions and use a provider supported by the Pi version
+bundled in the Action release.
+
+Pi publishes the broad catalog and provider-specific model details in its
+[provider documentation](https://github.com/earendil-works/pi/blob/main/docs/providers.md).
+For the exact Action contract, `provider`, `model`, and `auth-type` are checked
+before the audit starts.
+
+## Choose an authentication method
+
+Use [API-key providers](https://heyo.sh/heyo-code-audit/providers/api-keys) for
+standard provider keys, including OpenAI, Anthropic, Google, OpenRouter,
+Cloudflare AI, Groq, Mistral, xAI, DeepSeek, and Cerebras. Use the dedicated
+guides for [GitHub Copilot](https://heyo.sh/heyo-code-audit/providers/github-copilot),
+[OpenAI Codex](https://heyo.sh/heyo-code-audit/providers/openai-codex), or
+[Amazon Bedrock](https://heyo.sh/heyo-code-audit/providers/amazon-bedrock).
+
+<Callout type="warning" title="Keep credentials in GitHub Secrets">
+  Pass credentials from <code>secrets</code>, never literal workflow values. Do
+  not print the token, include it in a model prompt, or store it in the
+  repository.
+</Callout>
+
+## Required inputs
+
+Every normal audit must include:
+
+```yaml
+with:
+  provider: openai
+  model: gpt-5.4
+  auth-type: api-key
+  auth-token: ${{ secrets.OPENAI_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+`auth-token` is optional only for `auth-type: aws`. See the full
+[input reference](https://heyo.sh/heyo-code-audit/configuration/inputs) for all
+options.

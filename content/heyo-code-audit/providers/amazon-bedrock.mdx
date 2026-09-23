@@ -1,0 +1,65 @@
+---
+title: Amazon Bedrock
+description: Run Heyo Code Audit with AWS credentials or a Bedrock bearer token.
+---
+
+# Amazon Bedrock
+
+Use Pi's `amazon-bedrock` provider with either the runner's AWS credential
+chain or an Amazon Bedrock bearer token. Both modes can set `aws-region`; AWS
+credential mode can also select `aws-profile`.
+
+## AWS credentials
+
+Configure AWS before the Action. This example uses GitHub OIDC and requires an
+AWS role that may invoke the selected Bedrock model.
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  id-token: write
+
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+      persist-credentials: false
+  - uses: aws-actions/configure-aws-credentials@v5
+    with:
+      role-to-assume: ${{ vars.AWS_BEDROCK_ROLE_ARN }}
+      aws-region: eu-central-1
+  - uses: heyo-sh/heyo-code-audit@v1
+    with:
+      provider: amazon-bedrock
+      model: amazon.nova-lite-v1:0
+      auth-type: aws
+      aws-region: eu-central-1
+      github-token: ${{ github.token }}
+```
+
+The Action delegates AWS authentication to the AWS SDK credential chain. You
+may use a configured profile on a self-hosted runner with `aws-profile`.
+
+## Bedrock bearer token
+
+Store the bearer token as a GitHub secret and pass it explicitly:
+
+```yaml
+with:
+  provider: amazon-bedrock
+  model: amazon.nova-lite-v1:0
+  auth-type: bedrock-bearer
+  auth-token: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
+  aws-region: eu-central-1
+  github-token: ${{ github.token }}
+```
+
+## Model access and regions
+
+Enable access to the selected model in Amazon Bedrock and use a region where
+that model or inference profile is available. Pi accepts native Bedrock model
+IDs and supported inference profile IDs. See [Pi's Bedrock
+guide](https://github.com/earendil-works/pi/blob/main/docs/providers.md#amazon-bedrock)
+for AWS credential sources and model details.

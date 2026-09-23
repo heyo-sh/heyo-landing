@@ -1,0 +1,124 @@
+---
+title: Code Block Group
+description: Let readers switch between equivalent code examples in one place.
+---
+
+<CodeSnippet
+  code={`<CodeBlockGroup>
+  <CodeBlock language="bash" title="npm">
+    {"npm install @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {"pnpm add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {"yarn add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="bun">
+    {"bun add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+</CodeBlockGroup>`}
+>
+  <CodeBlockGroup>
+    <CodeBlock language="bash" title="npm">
+      {"npm install @heyo-sh/heyo-docs"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="pnpm">
+      {"pnpm add @heyo-sh/heyo-docs"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="yarn">
+      {"yarn add @heyo-sh/heyo-docs"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="bun">
+      {"bun add @heyo-sh/heyo-docs"}
+    </CodeBlock>
+  </CodeBlockGroup>
+</CodeSnippet>
+
+# Code Block Group
+
+`CodeBlockGroup` groups equivalent `CodeBlock` examples behind tabs. It keeps a
+guide compact when readers can choose among package managers, frameworks,
+operating systems, or API languages without duplicating the surrounding
+explanation.
+
+## Set the initial example
+
+Each child block uses its `title` as its tab label. The first block is active by
+default; provide `defaultValue` to open another block. Keep every tab equivalent
+in purpose so switching does not conceal a required step.
+
+<CodeBlockGroup defaultValue="bun" variant="default">
+  <CodeBlock language="bash" title="bun">
+    {"bun add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {"npm install @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {"pnpm add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {"yarn add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The group's copy control always copies the currently active source. Use a
+separate `CodeBlock` when examples are not alternatives and readers need to see
+all of them at once.
+
+## Offer complete installation choices
+
+Use a group for alternatives that differ in syntax but lead to the same result.
+This example makes the preferred package manager visible first while keeping
+the other options one click away.
+
+<CodeSnippet
+  code={`<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="npm">
+    {"npm install @heyo-sh/heyo-docs @vitejs/plugin-react"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {"pnpm add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="bun">
+    {"bun add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {"yarn add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+  </CodeBlock>
+</CodeBlockGroup>`}
+>
+  <CodeBlockGroup defaultValue="bun" variant="line">
+    <CodeBlock language="bash" title="npm">
+      {"npm install @heyo-sh/heyo-docs @vitejs/plugin-react"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="pnpm">
+      {"pnpm add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="bun">
+      {"bun add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="yarn">
+      {"yarn add @heyo-sh/heyo-docs @vitejs/plugin-react"}
+    </CodeBlock>
+  </CodeBlockGroup>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" type="CodeBlock[]">
+    Direct <code>CodeBlock</code> elements to present as alternatives.
+  </Property>
+  <Property name="defaultValue" type="string">
+    The tab value to open initially. Values are derived from each block's title,
+    language, or fallback option label. It defaults to the first block.
+  </Property>
+  <Property name="variant" type='"default" | "line"'>
+    Selects the tab appearance. It defaults to <code>line</code>.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the grouped code container.
+  </Property>
+</Properties>

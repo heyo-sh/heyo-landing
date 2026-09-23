@@ -1,0 +1,117 @@
+---
+title: Code
+description: Write copyable inline and block code examples that make technical steps safe to follow.
+---
+
+<CodeSnippet
+  code={`<CodeBlock language="bash" title="Terminal">
+  {"bun add @heyo-sh/heyo-docs"}
+</CodeBlock>`}
+>
+  <CodeBlock language="bash" title="Terminal">
+    {"bun add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+</CodeSnippet>
+
+Code samples should answer a specific implementation question and be safe to
+copy. Use inline code for a short literal value, then use a fenced block or
+`CodeBlock` as soon as a reader needs more than one line. Always state what a
+command changes before asking someone to run it.
+
+## Choose inline code or a block
+
+Inline code is best for names that belong inside a sentence: a file such as
+`heyo-docs.config.ts`, a key such as `content`, or a command flag such as
+`--watch`. A fenced block is better for an independent command, configuration
+fragment, API response, or complete example.
+
+```bash
+bun add @heyo-sh/heyo-docs
+bun run dev
+```
+
+Add a language after the opening fence whenever you can. It improves syntax
+highlighting and makes the purpose of the sample obvious at a glance. Use
+`bash` for commands, `ts` or `tsx` for TypeScript, `json` for data, and `md`
+for Markdown. Each newline inside a fenced block is rendered as a hard code
+line, never as a space.
+
+## Give configuration enough context
+
+Use a short fenced block when a reader only needs the source. Switch to
+`CodeBlock` when the example benefits from a title or line numbers—for example,
+when a guide refers back to a particular setting in a shared configuration
+file.
+
+<CodeBlock language="ts" showLineNumbers title="heyo-docs.config.ts">
+  {`export default heyoDocs({
+  title: "Orbit docs",
+  content: "content",
+});`}
+</CodeBlock>
+
+This is a useful pattern for onboarding and migration guides: show the smallest
+working configuration, then explain any project-specific options in the prose
+around it. Avoid dumping an entire production config if only three lines are
+relevant to the task.
+
+## Compare equivalent commands
+
+When readers may use different package managers or runtimes, group equivalent
+commands in tabs. The active tab remains copyable, so the example stays compact
+without making any option feel secondary.
+
+<CodeSnippet
+  code={`<CodeBlockGroup>
+  <CodeBlock language="bash" title="bun">
+    {"bun add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {"npm install @heyo-sh/heyo-docs"}
+  </CodeBlock>
+</CodeBlockGroup>`}
+>
+  <CodeBlockGroup>
+    <CodeBlock language="bash" title="bun">
+      {"bun add @heyo-sh/heyo-docs"}
+    </CodeBlock>
+    <CodeBlock language="bash" title="npm">
+      {"npm install @heyo-sh/heyo-docs"}
+    </CodeBlock>
+  </CodeBlockGroup>
+</CodeSnippet>
+
+Use this for genuinely equivalent choices such as package managers, deployment
+hosts, or framework adapters. If the steps differ in purpose rather than only
+syntax, give each workflow its own heading instead of hiding it in a tab.
+
+## Properties
+
+<Properties>
+  <Property name="```language" type="Markdown fence">
+    Starts a standard fenced code block. The optional language—for example
+    <code>bash</code>, <code>ts</code>, <code>json</code>, or <code>md</code>
+    —selects syntax highlighting.
+  </Property>
+  <Property name="language" type="string">
+    A <code>CodeBlock</code> or <code>CodeBlockGroup</code> child prop that
+    selects syntax highlighting. It defaults to plain text.
+  </Property>
+  <Property name="title" type="ReactNode">
+    A <code>CodeBlock</code> prop that labels the sample, usually with a file
+    name, command environment, or package manager.
+  </Property>
+  <Property name="showLineNumbers" type="boolean">
+    A <code>CodeBlock</code> prop that adds line numbers when the surrounding
+    explanation needs to cite a particular line. It defaults to
+    <code>false</code>.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The exact code shown and copied by a <code>CodeBlock</code>. Keep it small
+    enough that a reader can understand the effect before copying it.
+  </Property>
+  <Property name="variant" type='"default" | "line"'>
+    A <code>CodeBlockGroup</code> prop that changes the tab treatment for
+    equivalent code samples. It defaults to <code>default</code>.
+  </Property>
+</Properties>

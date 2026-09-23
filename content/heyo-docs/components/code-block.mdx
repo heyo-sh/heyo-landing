@@ -1,0 +1,97 @@
+---
+title: Code Block
+description: Display copyable, syntax-highlighted source without a live preview.
+---
+
+<CodeSnippet
+  code={`<CodeBlock language="bash" title="Terminal">
+  {"bun add @heyo-sh/heyo-docs"}
+</CodeBlock>`}
+>
+  <CodeBlock language="bash" title="Terminal">
+    {"bun add @heyo-sh/heyo-docs"}
+  </CodeBlock>
+</CodeSnippet>
+
+# Code Block
+
+`CodeBlock` displays source code, commands, configuration, or response samples
+when there is no rendered result to preview. It includes syntax highlighting and
+a copy control, so readers can take an example directly into their project.
+
+## Label code clearly
+
+Set `language` for accurate highlighting and use `title` when the reader needs
+more context than a language label provides. Enable line numbers when the
+surrounding explanation refers to a specific line.
+
+<CodeBlock language="json" showLineNumbers title="heyo-docs.config.json">
+  {`{
+  "title": "Orbit Docs",
+  "theme": "grain",
+  "mode": "system"
+}`}
+</CodeBlock>
+
+Use `CodeSnippet` instead when the same source can produce a useful live
+preview. Keep code blocks focused on a single operation so copying is safe and
+easy to understand.
+
+## Let readers edit an example
+
+Set `editable` to make the code area editable. It defaults to `false`; when it
+is enabled, the copy control copies the reader's current changes rather than
+the initial source.
+
+<CodeSnippet
+  code={`<CodeBlock editable language="json" title="reader-settings.json">
+  {"{ \\"theme\\": \\"dark\\" }"}
+</CodeBlock>`}
+>
+  <CodeBlock editable language="json" title="reader-settings.json">
+    {'{ "theme": "dark" }'}
+  </CodeBlock>
+</CodeSnippet>
+
+## Show a focused configuration change
+
+A titled block with line numbers works well when the surrounding guide refers
+to a few lines in a longer configuration object.
+
+<CodeSnippet
+  code={`<CodeBlock language="ts" showLineNumbers title="heyo-docs.config.ts">
+  {"export default {\n  title: 'Orbit Docs',\n  theme: 'grain',\n  mode: 'system',\n  navigation: [{ label: 'Guides', href: '/quickstart' }],\n};"}
+</CodeBlock>`}
+>
+  <CodeBlock language="ts" showLineNumbers title="heyo-docs.config.ts">
+    {
+      "export default {\n  title: 'Orbit Docs',\n  theme: 'grain',\n  mode: 'system',\n  navigation: [{ label: 'Guides', href: '/quickstart' }],\n};"
+    }
+  </CodeBlock>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="language" type="string">
+    The syntax-highlighting language. It defaults to plain text and recognises
+    common aliases such as <code>ts</code>, <code>js</code>, <code>bash</code>,
+    <code>json</code>, <code>md</code>, and <code>yaml</code>.
+  </Property>
+  <Property name="title" type="ReactNode">
+    The label shown above the code. It defaults to the resolved language.
+  </Property>
+  <Property name="showLineNumbers" type="boolean">
+    Adds line-number data to the code block. It defaults to <code>false</code>.
+  </Property>
+  <Property name="editable" type="boolean">
+    Makes the source editable in place. It defaults to <code>false</code>; the
+    copy control uses the edited source while it is enabled.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The source code to highlight and copy.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the outer code block.
+  </Property>
+</Properties>

@@ -1,0 +1,151 @@
+---
+title: Tables
+description: Present compact comparisons, option defaults, and compatibility information in a readable grid.
+---
+
+<CodeSnippet
+  language="md"
+  code={`| Framework    | Integration                       |
+| ------------ | --------------------------------- |
+| React Router | \`@heyo-sh/heyo-docs/vite\`        |
+| Next.js      | \`@heyo-sh/heyo-docs/next\`        |
+| Astro        | \`@heyo-sh/heyo-docs/astro\`       |`}
+>
+  <table>
+    <thead>
+      <tr>
+        <th>Framework</th>
+        <th>Integration</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>React Router</td>
+        <td>
+          <code>@heyo-sh/heyo-docs/vite</code>
+        </td>
+      </tr>
+      <tr>
+        <td>Next.js</td>
+        <td>
+          <code>@heyo-sh/heyo-docs/next</code>
+        </td>
+      </tr>
+      <tr>
+        <td>Astro</td>
+        <td>
+          <code>@heyo-sh/heyo-docs/astro</code>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</CodeSnippet>
+
+Tables are for comparison, not for prose. Use one when every item has the same
+fields and readers need to compare values across rows: supported frameworks,
+plan limits, configuration defaults, or a short compatibility matrix. The theme
+allows a table to scroll horizontally on small screens, giving wide comparisons
+more room without shrinking their content.
+
+## Start with a clear comparison
+
+Write a short, specific header for every column, then keep each column's values
+consistent. A reader should be able to scan down a column without interpreting
+a different kind of information in each row.
+
+```md
+| Option    | Default   | Use when                         |
+| --------- | --------- | -------------------------------- |
+| `content` | `content` | Choosing the directory for MDX   |
+| `siteUrl` | —         | Publishing canonical URLs        |
+| `title`   | —         | Naming the documentation website |
+```
+
+This is a good fit for a configuration reference, where the table exposes the
+facts and the prose immediately after it can recommend a choice. If one cell
+needs a paragraph of explanation, move that explanation below the table or
+into a dedicated section.
+
+## Use alignment to make values easier to scan
+
+Markdown supports left, centre, and right alignment with colons in the separator
+row. Right-align numbers, centre short status values, and leave descriptive
+text left-aligned. Alignment is a small cue, but it makes a pricing, limits, or
+support matrix much easier to read.
+
+<CodeSnippet
+  language="md"
+  code={`| Plan       | Projects | Support |
+| :--------- | -------: | :-----: |
+| Starter    |        3 | Email   |
+| Team       |       20 | Priority |
+| Enterprise | Unlimited | Dedicated |`}
+>
+  <table>
+    <thead>
+      <tr>
+        <th>Plan</th>
+        <th className="text-right">Projects</th>
+        <th className="text-center">Support</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Starter</td>
+        <td className="text-right">3</td>
+        <td className="text-center">Email</td>
+      </tr>
+      <tr>
+        <td>Team</td>
+        <td className="text-right">20</td>
+        <td className="text-center">Priority</td>
+      </tr>
+      <tr>
+        <td>Enterprise</td>
+        <td className="text-right">Unlimited</td>
+        <td className="text-center">Dedicated</td>
+      </tr>
+    </tbody>
+  </table>
+</CodeSnippet>
+
+Use this for plan limits, response times, and other values readers compare
+vertically. Avoid more columns than a reader needs to make the decision; even
+though the table can scroll on mobile, a smaller comparison is always easier to
+understand.
+
+## Give wide tables room to breathe
+
+For a wide compatibility matrix, reduce the content to the fields that affect
+the decision and move detailed notes underneath. A mobile reader can scroll the
+table horizontally, but they should not need to decode dense abbreviations or
+five-line cells to understand it.
+
+## Properties
+
+<Properties>
+  <Property name="| Header | Header |" type="table header" required>
+    Defines the table's columns. Write names that explain what a value means
+    without relying on the surrounding prose.
+  </Property>
+  <Property name="| --- | --- |" type="table separator" required>
+    Marks the header boundary and supplies one cell for every column. Add colons
+    to control alignment.
+  </Property>
+  <Property name=":---" type="left alignment">
+    Left-aligns values in a column. This is the natural choice for labels and
+    descriptive text.
+  </Property>
+  <Property name="---:" type="right alignment">
+    Right-aligns values in a column. Use it for counts, prices, sizes, and other
+    values readers compare by magnitude.
+  </Property>
+  <Property name=":---:" type="centre alignment">
+    Centres short status values such as support level or availability. Do not
+    use it for paragraph-length text.
+  </Property>
+  <Property name="| Value | Value |" type="table row">
+    Adds a data row. Keep the meaning of each column consistent in every row so
+    readers can compare values quickly.
+  </Property>
+</Properties>

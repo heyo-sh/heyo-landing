@@ -1,0 +1,134 @@
+---
+title: Configuration
+description: Define documentation-wide defaults, structure, and links in one validated configuration file.
+---
+
+# Configuration
+
+Heyo Docs reads the site model from `heyo-docs.config.ts` in the application
+root. The framework integration, the documentation UI, and the build use the
+same validated object, so navigation, metadata, generated routes, and the
+theme do not need separate configuration.
+
+The current `heyo-landing` example keeps that file beside `package.json` and
+points it at the local `content` directory.
+
+## Start with the site model
+
+New projects need only site identity and a theme. `content` defaults to
+`"content"`, while an omitted `groups` list produces an alphabetical
+**Documentation** sidebar from the scanned MDX pages. Add explicit groups only
+when you need a curated order, nested sections, a changelog, or OpenAPI.
+
+```ts title="heyo-docs.config.ts"
+import { heyoDocs } from "@heyo-sh/heyo-docs/config";
+
+export default heyoDocs({
+  title: "Acme Docs",
+  description: "Guides and API reference for Acme.",
+  theme: "grain",
+  mode: "system",
+  branding: {
+    name: "Acme",
+    logo: "/logo.svg",
+  },
+  navigation: [
+    { label: "App", href: "https://app.acme.com" },
+    { label: "Status", href: "https://status.acme.com" },
+  ],
+});
+```
+
+The function validates the configuration as the module is loaded. Misspelled
+properties and incorrectly shaped values fail early instead of being silently
+ignored. Keep this file as the single source of truth; do not create one
+configuration for Vite and another for the rendered application.
+
+## Top-level settings
+
+| Setting        | Purpose                                                                           | Default                                          |
+| -------------- | --------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `content`      | Directory containing MDX files and content-relative OpenAPI documents.            | `content`                                        |
+| `title`        | Default document title and site name used by metadata.                            | `Heyo Documentation`                             |
+| `description`  | Default site and page description when a page does not provide one.               | `Clear, focused documentation for your project.` |
+| `theme`        | Built-in visual theme: `grain`, `shade`, or `moss`.                               | `grain`                                          |
+| `mode`         | Initial color preference: `system`, `light`, or `dark`.                           | `system`                                         |
+| `colors`       | Optional `primary` and `secondary` CSS color overrides.                           | `{}`                                             |
+| `navigation`   | Serializable header links: `{ label, href }[]`.                                   | `[]`                                             |
+| `groups`       | Documentation groups, external links, and changelog groups in sidebar order.      | `[]`                                             |
+| `footer`       | Optional website and GitHub URLs for the sidebar footer.                          | `{}`                                             |
+| `branding`     | Brand name and optional logo for the header.                                      | Name falls back to `title`                       |
+| `siteUrl`      | Canonical public docs root, optionally including its mounted path.                | —                                                |
+| `integrations` | Optional browser integrations grouped into `analytics`, `support`, and `consent`. | `{ analytics: {}, support: {}, consent: {} }`    |
+
+The configuration is intentionally small. Content structure belongs in
+`groups` when you need to override the automatic sidebar, while page-specific
+titles and descriptions belong in each MDX file's frontmatter. `navigation` is
+a serializable list, so every framework receives the same header links without
+framework-specific glue; see [Header and Footer](https://heyo.sh/heyo-docs/manage-website/header-and-footer).
+Read [Integrations](https://heyo.sh/heyo-docs/manage-website/integrations) for the available providers
+and their settings.
+
+## Configure Markdown and AI page actions
+
+Every documentation, changelog, and OpenAPI page has **Copy for LLM** and
+**Open** actions by default. They use the page's public `.md` endpoint: Copy
+fetches its Markdown, while Open passes the same stable URL to the selected AI
+tool. The actions do not require AI Chat or provider credentials.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  ai: {
+    copyForLLM: "enabled", // default
+    openIn: "enabled", // default
+  },
+});
+```
+
+Set either value to `"disabled"` independently when the host does not expose
+public Markdown endpoints or when that action is not appropriate for the site.
+Every `create-heyo-docs` template serves these endpoints; see
+[.md endpoints](https://heyo.sh/heyo-docs/tutorials/markdown-endpoints) when
+adding Heyo Docs to an existing application.
+
+The action URL is derived from the public browser pathname after hydration, so
+a page at `/heyo-docs/guides/install` uses
+`/heyo-docs/guides/install.md` without an app-specific adapter. `siteUrl`
+provides the matching server-rendered fallback and should contain the exact
+public docs root, including a mount path when applicable:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  siteUrl: "https://heyo.sh/heyo-docs",
+});
+```
+
+This same value keeps canonical URLs, JSON-LD, the sitemap, RSS, and
+`llms.txt` below `/heyo-docs` rather than accidentally resolving them at the
+host root.
+
+## Keep configuration and framework glue aligned
+
+The React Router example imports this configuration in `vite.config.ts`,
+`app/root.tsx`, and `app/routes/docs.tsx`. Generated Next.js and Astro
+projects follow the same pattern with their framework-specific integration.
+When changing `content`, `theme`, header links, or an OpenAPI section, every
+adapter receives the exported result of `heyoDocs(...)` automatically.
+
+Do not mutate the object after it has been validated. Exporting a plain,
+stable object lets development reloads and production builds derive the same
+page model.
+
+## Verify a change
+
+Run the project checks after changing navigation or content paths:
+
+```bash
+bun run typecheck
+bun run build
+```
+
+The build resolves every configured MDX reference, validates the navigation
+tree, and generates the final public routes. A missing page or malformed
+configuration should be fixed in `heyo-docs.config.ts` rather than worked
+around in the rendered sidebar.

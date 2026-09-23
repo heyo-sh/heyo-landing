@@ -1,0 +1,72 @@
+---
+title: GitHub
+description: Embed a live summary of a public GitHub repository in an MDX page.
+---
+
+<CodeSnippet code={`<GitHub repo="shadcn-ui/ui" />`}>
+  <GitHub repo="shadcn-ui/ui" />
+</CodeSnippet>
+
+`GitHub` renders a linked repository card. Give it a repository slug or GitHub URL and it loads the public description, star count, and fork count in the browser. The card remains useful while data is loading or unavailable, and always links to the repository.
+
+## When to use it
+
+Use a GitHub card to point readers to the source repository for an SDK, starter template, plugin, or example project. It supplies a compact social proof and gives readers an obvious route to issues, releases, and source code without manually duplicating repository metadata in an MDX page.
+
+Repository data is requested client-side from GitHub's public API and cached for the current browser session. Server-rendered pages initially show a loading state. If GitHub cannot return data, the card shows an unavailable message instead of failing the page. For that reason, use it only for public repositories and do not depend on the displayed counts as a permanent record.
+
+Use the default `simple` variant for a single, self-contained card. Use `inset` when the card sits inside a denser section: the repository summary is visually nested and the statistics appear below it.
+
+<GitHub repo="react/react" variant="inset" />
+
+## Repository identifiers
+
+`repo`, `repository`, and `href` accept either an `owner/repository` slug or a full `https://github.com/owner/repository` URL. `repo` takes precedence over `repository`, which takes precedence over `href`. Use one identifier for clarity. The component normalises a trailing `.git` suffix and always links to the canonical GitHub repository URL when it recognises the slug.
+
+## Showcase companion projects
+
+Place repository cards in a small grid when readers should be able to compare
+the tools that make up a starter stack.
+
+<CodeSnippet
+  code={`<div className="grid gap-3 sm:grid-cols-2">
+  <GitHub className="!my-0" repo="shadcn-ui/ui" />
+  <GitHub className="!my-0" repo="vercel/next.js" variant="inset" />
+</div>`}
+>
+  <div className="grid gap-3 sm:grid-cols-2">
+    <GitHub className="!my-0" repo="shadcn-ui/ui" />
+    <GitHub className="!my-0" repo="vercel/next.js" variant="inset" />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="repo" type="string">
+    The preferred repository identifier. Use an <code>owner/repository</code>{" "}
+    slug or a GitHub repository URL. This prop has the highest priority when
+    more than one identifier is supplied.
+  </Property>
+  <Property name="repository" type="string">
+    Alias for <code>repo</code>. It is helpful when matching another content
+    system's naming, but <code>repo</code> is preferred in new pages.
+  </Property>
+  <Property name="href" type="string">
+    A GitHub repository URL or slug. It is also the fallback link destination if
+    the value cannot be parsed as a GitHub repository. Prefer <code>repo</code>{" "}
+    for a clearer MDX example.
+  </Property>
+  <Property name="variant" type='"simple" | "inset"'>
+    Selects the card layout. The default, <code>simple</code>, displays the
+    metadata inside one card. <code>inset</code> nests the summary surface and
+    places the statistics underneath.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Fallback label for the repository name when no valid repository slug is
+    available. In ordinary use the parsed repository slug is shown instead.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the clickable outer card.
+  </Property>
+</Properties>

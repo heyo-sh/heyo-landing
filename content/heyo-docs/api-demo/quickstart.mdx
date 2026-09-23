@@ -1,0 +1,61 @@
+---
+title: Quickstart
+description: Make your first authenticated request against the mock Platform API.
+---
+
+# Quickstart
+
+This five-minute example lists projects in a demo organization. The values are
+fake, but the request shape mirrors the generated reference below.
+
+## 1. Create a token
+
+In a real integration, create a scoped API key from **Developer settings**. For
+this demo, use a placeholder token that follows the expected format:
+
+```bash
+export HEYO_API_TOKEN="heyo_demo_01J8F2X6ZJ5Q3F7A4K9N"
+```
+
+Never put a long-lived secret in client-side code, source control, screenshots,
+or a query string. Use a server-side secret store and issue short-lived
+browser-facing credentials only when a browser really needs one.
+
+## 2. List projects
+
+```bash
+curl "https://api.demo.heyo.example/v3/organizations/org_01J8F1Q6N6VTX4E8W9R2D0A7B3/projects?limit=2" \
+  -H "Authorization: Bearer $HEYO_API_TOKEN" \
+  -H "X-Request-ID: docs-quickstart-001"
+```
+
+The response uses a consistent envelope:
+
+```json
+{
+  "data": [
+    {
+      "id": "prj_01J8F5KM4MAB0V7YQ6P3N2R8D1",
+      "name": "Northstar mobile",
+      "status": "active"
+    }
+  ],
+  "page": {
+    "next_cursor": "eyJvZmZzZXQiOjJ9",
+    "has_more": true
+  },
+  "request_id": "req_01J8F6C4YTP8B2S9QK1M"
+}
+```
+
+## 3. Continue through a list
+
+Pass the returned `next_cursor` back as `cursor`; do not decode or modify it.
+The final page returns `has_more: false` and omits `next_cursor`.
+
+## 4. Create a resource
+
+The **Projects** section includes a complete `POST` example with request-body
+validation, tags, environment settings, and documented `201`, `401`, `409`,
+and `422` responses. Use the in-page console to change fields and watch the
+cURL and JavaScript examples update.

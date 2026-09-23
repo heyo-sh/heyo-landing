@@ -1,0 +1,105 @@
+---
+title: Tabs
+description: Let readers switch between related examples or platform-specific content.
+---
+
+<CodeSnippet
+  code={`<Tabs>
+  <Tab title="npm">npm install @heyo-sh/heyo-docs</Tab>
+  <Tab title="pnpm">pnpm add @heyo-sh/heyo-docs</Tab>
+</Tabs>`}
+>
+  <Tabs>
+    <Tab title="npm">npm install @heyo-sh/heyo-docs</Tab>
+    <Tab title="pnpm">pnpm add @heyo-sh/heyo-docs</Tab>
+  </Tabs>
+</CodeSnippet>
+
+# Tabs
+
+`Tabs` presents related content one panel at a time. It is useful for package
+manager commands, framework-specific instructions, language variants, and
+short comparisons where readers need only one option to complete the task.
+
+## Give every panel a clear label
+
+Each `Tab` uses `title` as its visible label, with `label` available as an
+alias. The first tab opens by default. Add a `value` when you need a stable key
+and set `defaultValue` to choose a different initial panel.
+
+<Tabs defaultValue="typescript" variant="line">
+  <Tab title="JavaScript" value="javascript">
+    Import the package from your JavaScript entry point.
+  </Tab>
+  <Tab title="TypeScript" value="typescript">
+    Import the package with full type information.
+  </Tab>
+</Tabs>
+
+Keep the number of tabs small and make their content equivalent in purpose.
+Place sequential steps in `Steps` instead; tabs can hide information readers
+must see in order.
+
+## Compare publishing targets
+
+Tabs can make an overview feel more like a tailored guide when every platform
+has the same goal but a different starting point.
+
+<CodeSnippet
+  code={`<Tabs defaultValue="vercel" variant="line">
+  <Tab title="Vercel" value="vercel">
+    <Callout type="tip" title="Best for Next.js">
+      Connect the repository and let Vercel detect the framework automatically.
+    </Callout>
+  </Tab>
+  <Tab title="Cloudflare" value="cloudflare">
+    Deploy the generated site to Pages when your team already uses Cloudflare.
+  </Tab>
+  <Tab title="Static host" value="static">
+    Upload the build output to any host that serves static files.
+  </Tab>
+</Tabs>`}
+>
+  <Tabs defaultValue="vercel" variant="line">
+    <Tab title="Vercel" value="vercel">
+      <Callout type="tip" title="Best for Next.js">
+        Connect the repository and let Vercel detect the framework
+        automatically.
+      </Callout>
+    </Tab>
+    <Tab title="Cloudflare" value="cloudflare">
+      Deploy the generated site to Pages when your team already uses Cloudflare.
+    </Tab>
+    <Tab title="Static host" value="static">
+      Upload the build output to any host that serves static files.
+    </Tab>
+  </Tabs>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" type="Tab[]">
+    Direct <code>Tab</code> elements to render as tab panels.
+  </Property>
+  <Property name="defaultValue" type="string">
+    The value of the panel shown initially. It defaults to the first tab's
+    explicit or generated value.
+  </Property>
+  <Property name="variant" type='"default" | "line"'>
+    Selects the tab-list appearance. It defaults to <code>default</code>.
+  </Property>
+  <Property name="title" type="ReactNode">
+    A <code>Tab</code> label. It takes precedence over <code>label</code>.
+  </Property>
+  <Property name="label" type="ReactNode">
+    Alias for a <code>Tab</code> title when <code>title</code> is not supplied.
+  </Property>
+  <Property name="value" type="string">
+    An optional stable identifier for a <code>Tab</code>. When omitted, one is
+    generated from its label.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The content rendered in an individual <code>Tab</code> panel.
+  </Property>
+</Properties>

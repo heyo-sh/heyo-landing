@@ -1,0 +1,147 @@
+---
+title: Code Snippet
+description: Use the CodeSnippet component to show a live MDX preview with its source code.
+---
+
+This page documents `CodeSnippet`, the Heyo Docs MDX component that combines a
+live preview with the exact source used to create it. Pass the rendered example
+as `children` and pass its JSX or MDX source through `code`.
+
+The outer example below documents `CodeSnippet` itself. Its preview contains a
+working `CodeSnippet`; selecting **View Code** on the outer block reveals the
+markup needed to create the nested preview.
+
+<CodeSnippet
+  defaultOpen
+  code={`<CodeSnippet
+  code={\`<Callout
+  type="tip"
+  title="Keep examples focused"
+  description="Show the outcome first, then let readers inspect the source."
+/>\`}
+>
+  <Callout
+    type="tip"
+    title="Keep examples focused"
+    description="Show the outcome first, then let readers inspect the source."
+  />
+</CodeSnippet>`}
+>
+  <CodeSnippet
+    code={`<Callout
+  type="tip"
+  title="Keep examples focused"
+  description="Show the outcome first, then let readers inspect the source."
+/>`}
+  >
+    <Callout
+      type="tip"
+      title="Keep examples focused"
+      description="Show the outcome first, then let readers inspect the source."
+    />
+  </CodeSnippet>
+</CodeSnippet>
+
+`CodeSnippet` renders the preview above a syntax-highlighted code panel. Use
+this component in documentation when readers should see the result first and
+inspect or copy its implementation only when they need it. The preview accepts
+any MDX content; `code` must contain the source that corresponds to that
+preview.
+
+## When to use `CodeSnippet`
+
+Use the `CodeSnippet` component for a component example, a small UI pattern, or
+a configuration that benefits from a visible outcome. It keeps the page easier
+to scan than placing a preview and a separate code block one after another.
+
+Code longer than three lines starts collapsed behind a gradient. Readers can select **View Code** to expand it into a scrollable panel and copy the complete source. Short snippets stay open and show the copy control immediately. Leading and trailing blank lines in `code` are removed before highlighting and copying.
+
+Use `CodeBlock` instead when there is no rendered result, such as a shell
+command, JSON response, or an implementation detail that cannot run in MDX. In
+`CodeSnippet`, `children` are the live preview and the `code` prop is the source
+shown to readers, so keep the two in sync.
+
+## Open a `CodeSnippet` source by default
+
+Set `defaultOpen` when the source is the primary part of the example, or when hiding it would make the preview ambiguous. `previewClassName` is useful for changing the preview's alignment or spacing without changing the code panel.
+
+<CodeSnippet
+  defaultOpen
+  previewClassName="justify-start"
+  showLineNumbers
+  language="tsx"
+  code={`<Button href="https://heyo.sh/heyo-docs/quickstart" variant="outline">
+  Read the quickstart
+</Button>`}
+>
+  <Button href="https://heyo.sh/heyo-docs/quickstart" variant="outline">
+    Read the quickstart
+  </Button>
+</CodeSnippet>
+
+## Use `CodeSnippet` for a composed preview
+
+The preview can render more than one component, making it useful for patterns
+that readers will want to lift into a real documentation page.
+
+<CodeSnippet
+  code={`<Columns columns={2}>
+  <Column title="Create content" href="https://heyo.sh/heyo-docs/quickstart">
+    Add the first MDX page and give it a clear title.
+  </Column>
+  <Column title="Make it discoverable" href="https://heyo.sh/heyo-docs/tutorials/json-ld">
+    Configure the metadata readers and search engines need.
+  </Column>
+</Columns>`}
+>
+  <Columns columns={2}>
+    <Column title="Create content" href="https://heyo.sh/heyo-docs/quickstart">
+      Add the first MDX page and give it a clear title.
+    </Column>
+    <Column
+      title="Make it discoverable"
+      href="https://heyo.sh/heyo-docs/tutorials/json-ld"
+    >
+      Configure the metadata readers and search engines need.
+    </Column>
+  </Columns>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="code" type="string" required>
+    The source displayed in the code panel and copied by the copy button. Pass
+    the complete snippet, including any imports a reader needs to understand the
+    example.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The live preview rendered above the source. It can contain Markdown,
+    built-in MDX components, or regular JSX.
+  </Property>
+  <Property name="language" type="string">
+    The syntax-highlighting language. It defaults to <code>tsx</code>. Heyo Docs
+    recognises common aliases such as <code>ts</code>, <code>js</code>,{" "}
+    <code>bash</code>, <code>json</code>, <code>md</code>, and <code>yaml</code>
+    ; unknown languages render as plain text.
+  </Property>
+  <Property name="defaultOpen" type="boolean">
+    Controls the initial state for long source. The default is{" "}
+    <code>false</code>, which collapses source with more than three lines. It
+    has no visual effect on a short snippet because short source is always
+    visible.
+  </Property>
+  <Property name="showLineNumbers" type="boolean">
+    Adds the standard line-number data attribute to the code panel. It defaults
+    to <code>false</code> and is useful when the surrounding explanation refers
+    to specific lines.
+  </Property>
+  <Property name="previewClassName" type="string">
+    Extra utility classes applied to the preview area. Use it for presentation
+    changes such as left alignment, a custom minimum height, or a
+    preview-specific background.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the outer preview-and-code container.
+  </Property>
+</Properties>

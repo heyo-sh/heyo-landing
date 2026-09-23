@@ -1,0 +1,33 @@
+---
+title: GitHub Copilot
+description: Use an externally supplied GitHub Copilot access token.
+---
+
+# GitHub Copilot
+
+GitHub Copilot uses Pi's `github-copilot` provider with `auth-type: oauth`.
+The Action cannot open Pi's interactive `/login` flow or refresh a token, so
+the workflow must supply an access token that remains valid for the complete
+audit.
+
+```yaml
+with:
+  provider: github-copilot
+  model: claude-sonnet-4.5
+  auth-type: oauth
+  auth-token: ${{ secrets.GITHUB_COPILOT_TOKEN }}
+  github-token: ${{ github.token }}
+```
+
+The available Copilot models depend on your Copilot plan and enabled model
+access. Select a model available to the token's account or organization.
+
+## Token handling
+
+- Store the token in an Actions secret, for example `GITHUB_COPILOT_TOKEN`.
+- Ensure it remains valid for the audit; Heyo cannot renew it.
+- Keep `github-token` separate. It is used only to read pull-request metadata
+  and publish the Check and review.
+
+See [Pi's GitHub Copilot notes](https://github.com/earendil-works/pi/blob/main/docs/providers.md#github-copilot)
+for subscription and model-enablement requirements.

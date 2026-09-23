@@ -1,0 +1,153 @@
+---
+title: API-key providers
+description: Use an API key with a provider in Pi's bundled catalog.
+---
+
+# API-key providers
+
+Most Pi providers use `auth-type: api-key`. Store the provider key as a GitHub
+Actions secret and pass it through `auth-token`. The Action supplies it only to
+the selected provider; it does not create a local Pi credential file.
+
+## OpenAI
+
+```yaml
+with:
+  provider: openai
+  model: gpt-5.4
+  auth-type: api-key
+  auth-token: ${{ secrets.OPENAI_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## Anthropic
+
+```yaml
+with:
+  provider: anthropic
+  model: claude-sonnet-4.5
+  auth-type: api-key
+  auth-token: ${{ secrets.ANTHROPIC_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## Google Gemini
+
+```yaml
+with:
+  provider: google
+  model: gemini-2.5-pro
+  auth-type: api-key
+  auth-token: ${{ secrets.GEMINI_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## OpenRouter
+
+OpenRouter model IDs include the upstream provider name.
+
+```yaml
+with:
+  provider: openrouter
+  model: anthropic/claude-sonnet-4.5
+  auth-type: api-key
+  auth-token: ${{ secrets.OPENROUTER_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## Cloudflare AI
+
+For Cloudflare Workers AI, use the `cloudflare-workers-ai` provider. Set the
+Cloudflare account ID as a workflow, job, or Action-step environment variable;
+the API token itself remains in `auth-token`.
+
+```yaml
+- uses: heyo-sh/heyo-code-audit@v1
+  env:
+    CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+  with:
+    provider: cloudflare-workers-ai
+    model: @cf/moonshotai/kimi-k2.6
+    auth-type: api-key
+    auth-token: ${{ secrets.CLOUDFLARE_API_KEY }}
+    github-token: ${{ github.token }}
+```
+
+To route a model through Cloudflare AI Gateway, use
+`provider: cloudflare-ai-gateway`, set `CLOUDFLARE_ACCOUNT_ID` and
+`CLOUDFLARE_GATEWAY_ID`, and choose a model available through the gateway, for
+example `claude-sonnet-4-5`. Configure unified billing or stored BYOK in the
+Cloudflare dashboard before running the audit.
+
+## Groq
+
+Groq exposes fast hosted models through the `groq` provider. Store a Groq API
+key as `GROQ_API_KEY`.
+
+```yaml
+with:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  auth-type: api-key
+  auth-token: ${{ secrets.GROQ_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## Mistral
+
+Use the `mistral` provider with a Mistral API key. A Devstral model is a useful
+choice for a code-review workflow.
+
+```yaml
+with:
+  provider: mistral
+  model: devstral-medium-latest
+  auth-type: api-key
+  auth-token: ${{ secrets.MISTRAL_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## xAI
+
+Use `xai` for Grok models with an xAI API key. Subscription OAuth credentials
+are not available in a non-interactive GitHub Actions run, so use an API key.
+
+```yaml
+with:
+  provider: xai
+  model: grok-code-fast-1
+  auth-type: api-key
+  auth-token: ${{ secrets.XAI_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## DeepSeek
+
+Use the `deepseek` provider with a DeepSeek API key. Select a model exposed by
+the bundled Pi catalog.
+
+```yaml
+with:
+  provider: deepseek
+  model: deepseek-v4-pro
+  auth-type: api-key
+  auth-token: ${{ secrets.DEEPSEEK_API_KEY }}
+  github-token: ${{ github.token }}
+```
+
+## Other Pi API-key providers
+
+The bundled Pi catalog also includes API-key providers such as Cerebras, NVIDIA
+NIM, Together AI, Fireworks, Hugging Face, and more. Use the provider
+identifier and model ID from the Pi catalog, then pass its key as `auth-token`.
+
+Some cloud gateways need extra provider-specific environment values. Set those
+at workflow or job level from GitHub Secrets or Variables. Refer to
+[Pi's provider documentation](https://github.com/earendil-works/pi/blob/main/docs/providers.md)
+for the complete catalog and provider-specific requirements.
+
+<Callout type="warning" title="Use a model that supports tool calls">
+  Heyo asks Pi to inspect a bounded repository snapshot. Choose a capable model
+  from the provider catalog; low-capability or unsupported models may fail to
+  complete the structured audit.
+</Callout>

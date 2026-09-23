@@ -1,0 +1,59 @@
+---
+title: Action inputs
+description: Configure providers, checks, reports, scope, and incremental audits.
+---
+
+# Action inputs
+
+Inputs are set under `with:` on `heyo-sh/heyo-code-audit@v1`. Empty optional
+values use their default.
+
+## Provider and authentication
+
+| Input          | Required     | Default  | Description                                                            |
+| -------------- | ------------ | -------- | ---------------------------------------------------------------------- |
+| `provider`     | No           | `openai` | Pi provider identifier.                                                |
+| `model`        | Yes          | —        | Provider-specific model identifier. No model fallback is selected.     |
+| `auth-type`    | Yes          | —        | `api-key`, `oauth`, `aws`, or `bedrock-bearer`.                        |
+| `auth-token`   | Except `aws` | —        | API key, OAuth access token, or Bedrock bearer token.                  |
+| `aws-region`   | No           | —        | Optional AWS region for Amazon Bedrock.                                |
+| `aws-profile`  | No           | —        | Optional AWS shared-config profile for Amazon Bedrock AWS credentials. |
+| `github-token` | Yes          | —        | Token used to read pull-request metadata and publish reports.          |
+
+The valid authentication method depends on the provider: API-key providers
+require `api-key`; `github-copilot` and `openai-codex` require `oauth`; and
+`amazon-bedrock` supports `aws` or `bedrock-bearer`.
+
+## Audit policy
+
+| Input          | Default           | Description                                                                                 |
+| -------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| `checks`       | All four checks   | Comma-separated `security`, `regression`, `functional`, and `nonfunctional`.                |
+| `verification` | `true`            | Verify each candidate finding in a separate Pi session before reporting it.                 |
+| `fail-on`      | `high`            | Lowest severity that makes the Check fail: `never`, `low`, `medium`, `high`, or `critical`. |
+| `paths`        | Entire repository | Comma-separated repository globs to include.                                                |
+
+For example, only inspect source and infrastructure files without failing the
+workflow for verified findings:
+
+```yaml
+with:
+  checks: security,regression
+  paths: src/**,.github/**
+  fail-on: never
+```
+
+## Reporting and scale
+
+| Input              | Default             | Description                                                       |
+| ------------------ | ------------------- | ----------------------------------------------------------------- |
+| `report`           | `check-and-comment` | `check`, `comment`, `check-and-comment`, or `none`.               |
+| `comment-on-clean` | `false`             | Submit a clean pull-request review when no findings are verified. |
+| `incremental`      | `true`              | Reuse compatible completed-Check state on later pushes.           |
+| `max-pr-commits`   | `100`               | Maximum commits in a full audit, or `unlimited`.                  |
+| `max-new-commits`  | `20`                | Maximum new commits in an incremental audit, or `unlimited`.      |
+
+Set `verification: false` only when you intentionally accept discovery findings
+without separate verification. Use `unlimited` only if your repository policy
+permits it. Invalid provider, model, authentication, check, path, and limit
+values fail before Heyo starts an audit.

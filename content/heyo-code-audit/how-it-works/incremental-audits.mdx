@@ -1,0 +1,38 @@
+---
+title: Incremental audits
+description: Re-audit only new commits while re-verifying active findings.
+---
+
+# Incremental audits
+
+With `incremental: true` (the default), Heyo stores compact machine state in a
+completed GitHub Check. On a later push to the same pull request, it finds a
+compatible prior state, audits the new delta, re-verifies every active prior
+finding, and deduplicates the combined result.
+
+## When Heyo performs a full audit
+
+Heyo falls back to a full audit when it cannot safely reuse state, including
+when the base changed, the previous head is not an ancestor, configuration or
+policy changed, state is invalid, incremental mode is disabled, or a prior run
+was unreliable.
+
+`report: comment` and `report: none` produce no Check, so they do not retain
+incremental state.
+
+## Commit limits
+
+Before Pi starts, Heyo enforces these limits:
+
+- `max-pr-commits` for a full audit, default `100`.
+- `max-new-commits` for an incremental audit, default `20`.
+
+A limit breach publishes a `neutral` result and does not advance the audit
+state. Set either value to a positive integer or `unlimited`.
+
+```yaml
+with:
+  incremental: true
+  max-pr-commits: 100
+  max-new-commits: 20
+```

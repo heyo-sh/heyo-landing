@@ -1,0 +1,35 @@
+---
+title: Introduction
+description: Verified AI code reviews for GitHub pull requests.
+---
+
+# Heyo Code Audit
+
+Heyo Code Audit is a GitHub Action that reviews pull requests with an AI model
+from Pi's bundled provider catalog. It inspects the pull-request diff and
+repository context, discovers candidate issues, and by default verifies each
+candidate in a separate Pi session before it publishes findings.
+
+<GitHub repo="heyo-sh/heyo-code-audit" />
+
+## Review policy
+
+Heyo can look for four kinds of issues:
+
+| Check           | Focus                                                                      |
+| --------------- | -------------------------------------------------------------------------- |
+| `security`      | Vulnerabilities, unsafe data handling, authorization, and secret exposure. |
+| `regression`    | Behaviour changed unintentionally by the pull request.                     |
+| `functional`    | Missing or incorrect behaviour in the changed code.                        |
+| `nonfunctional` | Reliability, maintainability, and operational concerns.                    |
+
+All four are enabled by default. Use the `checks` input to select a
+comma-separated subset.
+
+## Start here
+
+Follow the [Quickstart](https://heyo.sh/heyo-code-audit/quickstart) to add the
+Action to a repository. Then choose a model and authentication method in the
+[supported providers guide](https://heyo.sh/heyo-code-audit/supported-providers).
+Read [How the audit works](https://heyo.sh/heyo-code-audit/how-it-works/audit-lifecycle)
+for the discovery, verification, and reporting lifecycle.

@@ -1,0 +1,125 @@
+---
+title: Text
+description: Structure readable pages with headings, concise prose, links, emphasis, and quotes.
+---
+
+<CodeSnippet
+  language="md"
+  code={`## Give every section a clear job
+
+Start with the reader's next decision, then use **emphasis** for the one detail
+they should remember.`}
+
+>
+
+  <div>
+    <h2 className="!mt-0">Give every section a clear job</h2>
+    <p className="!mb-0">
+      Start with the reader&apos;s next decision, then use <strong>emphasis</strong>{" "}
+      for the one detail they should remember.
+    </p>
+  </div>
+</CodeSnippet>
+
+Clear text makes a documentation page easy to scan before a reader commits to
+the details. Use the frontmatter `title` as the page's single H1, then organise
+the body with H2 and H3 headings. Keep paragraphs focused on one idea and make
+the next action explicit.
+
+## Build a useful reading hierarchy
+
+Use `##` for the main sections of a page and `###` only for a clear subdivision
+within one of those sections. A heading should describe the outcome or question
+that follows it, rather than a vague label such as "More information".
+
+```md
+## Set up the project
+
+Install the package before creating the first page.
+
+### Choose a content directory
+
+Keep documentation source separate from application code.
+```
+
+This hierarchy works especially well for guides: a reader can scan the H2s to
+find a task, then use the H3s to jump to a decision within that task. Do not add
+an H1 in the body—the page title in frontmatter already provides it.
+
+## Emphasise decisions, not whole paragraphs
+
+Use **bold text** for a command, constraint, or decision that needs to stand
+out. Use _italics_ sparingly for a term on first mention. Inline `code` is for
+file names, prop names, commands, and literal values; it is not a replacement
+for a full code sample.
+
+```md
+Deploy **after** the preview has been reviewed.
+
+Set `content: "content"` in `heyo-docs.config.ts`.
+
+The _content directory_ is the source of truth for each page.
+```
+
+For example, a migration note can bold the irreversible step, while a setup
+guide can reserve inline code for the exact setting a developer must change.
+Keeping the rest of the sentence plain makes those signals meaningful.
+
+## Link with context and quote supporting evidence
+
+Write links as a description of their destination instead of exposing a raw
+URL. Relative links are ideal for nearby documentation; use a full URL for an
+external resource. Use a block quote for a caveat, a policy, or a short piece of
+supporting context that deserves visual separation.
+
+<CodeSnippet
+  language="md"
+  code={`Read the [deployment guide](https://heyo.sh/heyo-docs/deploying/vercel) before publishing.
+
+> Keep the preview URL private until the content has been approved.`}
+
+>
+
+  <div>
+    <p>
+      Read the <a href="https://heyo.sh/heyo-docs/deploying/vercel">deployment guide</a> before
+      publishing.
+    </p>
+    <blockquote className="!mb-0">
+      Keep the preview URL private until the content has been approved.
+    </blockquote>
+  </div>
+</CodeSnippet>
+
+Use this pattern for a clear next step at the end of a concept page, or to make
+an operational rule visible in a long runbook. If the note requires a decision
+or a status, use a `Callout` instead of overloading a quote.
+
+## Properties
+
+<Properties>
+  <Property name="title" type="frontmatter string" required>
+    Supplies the page title rendered as the document's H1. Keep H1 out of the
+    MDX body so every page has one unambiguous top-level heading.
+  </Property>
+  <Property name="## Heading" type="Markdown heading">
+    Creates a primary section heading. Use <code>###</code> only to divide a
+    section into smaller, related parts.
+  </Property>
+  <Property name="**text** / *text*" type="inline Markdown">
+    Adds strong emphasis or lighter emphasis. Use it selectively so the most
+    important instruction remains easy to spot.
+  </Property>
+  <Property name="`code`" type="inline code">
+    Marks a literal value such as a file name, command, configuration key, or
+    prop name.
+  </Property>
+  <Property name="[label](destination)" type="link">
+    Creates a descriptive link. Use a leading slash for an internal docs route
+    and a full URL for an external destination.
+  </Property>
+  <Property name="> quote" type="blockquote">
+    Sets off a short policy, caveat, or supporting statement. Use a Callout when
+    the message needs a semantic status such as warning or tip.
+  </Property>
+</Properties>

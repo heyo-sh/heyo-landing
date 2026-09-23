@@ -1,0 +1,94 @@
+---
+title: Callout
+description: Highlight an important note, tip, warning, or error in an MDX page.
+---
+
+<CodeSnippet
+  code={`<Callout
+  type="tip"
+  title="Keep examples focused"
+  description="Show one idea at a time so readers can apply it quickly."
+/>`}
+>
+  <Callout
+    type="tip"
+    title="Keep examples focused"
+    description="Show one idea at a time so readers can apply it quickly."
+  />
+</CodeSnippet>
+
+# Callout
+
+`Callout` separates important guidance from the normal reading flow. It is best
+for a practical tip, a prerequisite, a warning, or an error condition that a
+reader should notice while following an article.
+
+## Select the right emphasis
+
+Use `note` for neutral context, `info` for helpful facts, `tip` for a preferred
+approach, and `check` for a successful outcome. Reserve `warning` and `danger`
+for situations where ignoring the content has a meaningful consequence.
+
+<Callout type="warning" title="Check before publishing">
+  Preview the page locally so broken links and invalid MDX do not reach readers.
+</Callout>
+
+You can provide a short string with `description`, or use children when the
+message needs Markdown, links, or another MDX component. Keep each callout to
+one focused point.
+
+## Tell a complete rollout story
+
+Stack related callouts to turn a dry deployment status into a scannable update.
+Each treatment gives the reader a useful visual cue without obscuring the
+timeline.
+
+<CodeSnippet
+  code={`<div className="rounded-xl border border-foreground/10 bg-muted/30 p-4">
+  <Callout type="info" title="Migration starts at 09:00 UTC">
+    Existing links continue to work while the new pages are generated.
+  </Callout>
+  <Callout type="warning" title="Pause edits for ten minutes">
+    Content changes made during the final sync will not be included.
+  </Callout>
+  <Callout type="check" title="Validation passed">
+    The preview is live and the search index has been refreshed.
+  </Callout>
+</div>`}
+>
+  <div className="rounded-xl border border-foreground/10 bg-muted/30 p-4">
+    <Callout type="info" title="Migration starts at 09:00 UTC">
+      Existing links continue to work while the new pages are generated.
+    </Callout>
+    <Callout type="warning" title="Pause edits for ten minutes">
+      Content changes made during the final sync will not be included.
+    </Callout>
+    <Callout type="check" title="Validation passed">
+      The preview is live and the search index has been refreshed.
+    </Callout>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property
+    name="type"
+    type='"note" | "warning" | "info" | "tip" | "check" | "danger"'
+  >
+    Selects the icon and accent colour. It defaults to <code>note</code>.
+  </Property>
+  <Property name="variant" type='CalloutType | "default" | "destructive"'>
+    Compatibility alias for <code>type</code>. <code>default</code> maps to
+    <code>note</code> and <code>destructive</code> maps to <code>danger</code>.
+  </Property>
+  <Property name="title" type="ReactNode">
+    An optional heading placed above the message.
+  </Property>
+  <Property name="description" type="ReactNode">
+    The message body. It takes precedence over the component's children.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Alternative rich message content when <code>description</code> is not set.
+  </Property>
+</Properties>

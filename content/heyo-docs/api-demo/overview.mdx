@@ -1,0 +1,58 @@
+---
+title: Platform API overview
+description: Explore the deliberately feature-rich mock API used by the OpenAPI demo.
+---
+
+# Platform API overview
+
+The **OpenAPI (Demo)** area is a realistic, fully mocked SaaS platform API. It
+is designed to exercise an API reference with many resource families, request
+bodies, pagination, errors, webhook events, file workflows, billing data, and
+different HTTP methods.
+
+## What is in the demo
+
+| Area          | Example resources                           | Useful for testing                       |
+| ------------- | ------------------------------------------- | ---------------------------------------- |
+| Identity      | sessions, API keys, organization members    | authentication and scoped permissions    |
+| Product       | projects, environments, documents, releases | nested paths and editable request bodies |
+| Customer data | contacts, segments, tags                    | filters, cursors, and bulk actions       |
+| Operations    | events, workflows, audit logs, exports      | time windows and asynchronous jobs       |
+| Commerce      | subscriptions, invoices, usage records      | money fields and lifecycle states        |
+| Delivery      | files, webhooks, delivery attempts          | upload state and event replay            |
+
+All values are sample data — tokens, domains, IDs, webhooks, invoices, and
+file locations are safe placeholders. The interactive request console sends no
+real requests unless you deliberately replace the server URL with your own
+compatible endpoint.
+
+## URL and versioning
+
+The mock API is versioned under `/v3`:
+
+```text
+https://api.demo.heyo.example/v3
+```
+
+New additive changes are released inside v3. A breaking change will get a new
+major path, while the previous major stays available for a published migration
+window. Every response exposes a `request_id`, which is the value to include
+when opening a support ticket or comparing a webhook delivery to its source
+event.
+
+## Resource conventions
+
+- IDs are opaque strings such as `org_01J8F1Q6N6VTX4E8W9R2D0A7B3`.
+- All timestamps use ISO 8601 UTC values.
+- List responses use a `data` array plus a `page` object with an opaque cursor.
+- Mutable resources include `created_at`, `updated_at`, and an `etag` where
+  optimistic updates are supported.
+- Deletions are soft by default. Endpoints that destroy a resource say so
+  explicitly and require the corresponding elevated scope.
+
+## Explore the reference
+
+Start with the **Quickstart** to make a read request, then inspect the
+generated endpoint sections below these guides. The menu contains more than
+forty operations grouped by their OpenAPI tag, so it is also a useful visual
+stress test for long documentation navigation.

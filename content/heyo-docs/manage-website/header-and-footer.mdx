@@ -1,0 +1,75 @@
+---
+title: Header and Footer
+description: Add serializable header links and optional website or GitHub links to the theme sidebar footer.
+---
+
+# Header and Footer
+
+The built-in themes keep global actions deliberately compact. The header always
+contains the linked brand mark and can display configured links. The sidebar
+footer can show website and GitHub links. Grain keeps the color-mode toggle
+there; Moss and Shade place that toggle in the header.
+
+## Add header links
+
+Use `navigation` for links in the theme's header slot. It is declarative and
+serializable, so the same configuration works in React Router, Next.js, and
+Astro without passing JSX through a browser-data module.
+
+```ts title="heyo-docs.config.ts"
+import { heyoDocs } from "@heyo-sh/heyo-docs/config";
+
+export default heyoDocs({
+  navigation: [
+    { label: "Sign in", href: "https://app.acme.com/sign-in" },
+    { label: "Status", href: "https://status.acme.com" },
+  ],
+});
+```
+
+Each item requires a non-empty `label` and `href`. Relative links use the
+framework's configured documentation link component. HTTP(S) links open as
+ordinary external links in a new tab with `rel="noreferrer"`.
+
+Keep the list short: one or two high-value destinations are usually enough.
+Documentation pages belong in the sidebar; header links are best for an app,
+a status page, or a GitHub repository.
+
+## Customize beyond links
+
+`navigation` deliberately does not accept React elements, menus, user state,
+or arbitrary scripts. That keeps `heyo-docs.config.ts` portable across build
+and browser environments. For a signed-in menu, a custom CTA, or a different
+header structure, compose it in the application shell or supply theme
+components to `DocsApp`. Do not create a second Heyo Docs configuration merely
+to add header UI.
+
+## Configure footer links
+
+The sidebar footer supports one website link and one GitHub link:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  footer: {
+    website: "https://acme.com",
+    github: "https://github.com/acme/docs",
+  },
+});
+```
+
+Both values must be absolute URLs. When set, every built-in theme renders
+recognizable globe and GitHub icon buttons that open in a new tab with
+`rel="noreferrer"`. Grain keeps its color-mode button at the other edge of the
+footer; Moss and Shade render it in the header.
+
+Omit either property to remove just that link. With an empty `footer` object,
+Grain retains only its color-mode control in the footer; Moss and Shade leave
+the footer empty.
+
+## Verify links and keyboard access
+
+After a change, test every action with a keyboard as well as a pointer. Check
+that labels make sense without icons, external URLs are correct, focus is
+visible in both color modes, and the header remains usable at mobile width.
+Header and footer URLs are public build configuration, so never put secrets or
+single-use tokens in them.

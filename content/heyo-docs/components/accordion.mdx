@@ -1,0 +1,105 @@
+---
+title: Accordion
+description: Group supporting details into concise, expandable sections.
+---
+
+<CodeSnippet
+  code={`<Accordion title="Why use MDX?" defaultOpen>
+  MDX lets documentation combine Markdown, JSX, and interactive components.
+</Accordion>`}
+>
+  <Accordion title="Why use MDX?" defaultOpen>
+    MDX lets documentation combine Markdown, JSX, and interactive components.
+  </Accordion>
+</CodeSnippet>
+
+# Accordion
+
+`Accordion` keeps secondary information close to the main explanation without
+making the page difficult to scan. Use its concise form for a single disclosure,
+or combine it with `AccordionItem` when readers should be able to open several
+related sections independently.
+
+## Multiple sections
+
+Use `multiple` when readers may need to compare answers. Without it, opening one
+item closes the previously open item. Give each item a stable `value` when its
+identity matters outside the current page.
+
+<Accordion multiple>
+  <AccordionItem title="Which files can use MDX?" value="files">
+    Any page in your configured content directory can use Markdown and the
+    built-in MDX components.
+  </AccordionItem>
+  <AccordionItem title="Can I nest content?" value="content">
+    Yes. Each item accepts Markdown and other MDX components as its content.
+  </AccordionItem>
+</Accordion>
+
+Keep essential instructions visible in the article itself. Accordions work best
+for optional context, troubleshooting notes, or answers to common questions.
+
+## Build a release checklist
+
+An accordion can hold rich MDX when readers need to drill into one part of a
+process at a time. This keeps a launch checklist approachable without losing
+the useful implementation detail.
+
+<CodeSnippet
+  code={`<Accordion multiple>
+  <AccordionItem title="Before launch" value="before-launch">
+    <Callout type="tip" title="Freeze the copy">
+      Ask reviewers to approve the final content before publishing.
+    </Callout>
+  </AccordionItem>
+  <AccordionItem title="During launch" value="during-launch">
+    Keep the status page and release notes open in separate tabs.
+  </AccordionItem>
+  <AccordionItem title="After launch" value="after-launch">
+    Monitor feedback, then capture follow-up work in the next sprint.
+  </AccordionItem>
+</Accordion>`}
+>
+  <Accordion multiple>
+    <AccordionItem title="Before launch" value="before-launch">
+      <Callout type="tip" title="Freeze the copy">
+        Ask reviewers to approve the final content before publishing.
+      </Callout>
+    </AccordionItem>
+    <AccordionItem title="During launch" value="during-launch">
+      Keep the status page and release notes open in separate tabs.
+    </AccordionItem>
+    <AccordionItem title="After launch" value="after-launch">
+      Monitor feedback, then capture follow-up work in the next sprint.
+    </AccordionItem>
+  </Accordion>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="title" type="ReactNode">
+    A concise <code>Accordion</code> heading. Providing it creates a single
+    disclosure from the component's children.
+  </Property>
+  <Property name="defaultOpen" type="boolean">
+    Opens the simple disclosure initially. It defaults to <code>false</code>. In
+    a multi-item accordion, items manage their own initial state.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Allows more than one <code>AccordionItem</code> to be open at once. It
+    defaults to <code>false</code>.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The disclosure body in concise mode, or direct <code>AccordionItem</code>
+    elements in multi-item mode.
+  </Property>
+  <Property name="title" type="ReactNode">
+    An <code>AccordionItem</code> heading. It defaults to
+    <code>Details</code> when omitted.
+  </Property>
+  <Property name="value" type="string">
+    An optional stable identifier for an <code>AccordionItem</code>. A unique
+    value is generated when it is omitted.
+  </Property>
+</Properties>

@@ -1,0 +1,89 @@
+---
+title: Quickstart
+description: Add verified AI pull-request reviews to a GitHub Actions workflow.
+---
+
+# Quickstart
+
+Add Heyo Code Audit to a workflow that runs on `pull_request`. The Action needs
+the full Git history to compare the pull request, permission to create a Check
+and review comments, and a secret for the selected model provider.
+
+<Steps>
+  <Step title="Create a provider secret">
+    For this OpenAI example, create an `OPENAI_API_KEY` Actions secret in the
+    repository or organization. The token remains a GitHub secret and is passed
+    to Pi only for the chosen provider.
+  </Step>
+
+  <Step title="Add the workflow">
+    Create `.github/workflows/heyo-code-audit.yml`:
+
+    ```yaml
+    name: Heyo Code Audit
+
+    on:
+      pull_request:
+        types: [opened, synchronize, reopened]
+
+    concurrency:
+      group: heyo-code-audit-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    jobs:
+      audit:
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+        steps:
+          - uses: actions/checkout@v7
+            with:
+              fetch-depth: 0
+              persist-credentials: false
+          - uses: heyo-sh/heyo-code-audit@v1
+            with:
+              provider: openai
+              model: gpt-5.4
+              auth-type: api-key
+              auth-token: ${{ secrets.OPENAI_API_KEY }}
+              github-token: ${{ github.token }}
+    ```
+
+    Use `@v1` for the newest compatible stable release. Pin an immutable
+    release, for example `@v1.1.1`, if your supply-chain policy requires an
+    exact version.
+  </Step>
+
+  <Step title="Open or update a pull request">
+    Heyo publishes a Check and, by default, an inline review. A `failure` Check
+    conclusion means at least one verified finding met the configured `fail-on`
+    threshold, which defaults to `high`.
+  </Step>
+</Steps>
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic
+    icon="code"
+    name="Choose a supported provider"
+    src="https://heyo.sh/heyo-code-audit/supported-providers"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Configure reports and severity thresholds"
+    src="https://heyo.sh/heyo-code-audit/configuration/inputs"
+  />
+  <RelatedTopic
+    icon="arrowRight"
+    name="Learn about incremental audits"
+    src="https://heyo.sh/heyo-code-audit/how-it-works/incremental-audits"
+  />
+</RelatedTopics>
+
+<Callout type="info" title="Use pull_request, not pull_request_target">
+  Heyo intentionally supports <code>pull_request</code> only. This prevents
+  untrusted fork code from running with elevated repository credentials.
+</Callout>

@@ -1,0 +1,99 @@
+---
+title: Search
+description: Add fast, local documentation search without a crawler, hosted index, or API key.
+---
+
+# Search
+
+Heyo Docs builds a local search index from the documentation model already sent
+to `DocsApp`. Readers search in their browser, so there is no crawler, hosted
+search provider, API key, or search endpoint to configure.
+
+## Use the built-in search
+
+Every `create-heyo-docs` starter connects its selected theme to the built-in
+search UI. The dialog is available from the navigation and opens with
+<kbd>⌘ K</kbd> on macOS or <kbd>Ctrl K</kbd> on other systems. Readers can use
+the arrow keys to choose a result and <kbd>Enter</kbd> to open it.
+
+<Callout type="info" title="Included in starter templates">
+  Search is ready after creating a project. Add useful page titles,
+  descriptions, and headings, then run the app.
+</Callout>
+
+```bash
+bun create @heyo-sh/heyo-docs my-docs --template react-router
+```
+
+The same built-in search is available in the Grain, Shade, and Moss themes.
+When you compose a custom theme, include its `Search` component to expose the
+same local data to readers.
+
+## What search indexes
+
+Every MDX page contributes its title, frontmatter description, table-of-
+contents headings, and plain-text body. During the build, Heyo Docs removes
+frontmatter, code blocks, images, links, and MDX tags from the body before it
+is indexed.
+
+Generated OpenAPI reference pages are searchable too. Their title,
+description, HTTP method, path, operation ID, tags, and parameter names are
+included; the complete OpenAPI document is not sent merely to support search.
+
+The built-in index uses ZBSearch. It ranks title matches above descriptions and
+body text, tolerates small typos, and returns up to eight results. Queries stay
+in the reader's browser.
+
+## Write searchable pages
+
+A descriptive title, description, and headings make the results more useful.
+The page description is also the preferred excerpt in the search dialog:
+
+```mdx
+---
+title: Configure webhooks
+description: Verify signed webhook deliveries from the API.
+---
+
+# Configure webhooks
+
+## Verify the signature
+
+Use the signing secret to validate every incoming request.
+```
+
+Search is not an access-control boundary. Any page passed to `DocsApp` is
+available to anyone who can load the documentation application.
+
+## Build a custom search experience
+
+The search engine is exported separately from the theme UI. Use it when a
+custom theme needs a different interaction while keeping the same matching,
+ranking, and result limit:
+
+```ts
+import {
+  createSearchIndex,
+  findSearchPages,
+  type SearchDocument,
+} from "@heyo-sh/heyo-docs/search";
+
+const pages: SearchDocument[] = [
+  {
+    slug: "/webhooks",
+    title: "Configure webhooks",
+    description: "Verify signed webhook deliveries from the API.",
+    tableOfContents: [
+      { id: "verify-the-signature", title: "Verify the signature", depth: 2 },
+    ],
+    searchContent: "Use the signing secret to validate every incoming request.",
+  },
+];
+
+const index = createSearchIndex(pages);
+const results = findSearchPages(index, "webhook signature");
+```
+
+Create the index once for a stable page set, then call `findSearchPages()` for
+each query. Use `searchPages(pages, query)` only when retaining an index is
+unnecessary.

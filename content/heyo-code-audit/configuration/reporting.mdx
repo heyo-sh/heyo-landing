@@ -1,0 +1,53 @@
+---
+title: Reporting and severity
+description: Control GitHub Checks, inline review comments, and failure thresholds.
+---
+
+# Reporting and severity
+
+With the default verification setting, Heyo reports only independently verified
+findings. The report mode controls where findings appear; `fail-on` controls
+whether the resulting GitHub Check fails.
+
+## Report modes
+
+| `report`            | GitHub Check | Inline review comments | Incremental state |
+| ------------------- | ------------ | ---------------------- | ----------------- |
+| `check`             | Yes          | No                     | Yes               |
+| `comment`           | No           | Yes                    | No                |
+| `check-and-comment` | Yes          | Yes                    | Yes               |
+| `none`              | No           | No                     | No                |
+
+`check-and-comment` is the default. It places eligible findings on changed
+lines of the **Heyo Code Audit** Check and publishes the same findings as one
+inline pull-request review.
+
+A finding gets an inline comment only when its file and line correspond to an
+added or modified pull-request line. Heyo adds an **Apply suggestion** control
+only when verification proves an exact replacement for that line.
+
+## Failure threshold
+
+Set `fail-on` to the lowest severity that should fail the Check:
+
+```yaml
+with:
+  fail-on: medium
+```
+
+Allowed values are `never`, `low`, `medium`, `high`, and `critical`. The
+default is `high`. `fail-on: never` still publishes results but never fails the
+job for a verified finding.
+
+## Clean pull requests
+
+Set `comment-on-clean: true` to submit a clean review when an audit has no
+verified findings:
+
+```yaml
+with:
+  comment-on-clean: true
+```
+
+Heyo avoids duplicating its own inline finding comments for the same pull
+request head and finding fingerprint.

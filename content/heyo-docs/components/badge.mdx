@@ -1,0 +1,65 @@
+---
+title: Badge
+description: Add a compact status, category, or metadata label to MDX content.
+---
+
+<CodeSnippet code={`<Badge variant="secondary">New</Badge>`}>
+  <Badge variant="secondary">New</Badge>
+</CodeSnippet>
+
+# Badge
+
+`Badge` is a small inline label for communicating status, type, or category.
+Use it next to a heading, a version number, or a short piece of metadata where a
+full callout would add too much visual weight.
+
+## Choose a semantic variant
+
+Use the default style for the primary label, `secondary` for neutral metadata,
+and `destructive` for an error or breaking-change status. `outline`, `ghost`,
+and `link` work well when the badge should recede into surrounding prose.
+
+<Badge>Stable</Badge> <Badge variant="outline">v2.0</Badge>
+<Badge variant="destructive">Deprecated</Badge>
+
+Keep badge text short and make meaning clear in the surrounding sentence. A
+badge adds emphasis; it should not be the only way readers learn about an
+important state.
+
+## Create a compact release status
+
+Combine short labels to make a lightweight release summary. The surrounding
+text still explains the state, while the badges make it easy to scan.
+
+<CodeSnippet
+  code={`<div className="flex flex-wrap items-center gap-2">
+  <Badge>v2.4</Badge>
+  <Badge variant="secondary">Public beta</Badge>
+  <Badge variant="outline">Updated today</Badge>
+  <Badge variant="ghost">Docs ready</Badge>
+</div>`}
+>
+  <div className="flex flex-wrap items-center gap-2">
+    <Badge>v2.4</Badge>
+    <Badge variant="secondary">Public beta</Badge>
+    <Badge variant="outline">Updated today</Badge>
+    <Badge variant="ghost">Docs ready</Badge>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property
+    name="variant"
+    type='"default" | "secondary" | "destructive" | "outline" | "ghost" | "link"'
+  >
+    Selects the visual treatment. It defaults to <code>default</code>.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The compact label displayed inside the badge.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the rendered badge.
+  </Property>
+</Properties>

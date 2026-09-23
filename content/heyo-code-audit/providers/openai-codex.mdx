@@ -1,0 +1,28 @@
+---
+title: OpenAI Codex
+description: Use an externally supplied OpenAI Codex access token.
+---
+
+# OpenAI Codex
+
+OpenAI Codex uses Pi's `openai-codex` provider with `auth-type: oauth`. Supply
+a Codex access token as an Actions secret. Heyo does not start an interactive
+OAuth flow and cannot refresh the credential during a run.
+
+```yaml
+with:
+  provider: openai-codex
+  model: gpt-5.4
+  auth-type: oauth
+  auth-token: ${{ secrets.OPENAI_CODEX_TOKEN }}
+  github-token: ${{ github.token }}
+```
+
+Use a model identifier available through your Codex account. Pi's
+[OpenAI Codex documentation](https://github.com/earendil-works/pi/blob/main/docs/providers.md#openai-codex)
+describes the subscription requirement.
+
+## Keep the tokens separate
+
+`auth-token` authenticates model inference. `github-token` authenticates
+GitHub API reads and report publication. Do not substitute one for the other.

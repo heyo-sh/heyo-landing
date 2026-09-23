@@ -1,0 +1,123 @@
+---
+title: Properties
+description: Build a compact, consistent API reference for an MDX component.
+---
+
+<CodeSnippet
+  code={`<Properties>
+  <Property name="color" required type="string">
+    The accent colour used by the component.
+  </Property>
+</Properties>`}
+>
+  <Properties>
+    <Property name="color" required type="string">
+      The accent colour used by the component.
+    </Property>
+  </Properties>
+</CodeSnippet>
+
+# Properties
+
+`Properties` groups `Property` entries into a concise API reference. It gives
+each prop a clear name, type, required state, and explanation, so reference
+sections stay consistent across all component pages.
+
+## Document the API that readers use
+
+Use one `Property` per public prop. Mark required values explicitly and explain
+defaults, precedence rules, or constraints in the description. The `badges`
+prop is useful for short metadata such as a version or platform note.
+
+<Properties>
+  <Property
+    badges={<Badge variant="outline">v2.0</Badge>}
+    name="theme"
+    type='"light" | "dark"'
+  >
+    Chooses the appearance. It defaults to <code>light</code>.
+  </Property>
+  <Property name="token" required showRequired={false} type="string">
+    An access token. The required badge is hidden because the surrounding text
+    already communicates the requirement.
+  </Property>
+</Properties>
+
+Use normal Markdown headings and prose for the conceptual explanation; reserve
+this component for the final, scannable prop reference.
+
+## Describe a rollout policy
+
+Mix required state, version metadata, and rich descriptions to make a compact
+reference section feel more like a useful API contract.
+
+<CodeSnippet
+  code={`<Properties>
+  <Property
+    badges={<Badge variant="outline">v2.4</Badge>}
+    name="strategy"
+    required
+    type='"preview" | "instant"'
+  >
+    Use <code>preview</code> to require a final approval before publishing.
+  </Property>
+  <Property name="reviewers" type="string[]">
+    The people who receive the preview link. It defaults to an empty list.
+  </Property>
+  <Property name="notify" type="boolean">
+    Sends a completion message to each reviewer. It defaults to <code>true</code>.
+  </Property>
+</Properties>`}
+>
+  <Properties>
+    <Property
+      badges={<Badge variant="outline">v2.4</Badge>}
+      name="strategy"
+      required
+      type='"preview" | "instant"'
+    >
+      Use <code>preview</code> to require a final approval before publishing.
+    </Property>
+    <Property name="reviewers" type="string[]">
+      The people who receive the preview link. It defaults to an empty list.
+    </Property>
+    <Property name="notify" type="boolean">
+      Sends a completion message to each reviewer. It defaults to{" "}
+      <code>true</code>.
+    </Property>
+  </Properties>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    The <code>Property</code> entries rendered in the reference section.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the outer <code>Properties</code> section.
+  </Property>
+  <Property name="name" required type="ReactNode">
+    A <code>Property</code> name, usually the public prop name.
+  </Property>
+  <Property name="type" type="ReactNode">
+    An optional type label displayed next to the property name.
+  </Property>
+  <Property name="required" type="boolean">
+    Marks a <code>Property</code> as required. It defaults to
+    <code>false</code>.
+  </Property>
+  <Property name="showRequired" type="boolean">
+    Shows the required or optional state badge. It defaults to
+    <code>true</code>.
+  </Property>
+  <Property name="badges" type="ReactNode">
+    Additional inline badges displayed beside the property's type and state.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The explanatory content for an individual <code>Property</code>.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to an individual <code>Property</code> entry.
+  </Property>
+</Properties>

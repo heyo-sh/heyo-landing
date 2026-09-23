@@ -1,0 +1,206 @@
+---
+title: Hover Card
+description: Reveal contextual preview content when a reader hovers over or focuses a link.
+---
+
+<CodeSnippet
+  code={`<HoverCard>
+  <HoverCardTrigger
+    href="https://github.com/shadcn-ui"
+    target="_blank"
+    rel="noreferrer"
+    className="inline-flex font-medium underline underline-offset-4"
+  >
+    <span>@shadcn</span>
+  </HoverCardTrigger>
+  <HoverCardContent className="w-80 p-4">
+    <div className="flex justify-between gap-4">
+      <img
+        src="https://github.com/shadcn-ui.png?size=96"
+        alt="shadcn"
+        width="48"
+        height="48"
+        className="size-12 rounded-full"
+      />
+      <div className="min-w-0 space-y-1.5">
+        <p className="font-semibold text-popover-foreground">shadcn/ui</p>
+        <p className="text-muted-foreground">
+          Beautifully designed components that you can copy, own, and build on.
+        </p>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 text-[0.6875rem] text-muted-foreground">
+          <span>127k GitHub stars</span>
+          <span>Open source</span>
+        </div>
+      </div>
+    </div>
+  </HoverCardContent>
+</HoverCard>`}
+>
+  <HoverCard>
+    <HoverCardTrigger
+      className="font-medium underline underline-offset-4"
+      href="https://github.com/shadcn-ui"
+      rel="noreferrer"
+      target="_blank"
+    >
+      <span>@shadcn</span>
+    </HoverCardTrigger>
+    <HoverCardContent className="w-80 p-4">
+      <div className="flex justify-between gap-4">
+        <img
+          src="https://github.com/shadcn-ui.png?size=96"
+          alt="shadcn"
+          width="48"
+          height="48"
+          className="size-12 rounded-full"
+        />
+        <div className="min-w-0 space-y-1.5">
+          <p className="font-semibold text-popover-foreground">shadcn/ui</p>
+          <p className="text-muted-foreground">
+            Beautifully designed components that you can copy, own, and build
+            on.
+          </p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 text-[0.6875rem] text-muted-foreground">
+            <span>127k GitHub stars</span>
+            <span>Open source</span>
+          </div>
+        </div>
+      </div>
+    </HoverCardContent>
+  </HoverCard>
+</CodeSnippet>
+
+`HoverCard` is a composable preview-card primitive for concise, contextual information. It consists of a root, an anchor-like trigger, and a floating content panel. The panel opens on hover and keyboard focus, so an inline documentation link can offer a useful preview without sending a reader away from the current page.
+
+## When to use it
+
+Use a hover card for a short definition, author profile, repository summary, or contextual preview that helps a reader decide whether to follow a link. It works particularly well inside prose because the trigger renders as an anchor and supports keyboard focus as well as pointer hover.
+
+Keep content brief and supplementary. A hover card is not a replacement for a required instruction, a form control, or a multi-step interaction: important content must remain available in the document itself. For a persistent disclosure, use `Accordion`; for a link to a related page, use `RelatedTopic`.
+
+`HoverCardContent` is rendered in a portal, positioned relative to its trigger, and uses a 4-pixel gap by default. The trigger opens immediately in Heyo Docs (`delay={0}`), which is useful for quick documentation previews. Increase `delay` when a dense page would otherwise open cards too eagerly.
+
+## Position and timing
+
+<HoverCard>
+  <HoverCardTrigger
+    className="font-medium underline underline-offset-4"
+    delay={250}
+    href="#positioned-preview"
+  >
+    Positioned preview
+  </HoverCardTrigger>
+  <HoverCardContent align="start" className="w-64" side="right" sideOffset={8}>
+    This card waits briefly, opens on the right, and aligns with the trigger's
+    start edge.
+  </HoverCardContent>
+</HoverCard>
+
+## Preview a deployment guide
+
+Rich content can turn an ordinary reference link into a helpful product
+preview. Keep the trigger useful on its own, then use the card for the detail
+that helps a reader decide whether to open it.
+
+<CodeSnippet
+  code={`<HoverCard defaultOpen>
+  <HoverCardTrigger
+    className="font-medium underline underline-offset-4"
+    href="https://heyo.sh/heyo-docs/deploying/vercel"
+  >
+    Deploy to Vercel
+  </HoverCardTrigger>
+  <HoverCardContent align="start" className="w-72 p-4" sideOffset={8}>
+    <div className="space-y-3">
+      <Badge variant="secondary">New release</Badge>
+      <div>
+        <p className="font-semibold text-popover-foreground">Production release</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Configure the canonical URL, make a preview deployment, then publish.
+        </p>
+      </div>
+      <Button href="https://heyo.sh/heyo-docs/deploying/vercel" size="sm" variant="outline">
+        Open deployment guide
+      </Button>
+    </div>
+  </HoverCardContent>
+</HoverCard>`}
+>
+  <HoverCard defaultOpen>
+    <HoverCardTrigger
+      className="font-medium underline underline-offset-4"
+      href="https://heyo.sh/heyo-docs/deploying/vercel"
+    >
+      Deploy to Vercel
+    </HoverCardTrigger>
+    <HoverCardContent align="start" className="w-72 p-4" sideOffset={8}>
+      <div className="space-y-3">
+        <Badge variant="secondary">New release</Badge>
+        <div>
+          <p className="font-semibold text-popover-foreground">
+            Production release
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Configure the canonical URL, make a preview deployment, then
+            publish.
+          </p>
+        </div>
+        <Button href="https://heyo.sh/heyo-docs/deploying/vercel" size="sm" variant="outline">
+          Open deployment guide
+        </Button>
+      </div>
+    </HoverCardContent>
+  </HoverCard>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="defaultOpen" type="boolean">
+    A <code>HoverCard</code> prop that opens the card initially in uncontrolled
+    mode. It defaults to <code>false</code>.
+  </Property>
+  <Property name="open" type="boolean">
+    A controlled <code>HoverCard</code> state. Supply this together with{" "}
+    <code>onOpenChange</code> when another part of the page owns the open state.
+  </Property>
+  <Property name="onOpenChange" type="(open, details) =&gt; void">
+    Called whenever the root opens or closes. Use it to synchronise controlled
+    state or record an interaction.
+  </Property>
+  <Property name="href" type="string">
+    An anchor attribute accepted by <code>HoverCardTrigger</code>. Give the
+    trigger a real destination whenever possible so it remains a useful link
+    without the preview.
+  </Property>
+  <Property name="delay" type="number">
+    A <code>HoverCardTrigger</code> prop, in milliseconds, that delays opening.
+    Heyo Docs defaults it to <code>0</code>.
+  </Property>
+  <Property name="closeDelay" type="number">
+    A <code>HoverCardTrigger</code> prop, in milliseconds, that delays closing
+    after the pointer or focus leaves. The underlying primitive defaults to{" "}
+    <code>300</code>.
+  </Property>
+  <Property name="side" type='"top" | "right" | "bottom" | "left"'>
+    A <code>HoverCardContent</code> prop that chooses the preferred side of the
+    trigger. It defaults to <code>bottom</code> and may flip when the viewport
+    does not have enough room.
+  </Property>
+  <Property name="align" type='"start" | "center" | "end"'>
+    A <code>HoverCardContent</code> prop that aligns the panel along the
+    selected side. It defaults to <code>center</code>.
+  </Property>
+  <Property name="sideOffset" type="number">
+    A <code>HoverCardContent</code> prop for the gap from the trigger. It
+    defaults to <code>4</code> pixels.
+  </Property>
+  <Property name="alignOffset" type="number">
+    A <code>HoverCardContent</code> prop for fine-tuning alignment along the
+    trigger. It defaults to <code>4</code> pixels.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes accepted by the trigger and content components. Use it to
+    style an inline trigger or change the panel's width and padding.
+  </Property>
+</Properties>

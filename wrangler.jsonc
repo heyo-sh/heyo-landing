@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "heyo-landing",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-08-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./build/client",
+  },
+  "routes": [
+    {
+      "pattern": "heyo.sh",
+      "custom_domain": true,
+    },
+  ],
+}

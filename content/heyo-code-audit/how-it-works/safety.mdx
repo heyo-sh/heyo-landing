@@ -1,0 +1,43 @@
+---
+title: Safety boundaries
+description: The Action's restricted repository access, secret handling, and fork policy.
+---
+
+# Safety boundaries
+
+Heyo treats repository content as untrusted data. The released Action owns its
+policy, prompts, schemas, verification rules, and Pi integration; workflows
+cannot supply a prompt, command, provider URL, extension, skill, schema, or
+tool permission.
+
+## Restricted tools
+
+Pi receives Heyo-owned, read-only tools for bounded file reads and search, plus
+pull-request diff and structure inspection. During verification it may run only
+a fixed `git diff --check` command. It cannot load `AGENTS.md`, `SYSTEM.md`, Pi
+extensions, repository skills, or an unrestricted shell.
+
+Path validation is repeated after symlinks resolve. Sensitive-looking values
+are redacted from model-visible tool output and published reports.
+
+## GitHub event and fork policy
+
+Heyo supports `pull_request`, never `pull_request_target`. A fork pull request
+without a provider token is skipped before an audit starts. An
+AWS-authenticated fork can run only when the runner already has the intended
+AWS credential chain.
+
+## GitHub permissions
+
+The basic workflow needs:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+```
+
+Use the least privilege that still lets the Action read the pull request and
+publish the selected report mode. For AWS OIDC, add `id-token: write` only to
+the job that configures AWS credentials.

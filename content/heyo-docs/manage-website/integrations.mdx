@@ -1,0 +1,599 @@
+---
+title: Integrations
+description: Connect analytics, support, and consent providers through one validated integrations object.
+---
+
+# Integrations
+
+Use `integrations` in `heyo-docs.config.ts` to add supported third-party
+services to every documentation page. Integrations are grouped by purpose so
+consent tooling loads before analytics and support widgets.
+
+Heyo Docs validates the shape of this configuration and renders the provider's
+browser code. A valid identifier alone does not configure the provider account:
+before deploying, create or publish the relevant site, workspace, project, or
+consent policy in the provider's dashboard. The reference below lists that
+required provider-side setup for every integration.
+
+## Configure integrations
+
+Add only the providers you use below their purpose-specific category:
+
+```ts title="heyo-docs.config.ts"
+import { heyoDocs } from "@heyo-sh/heyo-docs/config";
+
+export default heyoDocs({
+  content: "content",
+  integrations: {
+    analytics: {
+      fathom: {
+        siteId: "YOUR_SITE_ID",
+      },
+    },
+    support: {
+      intercom: {
+        appId: "abc123",
+      },
+    },
+    consent: {
+      transcend: {
+        bundleId: "YOUR_BUNDLE_ID",
+      },
+    },
+  },
+});
+```
+
+Every category and provider is optional. The normalized configuration contains
+this empty structure when no provider is configured:
+
+```ts
+integrations: {
+  analytics: {},
+  support: {},
+  consent: {},
+}
+```
+
+Integration settings are browser-facing. Use only public identifiers and public
+script URLs; never place private API keys, server credentials, or visitor data
+in `heyo-docs.config.ts`.
+
+## Render integrations in the document shell
+
+Configuration alone does not add provider scripts to the page. Render
+`IntegrationScripts` once in the framework's root document, using both
+placements: `head` for consent, analytics, and early loaders, then `body` for
+widgets and fallbacks. Do not place it inside an MDX page or `DocsApp`, where
+it can be rendered more than once.
+
+### React Router
+
+In `app/root.tsx`, import the renderer and the generated configuration:
+
+```tsx title="app/root.tsx"
+import type { ReactNode } from "react";
+import { IntegrationScripts } from "@heyo-sh/heyo-docs/integrations";
+
+import { config } from "virtual:heyo-docs-config";
+```
+
+Render it in the root layout:
+
+```tsx title="app/root.tsx"
+export function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        {/* Existing metadata, links, and theme bootstrap… */}
+        <IntegrationScripts
+          integrations={config.integrations}
+          placement="head"
+        />
+      </head>
+      <body>
+        <IntegrationScripts
+          integrations={config.integrations}
+          placement="body"
+        />
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+### Astro
+
+In the layout that renders the documentation document, import the configured
+object and renderer:
+
+```astro title="src/layouts/docs-layout.astro"
+---
+import config from "../../heyo-docs.config";
+import { IntegrationScripts } from "@heyo-sh/heyo-docs/integrations";
+---
+
+<html lang="en">
+  <head>
+    <!-- Existing metadata and theme bootstrap… -->
+    <IntegrationScripts integrations={config.integrations} placement="head" />
+  </head>
+  <body>
+    <slot />
+    <IntegrationScripts integrations={config.integrations} placement="body" />
+  </body>
+</html>
+```
+
+### Next.js
+
+In `app/layout.tsx`, render both placements in `RootLayout`:
+
+```tsx title="app/layout.tsx"
+import type { ReactNode } from "react";
+import { IntegrationScripts } from "@heyo-sh/heyo-docs/integrations";
+
+import config from "../heyo-docs.config";
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        {/* Existing metadata and theme bootstrap… */}
+        <IntegrationScripts
+          integrations={config.integrations}
+          placement="head"
+        />
+      </head>
+      <body>
+        <IntegrationScripts
+          integrations={config.integrations}
+          placement="body"
+        />
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+The official templates already include this renderer. When adapting an
+existing application, add it before expecting an `integrations` entry to load.
+React Router and Next.js can perform client-side transitions; providers that
+need special SPA treatment are called out below.
+
+## Analytics
+
+### Adobe Analytics
+
+```ts
+analytics: {
+  adobe: { launchUrl: "https://assets.adobedtm.com/launch-YOUR-ID.min.js" },
+}
+```
+
+Create an Adobe Experience Platform Tags property, add and configure the Adobe
+Analytics extension, then publish the production environment library. Copy its
+HTTPS embed URL as `launchUrl`. Configure the Analytics rules to record the
+initial page view and History API route changes, then verify the report suite
+receives both. [Adobe installation guide](https://experienceleague.adobe.com/en/docs/experience-platform/tags/client-side/asynchronous-deployment)
+
+### Amplitude
+
+```ts
+analytics: {
+  amplitude: { apiKey: "YOUR_PUBLIC_API_KEY" },
+}
+```
+
+Create the Amplitude project in the intended data region and copy its public
+browser API key. Configure consent and data-governance rules in Amplitude as
+needed, then verify an initial visit and a route change in Debug Mode. The
+integration uses Amplitude's Unified Script. [Amplitude Browser SDK](https://www.amplitude.com/docs/sdks/analytics/browser/browser-unified-sdk)
+
+### Microsoft Clarity
+
+```ts
+analytics: {
+  clarity: { projectId: "YOUR_PROJECT_ID" },
+}
+```
+
+Create a Clarity project for the production site and use the project ID from
+its tracking snippet. Confirm the deployed hostname is the one configured for
+the project and verify sessions arrive in Clarity. [Clarity setup guide](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-setup)
+
+### Clearbit
+
+```ts
+analytics: {
+  clearbit: { publishableKey: "pk_YOUR_KEY" },
+}
+```
+
+Create the public JavaScript key in Clearbit and allow the documentation
+hostname as a referrer/origin for that key. Configure the Clearbit tags or
+destinations that should receive data, then confirm the tag request is accepted
+from the deployed site. [Clearbit JavaScript installation](https://help.clearbit.com/hc/en-us/articles/360063559573-Install-Clearbit-JavaScript)
+
+### Fathom
+
+```ts
+analytics: {
+  fathom: { siteId: "YOUR_SITE_ID" },
+}
+```
+
+Add the documentation hostname as a site in Fathom and copy its site ID. Heyo
+Docs enables Fathom's `data-spa="auto"` mode; verify one page view is recorded
+per in-app navigation. [Fathom script guide](https://usefathom.com/docs/script/script-advanced)
+
+### Google Analytics 4
+
+```ts
+analytics: {
+  ga4: { measurementId: "G-YOUR_ID" },
+}
+```
+
+Create a web data stream for the exact production hostname and copy its
+Measurement ID. In **Enhanced measurement**, enable page changes based on
+browser history for this SPA, configure consent if required, and verify route
+views in DebugView before relying on reports. [GA4 SPA measurement](https://support.google.com/analytics/answer/14183469)
+
+### Google Tag Manager
+
+```ts
+analytics: {
+  gtm: { containerId: "GTM-YOUR_ID" },
+}
+```
+
+Create and publish the GTM container, then configure its tags, consent settings,
+and a **History Change** trigger for SPA page views where required. Use Preview
+mode to verify that the initial page and client-side route changes fire exactly
+once. [GTM installation](https://support.google.com/tagmanager/answer/14847097)
+
+### Heap
+
+```ts
+analytics: {
+  heap: { environmentId: "YOUR_ENVIRONMENT_ID" },
+}
+```
+
+Create or select the correct Heap environment and copy its environment ID.
+Allow Heap in the site's Content Security Policy if one is used, select the
+appropriate data-residency environment, and verify the production hostname and
+History API page views in Heap. [Heap web installation](https://developers.heap.io/docs/web)
+
+### Hotjar
+
+```ts
+analytics: {
+  hotjar: { siteId: 1234567, snippetVersion: 6 },
+}
+```
+
+Create the Hotjar site for the deployed hostname and copy both the site ID and
+the snippet version from Hotjar's tracking code. Set masking, recording, and
+consent settings in Hotjar before publishing; then verify a recording includes
+an in-app navigation. [Hotjar installation](https://help.hotjar.com/hc/en-us/articles/36819972345105-How-to-Install-Your-Hotjar-Tracking-Code)
+
+### LogRocket
+
+```ts
+analytics: {
+  logrocket: { appId: "organization/application" },
+}
+```
+
+Create the LogRocket application for this site and copy its `organization/application`
+app ID. Review the project's privacy, sanitisation, and network settings before
+deployment, then confirm a session is recorded from the production hostname.
+[LogRocket initialization](https://docs.logrocket.com/reference/init)
+
+### Mixpanel
+
+```ts
+analytics: {
+  mixpanel: { projectToken: "YOUR_PROJECT_TOKEN" },
+}
+```
+
+Create or choose the Mixpanel project and copy its public project token. Apply
+the required consent and data-retention settings in the Mixpanel project. Heyo
+Docs enables URL-based page-view tracking, so check that each History API route
+produces one page view. [Mixpanel JavaScript API](https://github.com/mixpanel/mixpanel-js/blob/master/doc/readme.io/javascript-full-api-reference.md)
+
+### OpenPanel
+
+```ts
+analytics: {
+  openpanel: {
+    clientId: "YOUR_CLIENT_ID",
+    // apiUrl: "https://analytics.example.com", // self-hosted only
+  },
+}
+```
+
+Create an OpenPanel client for the site and copy its client ID. For a self-hosted
+installation, set the HTTPS API origin as `apiUrl`; otherwise omit it. Verify
+the client accepts the deployed hostname and that screen views are received.
+[OpenPanel script SDK](https://openpanel.dev/docs/sdks/script)
+
+### OpenReplay
+
+```ts
+analytics: {
+  openreplay: {
+    projectKey: "YOUR_PROJECT_KEY",
+    // ingestPoint: "https://openreplay.example.com", // self-hosted only
+  },
+}
+```
+
+Create the OpenReplay project, copy its project key, and set `ingestPoint` only
+for a self-hosted collector. Configure privacy masking and allowed domains in
+OpenReplay, then smoke-test a recording across several routes. This integration
+uses the browser snippet; for a provider-supported SPA lifecycle and advanced
+tracking, use OpenReplay's client-side `@openreplay/tracker` SDK in the host
+application. [OpenReplay setup](https://docs.openreplay.com/en/deployment/setup-or/)
+
+### Pirsch
+
+```ts
+analytics: {
+  pirsch: { identificationCode: "YOUR_IDENTIFICATION_CODE" },
+}
+```
+
+Create the website in Pirsch for the deployed hostname and copy its public
+identification code. Configure any privacy, domain, and consent policy in
+Pirsch, then verify route changes in the dashboard. [Pirsch frontend integration](https://docs.pirsch.io/get-started/frontend-integration)
+
+### Plausible
+
+```ts
+analytics: {
+  plausible: { domain: "docs.example.com" },
+}
+```
+
+Add the exact canonical hostname as a Plausible site and use that hostname as
+`domain`. Configure goals, proxying, or consent in Plausible if applicable.
+The tracker observes History API navigation; smoke-test that a route change
+creates one, not duplicate, page view. [Plausible SPA support](https://plausible.io/docs/spa-support)
+
+### PostHog
+
+```ts
+analytics: {
+  posthog: {
+    projectApiKey: "phc_YOUR_PUBLIC_KEY",
+    // apiHost: "https://eu.i.posthog.com", // EU Cloud or self-hosted origin
+  },
+}
+```
+
+Create the PostHog project and copy its public project API key. The default
+`apiHost` is US Cloud; set it explicitly for EU Cloud or a self-hosted HTTPS
+origin. Configure recording, privacy, and consent in PostHog, then check
+History API page views in the live event stream. [PostHog JavaScript configuration](https://posthog.com/docs/libraries/js/config)
+
+### Rybbit
+
+```ts
+analytics: {
+  rybbit: {
+    siteId: "YOUR_SITE_ID",
+    // scriptUrl: "https://analytics.example.com/api/script.js", // self-hosted only
+  },
+}
+```
+
+Create the site in Rybbit and copy its site ID. Set `scriptUrl` only for a
+self-hosted instance, configure the production domain in Rybbit, and verify
+route changes are recorded. [Rybbit SPA guide](https://www.rybbit.io/docs/guides/react/gatsby)
+
+### Swetrix
+
+```ts
+analytics: {
+  swetrix: {
+    projectId: "YOUR_PROJECT_ID",
+    // apiUrl: "https://analytics.example.com", // self-hosted only
+  },
+}
+```
+
+Create the Swetrix project and copy its project ID. Configure privacy and
+domain settings in Swetrix; for self-hosting, set the HTTPS API origin as
+`apiUrl`. Verify page views after both a direct load and a client-side route
+change. [Swetrix script installation](https://swetrix.com/docs/install-script)
+
+### Umami
+
+```ts
+analytics: {
+  umami: {
+    websiteId: "YOUR_WEBSITE_ID",
+    scriptUrl: "https://cloud.umami.is/script.js",
+  },
+}
+```
+
+Create the website in Umami, set its production hostname, and copy the website
+ID. Provide the tracker URL from Umami Cloud or your self-hosted instance as
+`scriptUrl`. Confirm the tracker domain is allowed by the site's Content
+Security Policy and test History API page views. [Umami SPA tracking](https://docs.umami.is/docs/guides/track-single-page-apps)
+
+## Support
+
+### Chaskiq
+
+```ts
+support: {
+  chaskiq: {
+    appId: "YOUR_APP_ID",
+    baseUrl: "https://chat.example.com",
+    // wsUrl: "wss://chat.example.com/cable", // optional
+  },
+}
+```
+
+Create the Chaskiq application and its anonymous widget on the instance, then
+copy its public app ID and HTTPS instance URL. Set `wsUrl` only when the
+instance uses a different WSS endpoint. Test the deployed hostname manually:
+the integration initialises the anonymous messenger only, while authenticated
+visitor data must be generated by your server. [Chaskiq getting started](https://dev.chaskiq.io/getting-started/introduccion)
+
+### Chatwoot
+
+```ts
+support: {
+  chatwoot: {
+    baseUrl: "https://app.chatwoot.com",
+    websiteToken: "YOUR_WEBSITE_TOKEN",
+  },
+}
+```
+
+Create a website inbox in Chatwoot, add the deployed site as a permitted
+website, and copy the inbox's public website token. Use your HTTPS Chatwoot
+instance URL as `baseUrl`; then verify that the widget opens after client-side
+navigation. [Chatwoot SPA installation](https://www.chatwoot.com/hc/user-guide/articles/1677677232-how-to-install-live_chat-on-a-vue-js-app)
+
+### Front Chat
+
+```ts
+support: {
+  front: { chatId: "YOUR_CHAT_ID" },
+}
+```
+
+Create and publish the Front Chat channel, configure its allowed domain and
+launcher, and copy the public chat ID. Smoke-test the widget on the production
+site. The embedded loader provides the basic widget; Front directs SPA-specific
+identity and dynamic attribute handling to `front-chat-sdk`, so use that SDK in
+the host application when those behaviours are required. [Front Chat installation](https://help.front.com/en/articles/2049)
+
+### Intercom
+
+```ts
+support: {
+  intercom: {
+    appId: "YOUR_APP_ID",
+    // apiBase: "https://api-iam.eu.intercom.io", // EU region; US is default
+  },
+}
+```
+
+Create or select the Intercom web workspace, configure Messenger availability
+and allowed domains, then copy the public app ID. Use `apiBase` for an EU or
+Australian workspace; omit it for the US default. Configure identity and secure
+mode server-side when needed, and verify Messenger updates after navigation.
+[Intercom web installation](https://developers.intercom.com/installing-intercom/web/installation)
+
+### Papercups
+
+```ts
+support: {
+  papercups: {
+    token: "YOUR_PUBLIC_TOKEN",
+    // inbox: "support", // optional
+    // baseUrl: "https://app.papercups.io", // self-hosted only
+  },
+}
+```
+
+Create the inbox/widget in Papercups and copy its public token. Optionally set
+an inbox and a self-hosted HTTPS `baseUrl`. Configure the widget's allowed
+domain and privacy settings in Papercups; do not put customer identity or API
+credentials in this public configuration. [Papercups web widget](https://github.com/papercups-io/chat-widget#using-in-html)
+
+### Typebot
+
+```ts
+support: {
+  typebot: {
+    typebot: "YOUR_TYPEBOT_ID",
+    // apiHost: "https://typebot.example.com", // self-hosted only
+  },
+}
+```
+
+Publish the Typebot, configure its public access and bubble settings, and copy
+its public ID. Set `apiHost` only for a self-hosted Typebot instance. Verify the
+bubble appears and can start a conversation from the deployed domain.
+[Typebot HTML/JavaScript embed](https://docs.typebot.com/deploy/web/html-javascript)
+
+### Zammad
+
+```ts
+support: {
+  zammad: {
+    baseUrl: "https://support.example.com",
+    chatId: 1,
+  },
+}
+```
+
+Enable the Chat channel in Zammad, create and publish the chat, then copy its
+numeric chat ID and the HTTPS Zammad instance URL. Configure the widget's
+availability and allowed domain in Zammad, then test that the launcher and
+conversation work on the production site. [Zammad chat configuration](https://admin-docs.zammad.org/en/latest/channels/chat.html)
+
+## Consent
+
+### Osano
+
+```ts
+consent: {
+  osano: {
+    scriptUrl: "https://cmp.osano.com/YOUR_TENANT/YOUR_SITE/osano.js",
+  },
+}
+```
+
+Create and publish the Osano configuration for the documentation hostname and
+copy its generated `cmp.osano.com` script URL. Classify the analytics and
+support vendors, configure the consent policy, and use a mode that actually
+enforces it: **Listener/Discovery** can observe scripts but does not provide
+production blocking. In Strict mode, mark required documentation assets as
+essential where appropriate. Osano loads before all analytics and support
+scripts. [Osano installation](https://docs.osano.com/en-US/osano/article/UT9yXk6U-installing-osano-cookie-consent)
+
+### Transcend
+
+```ts
+consent: {
+  transcend: {
+    bundleId: "YOUR_BUNDLE_ID",
+  },
+}
+```
+
+Create and publish the Transcend Airgap bundle, map consent purposes and the
+vendor domains it must regulate, then copy the public bundle ID. Heyo Docs
+places Airgap first in the document head. When GA4 or GTM is also configured,
+the templates set Google Consent Mode defaults to denied before Airgap loads.
+In an incognito browser, verify that regulated requests are blocked before
+consent and allowed only for the accepted categories. [Transcend Airgap installation](https://docs.transcend.io/docs/articles/consent-management/configuration/installing-airgap/installing-airgap-js)
+
+## Verify a production integration
+
+After configuring a provider, run a production build and smoke-test the real
+deployed hostname in a private window without an ad blocker:
+
+1. Check Console and Network for blocked scripts or CSP errors.
+2. Visit the initial page, then navigate through at least two internal routes.
+3. Confirm the expected page view, session, or widget in the provider's
+   dashboard or debugger.
+4. For consent tools, repeat before and after accepting each relevant category.
+
+```bash
+bun run typecheck
+bun run build
+```

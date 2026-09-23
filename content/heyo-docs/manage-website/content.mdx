@@ -1,0 +1,152 @@
+---
+title: Content
+description: Organize MDX source files, frontmatter, routes, local assets, and reusable documentation components.
+---
+
+# Content
+
+Heyo Docs treats the configured content directory as the source of every
+hand-written documentation page. MDX files are compiled during development and
+build, then become routes, metadata, search records, and optional Markdown
+mirrors.
+
+The default configuration uses `content`, so a file at
+`content/guides/install.mdx` is available at `/guides/install`.
+
+## Choose the content directory
+
+The `content` option is relative to the application root:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+});
+```
+
+`content` and `./content` are equivalent. Keep all referenced pages inside
+that directory: navigation references cannot use `..` to escape it. Local
+OpenAPI documents use this same directory unless their schema source starts
+with `/` to explicitly select `public`.
+
+## Turn files into routes
+
+Routes follow the path below `content` and omit the MDX extension.
+
+| Source file                  | Public route      |
+| ---------------------------- | ----------------- |
+| `content/index.mdx`          | `/`               |
+| `content/quickstart.mdx`     | `/quickstart`     |
+| `content/guides/index.mdx`   | `/guides`         |
+| `content/guides/install.mdx` | `/guides/install` |
+
+With no `groups`, every scanned page appears in the automatic Documentation
+sidebar. Create explicit `groups` only when you need a curated order or want
+to hide a route from navigation. A scanned page always retains its route even
+when it is not listed in an explicit group.
+
+## Publish docs below a path
+
+`siteUrl` may include the public path where the documentation is mounted. Keep
+that path out of the content directory and page references:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  siteUrl: "https://heyo.sh/docs",
+});
+```
+
+For example, `content/guides/install.mdx` still has the page slug
+`/guides/install`, while its canonical URL and generated discovery-file entry
+are `https://heyo.sh/docs/guides/install`. The content tree does not need a
+`docs/` directory, and links supplied to `DocsApp` remain page-relative.
+
+`siteUrl` supplies the public base for canonical metadata, sitemap, RSS, LLM
+files, and the server-rendered fallback for page-level AI actions; it does not
+mount routes in the host application. Configure the selected framework or
+reverse proxy to serve the documentation at `/docs`, and make its documentation
+link component preserve that prefix. Copy for LLM and Open derive their
+Markdown URL from the current browser pathname, so `/docs/guides/install`
+automatically uses `/docs/guides/install.md` without a per-app adapter. Set
+`siteUrl` to the exact deployed base path so generated absolute URLs agree with
+the route that readers visit.
+
+A root-relative MDX link still follows normal browser URL rules: `[Guide](/guide)`
+means the host-root `/guide`, not the docs-root `/docs/guide`. Use the complete
+public docs path (for example, `/docs/guide`) or an absolute URL for a link
+that must target a mounted documentation site. This preserves the ability to
+link intentionally to another host-root application route.
+
+## Add useful frontmatter
+
+Frontmatter is optional, but every reader-facing page should normally set a
+title and description:
+
+```mdx
+---
+title: Install the SDK
+description: Add the Acme SDK to a TypeScript service and verify the first request.
+---
+
+# Install the SDK
+
+Install the package, configure a client, and make a test request.
+```
+
+The title appears in navigation, page metadata, breadcrumbs, search results,
+and previous/next links. The description is the preferred search and social
+excerpt. If no title is supplied, Heyo Docs uses the first level-one heading
+and then a title inferred from the URL; page SEO falls back to the site
+description when a page description is absent.
+
+Use one `#` heading for the article title, `##` for major sections, and `###`
+for details that should appear nested in the right-side table of contents.
+
+## Use Markdown and MDX
+
+Regular Markdown works for prose, links, lists, tables, and fenced code:
+
+````md
+Install the package:
+
+```bash
+bun add @acme/sdk
+```
+````
+
+Built-in documentation components can be used directly in any MDX page
+without an import. For example, use `<Callout>` for a notable instruction,
+`<Tabs>` for alternatives, and `<Steps>` for an ordered workflow. See the
+Components section for the complete set and its supported props.
+
+Keep interactive React components focused on documentation. MDX is compiled
+as part of the application, so a component error is a build error rather than
+content that can be repaired after deployment.
+
+## Reference local assets
+
+Relative assets beside an MDX page are bundled with the application:
+
+```mdx
+![Project architecture](./assets/architecture.svg)
+
+<Image
+  src="./assets/dashboard.png"
+  alt="The Acme dashboard after sign-in."
+  caption="The project overview."
+/>
+
+<File
+  src="./downloads/quick-reference.pdf"
+  name="Quick reference"
+  description="Printable PDF"
+/>
+```
+
+Use a root-relative URL such as `/logo.svg` for files in `public`. Use a
+relative URL for assets that belong to a specific article so the bundler can
+copy and fingerprint them with that page. Standard Markdown links to local
+files are bundled as well.
+
+Images, video, and downloads have dedicated `Image`, `Video`, and `File` MDX
+components when a caption or a styled download card is useful.

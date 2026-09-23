@@ -1,0 +1,119 @@
+---
+title: Tree
+description: Show a compact, expandable file and folder hierarchy in MDX.
+---
+
+<CodeSnippet
+  code={`<Tree>
+  <Folder name="app">
+    <File name="routes.ts" />
+    <Folder name="components" defaultOpen={false}>
+      <File name="theme-provider.tsx" />
+    </Folder>
+  </Folder>
+  <File name="heyo-docs.config.ts" />
+</Tree>`}
+>
+  <Tree>
+    <Folder name="app">
+      <File name="routes.ts" />
+      <Folder name="components" defaultOpen={false}>
+        <File name="theme-provider.tsx" />
+      </Folder>
+    </Folder>
+    <File name="heyo-docs.config.ts" />
+  </Tree>
+</CodeSnippet>
+
+`Tree` renders a monospaced hierarchy for project structure, configuration locations, or conceptual nesting. Use `Folder` for a branch and `File` for a leaf. Folders are native disclosure controls, so readers can collapse a large branch without any JavaScript state or additional configuration.
+
+## When to use it
+
+Use a tree to orient a reader in an unfamiliar repository, point out files that must be edited, or explain how generated files relate to source files. It is more scannable than an indented code block and lets a reader collapse secondary detail.
+
+Keep labels to names and short paths. A tree describes structure; explain what a file does in the surrounding prose or link to the relevant guide.
+
+Folders are expanded by default. Set `defaultOpen={false}` for verbose branches so the important top-level files remain visible first. `Tree` does not infer folders from the filesystem: the MDX author controls every displayed item, which makes it safe to show a conceptual or abbreviated structure.
+
+## Keep the important files in view
+
+Collapse the implementation-heavy branch by default when a page is explaining
+where readers should begin rather than every file in the repository.
+
+<Tree>
+  <File name="heyo-docs.config.ts" />
+  <Folder name="content">
+    <File name="index.mdx" />
+  </Folder>
+  <Folder defaultOpen={false} name="app">
+    <File name="root.tsx" />
+    <Folder name="routes">
+      <File name="docs.tsx" />
+      <File name="home.tsx" />
+    </Folder>
+  </Folder>
+</Tree>
+
+## Separate source from generated output
+
+An abbreviated project tree can show where readers should make changes while
+keeping implementation folders available as optional detail.
+
+<CodeSnippet
+  code={`<Tree>
+  <Folder name="content">
+    <Folder name="guides">
+      <File name="quickstart.mdx" />
+      <File name="deployment.mdx" />
+    </Folder>
+  </Folder>
+  <Folder defaultOpen={false} name="app">
+    <Folder name="components">
+      <File name="theme-provider.tsx" />
+    </Folder>
+    <File name="routes.ts" />
+  </Folder>
+  <Folder defaultOpen={false} name="dist">
+    <File name="index.html" />
+  </Folder>
+</Tree>`}
+>
+  <Tree>
+    <Folder name="content">
+      <Folder name="guides">
+        <File name="quickstart.mdx" />
+        <File name="deployment.mdx" />
+      </Folder>
+    </Folder>
+    <Folder defaultOpen={false} name="app">
+      <Folder name="components">
+        <File name="theme-provider.tsx" />
+      </Folder>
+      <File name="routes.ts" />
+    </Folder>
+    <Folder defaultOpen={false} name="dist">
+      <File name="index.html" />
+    </Folder>
+  </Tree>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    A <code>Tree</code> accepts <code>Folder</code> and <code>File</code>{" "}
+    entries. A <code>Folder</code> accepts nested tree entries, allowing the
+    hierarchy to continue as deeply as needed.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the outer <code>Tree</code> list.
+  </Property>
+  <Property name="name" type="ReactNode">
+    The label for a <code>Folder</code> or tree-style <code>File</code>. A{" "}
+    <code>File</code> can also use its children as the label.
+  </Property>
+  <Property name="defaultOpen" type="boolean">
+    A <code>Folder</code> prop that controls its initial disclosure state. It
+    defaults to <code>true</code>.
+  </Property>
+</Properties>

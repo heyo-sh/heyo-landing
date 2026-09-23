@@ -1,0 +1,45 @@
+---
+title: Moss
+description: A calm, green-tinted documentation theme based on familiar documentation-site patterns.
+---
+
+# Moss
+
+Moss is a calm, green-tinted documentation theme based on the familiar patterns
+of established documentation sites: a persistent sidebar, centered group tabs,
+and a spacious reading column. It is designed to feel immediately legible for
+guides, release notes, and API references.
+
+## Documentation previews
+
+<Image
+  lightSrc="/themes/moss-light.png"
+  darkSrc="/themes/moss-dark.png"
+  alt="Moss theme rendering of the Introduction page"
+  width={1440}
+  height={960}
+/>
+
+## Configure Moss
+
+Select Moss in `heyo-docs.config.ts` and choose the initial color mode. Use
+`system` when the documentation should follow each visitor's operating-system
+preference.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  theme: "moss",
+  mode: "system",
+});
+```
+
+The official React Router, Next.js, and Astro integrations generate and load
+Moss's stylesheet from the selected `theme` automatically. To customize
+colors, radius, or typography, see
+[Overriding styles](https://heyo.sh/heyo-docs/manage-website/appearance#overriding-styles).
+
+Moss keeps search and external footer links in the sidebar, while group tabs
+are centered in the top navigation. The active page marker uses the configured
+primary color. Adjust semantic CSS variables to fit a product palette while
+preserving the theme's familiar documentation layout.

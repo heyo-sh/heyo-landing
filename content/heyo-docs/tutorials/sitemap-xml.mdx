@@ -1,0 +1,135 @@
+---
+title: sitemap.xml
+description: Generate a sitemap from MDX pages and OpenAPI operations with the same model used by the documentation UI.
+---
+
+# sitemap.xml
+
+<Callout type="info" title="Included with create-heyo-docs">
+  This is already configured in projects created with <code>create-heyo-docs</code>. No action is required if you used the creator to install Heyo Docs.
+</Callout>
+
+Heyo Docs generates `/sitemap.xml` from the documentation model. It includes
+all MDX pages and generated OpenAPI operation routes, so the sitemap changes
+with the content and navigation that readers see.
+
+## Set the canonical site URL
+
+Set `siteUrl` before deployment so every `<loc>` uses the production origin:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  siteUrl: "https://docs.example.com",
+  // ...
+});
+```
+
+Without it, the route uses the incoming request origin. That is useful locally
+or on a preview, but a production site should use one canonical address.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://docs.example.com/quickstart</loc></url>
+  <url><loc>https://docs.example.com/api/widgets/list-widgets</loc></url>
+</urlset>
+```
+
+Heyo Docs publishes URLs only. It does not infer `lastmod`, `priority`, or
+change frequency.
+
+## Add the route
+
+Build the model from the generated MDX pages and OpenAPI documents, then pass
+its paths to `sitemapXml()`. The virtual modules are provided by the Heyo Docs
+integration for React Router and Astro; the Next.js starter exposes the same
+data through `app/lib/docs.ts`.
+
+### React Router
+
+Register the resource route before the documentation catch-all:
+
+```ts title="app/routes.ts"
+route("sitemap.xml", "routes/sitemap.ts"),
+route("*", "routes/page.tsx"),
+```
+
+Then create `app/routes/sitemap.ts`:
+
+```ts title="app/routes/sitemap.ts"
+import { createDocsModel } from "@heyo-sh/heyo-docs/model";
+import { sitemapPaths, sitemapXml } from "@heyo-sh/heyo-docs/seo";
+import type { Route } from "./+types/sitemap";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content";
+import { openApiDocuments } from "virtual:heyo-docs-openapi";
+
+export function loader({ request }: Route.LoaderArgs) {
+  const model = createDocsModel(config, pages, openApiDocuments);
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(sitemapXml(siteUrl, sitemapPaths(model)), {
+    headers: { "content-type": "application/xml; charset=utf-8" },
+  });
+}
+```
+
+For a static React Router deployment, include `/sitemap.xml` in
+`prerender()` in `react-router.config.ts`.
+
+### Astro
+
+Create `src/pages/sitemap.xml.ts`:
+
+```ts title="src/pages/sitemap.xml.ts"
+import type { APIRoute } from "astro";
+import { createDocsModel } from "@heyo-sh/heyo-docs/model";
+import { sitemapXml } from "@heyo-sh/heyo-docs/seo";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content";
+import { openApiDocuments } from "virtual:heyo-docs-openapi";
+
+export const GET: APIRoute = ({ request }) => {
+  const model = createDocsModel(config, pages, openApiDocuments);
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(
+    sitemapXml(
+      siteUrl,
+      [...model.pages, ...model.endpoints].map((page) => page.slug),
+    ),
+    { headers: { "content-type": "application/xml; charset=utf-8" } },
+  );
+};
+```
+
+Astro maps the file to `/sitemap.xml`; with static output, it is generated as
+a build artifact.
+
+### Next.js
+
+Create `app/sitemap.xml/route.ts`:
+
+```ts title="app/sitemap.xml/route.ts"
+import { sitemapXml } from "@heyo-sh/heyo-docs/seo";
+
+import { config, docsModel } from "../lib/docs";
+
+export function GET(request: Request) {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(
+    sitemapXml(
+      siteUrl,
+      [...docsModel.pages, ...docsModel.endpoints].map((page) => page.slug),
+    ),
+    { headers: { "content-type": "application/xml; charset=utf-8" } },
+  );
+}
+```
+
+`docsModel` must be built from the generated server-side page registry and
+OpenAPI documents, as in the Next.js starter. This ensures generated operation
+pages appear in the sitemap too.

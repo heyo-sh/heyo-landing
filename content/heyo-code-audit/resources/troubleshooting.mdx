@@ -1,0 +1,55 @@
+---
+title: Troubleshooting
+description: Diagnose configuration, authentication, reporting, and fork-run issues.
+---
+
+# Troubleshooting
+
+## Configuration fails before the audit
+
+- Set a non-empty `model`; Heyo has no model fallback.
+- Use a Pi provider identifier supported by the Pi version bundled in the
+  released Action.
+- Match the authentication type to the provider: `api-key` for standard
+  providers, `oauth` for `github-copilot` and `openai-codex`, and `aws` or
+  `bedrock-bearer` for `amazon-bedrock`.
+- Check spelling in `checks`, `report`, `fail-on`, and path globs. The Action
+  validates these values before it creates a Pi session.
+
+## The Action cannot publish results
+
+Ensure the workflow grants the required permissions:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+```
+
+`report: comment` needs pull-request write permission. `report: check` needs
+checks write permission. The default mode needs both.
+
+## There are no inline comments
+
+Inline comments are published only for verified findings on added or modified
+pull-request lines. Use `report: check-and-comment` or `report: comment`; a
+Check-only report intentionally creates no review comments.
+
+## A fork run was skipped
+
+For security, a fork without `auth-token` is skipped before an audit begins.
+Provide the credential only when your repository policy permits it. Do not
+switch the workflow to `pull_request_target`.
+
+## The Check is neutral
+
+A commit limit may have been exceeded before Pi started. Adjust
+`max-pr-commits` or `max-new-commits` only after considering audit cost and
+repository policy.
+
+## Need help?
+
+Open a question in [GitHub Discussions](https://github.com/heyo-sh/heyo-code-audit/discussions).
+For a reproducible bug, use the repository's issue template. Never include
+provider keys, GitHub tokens, AWS credentials, private diffs, or customer data.

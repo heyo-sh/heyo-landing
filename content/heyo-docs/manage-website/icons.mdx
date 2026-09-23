@@ -1,0 +1,81 @@
+---
+title: Icons
+description: Map Heyo Docs semantic icon names to a local icon library and use those names throughout configuration.
+---
+
+# Icons
+
+Heyo Docs uses semantic icon names instead of bundling a specific icon library.
+Each generated application imports the icons it wants, then supplies a local
+mapping to `DocsApp`. This keeps unused icon packs out of the browser bundle
+and lets a project adopt its preferred visual style.
+
+The `heyo-landing` React Router example maps Remix Icons in
+`app/heyo-docs-icons.tsx`.
+
+## Use semantic names in configuration
+
+Pass a semantic name to a group or section:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  groups: [
+    {
+      group: "Documentation",
+      icon: "globe",
+      sections: [{ section: "Get started", icon: "book", pages: ["index"] }],
+    },
+  ],
+});
+```
+
+Names are normalized, so `gitRepository`, `git-repository`, and
+`Git Repository` resolve to the same semantic icon. An unknown name or a name
+without a mapped component intentionally renders no icon.
+
+## Available names
+
+These are the semantic names recognized by the current Heyo Docs runtime:
+
+| Navigation and status                                  | Actions and product                   |
+| ------------------------------------------------------ | ------------------------------------- |
+| `book`, `changelog`, `code`, `file`, `folder`          | `github`, `globe`, `signIn`, `search` |
+| `chevronDown`, `chevronRight`, `menu`, `close`         | `copy`, `externalLink`, `star`        |
+| `arrowDown`, `arrowUp`, `arrowRight`, `cornerDownLeft` | `gitFork`, `gitRepository`, `cursor`  |
+| `check`, `checkCircle`, `closeCircle`, `information`   | `bot`, `chat`, `lightbulb`            |
+| `sun`, `moon`                                          |                                       |
+
+The runtime itself uses several of these names for controls such as search,
+navigation arrows, the color-mode toggle, and copy actions. Retain those
+mappings when replacing the icon family.
+
+## Replace the icon family
+
+Open the application icon file, replace its imports, and preserve the
+semantic keys:
+
+```tsx title="app/heyo-docs-icons.tsx"
+import { RiBookOpenLine, RiGlobalLine, RiLoginBoxLine } from "@remixicon/react";
+import type { IconSet } from "@heyo-sh/heyo-docs/types";
+
+export const iconSet = {
+  book: RiBookOpenLine,
+  globe: RiGlobalLine,
+  signIn: RiLoginBoxLine,
+  // Keep the remaining semantic mappings from the generated file.
+} satisfies IconSet;
+```
+
+The generated file uses `satisfies Required<IconSet>` so TypeScript confirms
+that all built-in controls are covered. Keep that stricter form in a real
+application and replace every existing component with its equivalent from the
+new library.
+
+The framework-specific mapping files are:
+
+| Framework    | Icon mapping              |
+| ------------ | ------------------------- |
+| React Router | `app/heyo-docs-icons.tsx` |
+| Next.js      | `app/heyo-docs-icons.tsx` |
+| Astro        | `src/heyo-docs-icons.tsx` |

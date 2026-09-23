@@ -1,0 +1,105 @@
+---
+title: Lists
+description: Turn repeated steps, options, and checklists into content readers can scan quickly.
+---
+
+<CodeSnippet
+  language="md"
+  code={`- Create the page
+- Add it to navigation
+- Preview the result locally`}
+>
+  <ul className="!my-0 list-disc pl-6">
+    <li>Create the page</li>
+    <li>Add it to navigation</li>
+    <li>Preview the result locally</li>
+  </ul>
+</CodeSnippet>
+
+Lists make repeated information easier to scan than a long paragraph. Use them
+when each item can stand on its own: a sequence of steps, a set of choices, a
+group of requirements, or a short checklist.
+
+## Use ordered lists for a sequence
+
+Use an ordered list when the reader must complete actions in order. Keep one
+item focused on one action; if an item needs several paragraphs or a command,
+give that task its own heading instead.
+
+```md
+1. Create `content/guides/first-page.mdx`.
+2. Add `guides/first-page` to the navigation.
+3. Start the local development server.
+```
+
+This pattern works for installation, deployment, and migration instructions,
+where completing a later step too early can cause an error. The number is part
+of the instruction, so do not use it merely to make a group of links look more
+structured.
+
+## Use bullets for equal choices
+
+Use a bulleted list when the items are alternatives, outcomes, requirements, or
+checks with no required order. Start every item with the same kind of word—for
+example, a verb for actions or a noun for supported features—so the list is
+easy to compare at a glance.
+
+<CodeSnippet
+  language="md"
+  code={`Before publishing, confirm that:
+
+- every page has a descriptive title;
+- internal links use a relative path; and
+- screenshots describe their purpose in alt text.`}
+  >
+        <div>
+        <p>Before publishing, confirm that:</p>
+        <ul className="!mb-0 list-disc pl-6">
+          <li>every page has a descriptive title;</li>
+          <li>internal links use a relative path; and</li>
+          <li>screenshots describe their purpose in alt text.</li>
+        </ul>
+      </div>
+  </CodeSnippet>
+
+This is useful for pre-publish checks and capability summaries. If a list item
+needs a binary state, make it a checkbox only when the reader can meaningfully
+complete it in the current context.
+
+## Nest detail sparingly
+
+Indent a child list only when it clarifies the parent item. One level of nesting
+is usually enough for a parent task and its supporting detail; deeper nesting
+makes a documentation page difficult to follow, especially on a narrow screen.
+
+```md
+1. Configure the site.
+   - Set the title and description.
+   - Choose the content directory.
+2. Add the first guide.
+```
+
+Use this form for a small setup procedure or a concise release checklist. For a
+complex workflow, prefer separate H2 or H3 sections so readers can link to and
+return to each part of the process.
+
+## Properties
+
+<Properties>
+  <Property name="- item" type="unordered list">
+    Creates a bulleted list item. Use it for alternatives, requirements,
+    outcomes, and checklists where order does not change the result.
+  </Property>
+  <Property name="1. item" type="ordered list">
+    Creates a numbered list item. Use it for instructions that must be completed
+    in sequence.
+  </Property>
+  <Property name="indentation" type="nested list">
+    Indent a child item beneath its parent to add supporting detail. Keep
+    nesting shallow so the instructions remain easy to scan.
+  </Property>
+  <Property name="- [ ] item" type="task item">
+    Creates an unchecked task item in Markdown. Use it only when the checklist
+    represents an action the reader can complete.
+  </Property>
+</Properties>

@@ -1,0 +1,105 @@
+---
+title: Files
+description: Make local downloads and linked resources easy to discover without interrupting the guide.
+---
+
+<CodeSnippet
+  code={`<File
+  src="../assets/quick-reference.txt"
+  name="Quick reference"
+  description="Local text file · downloads by default"
+/>`}
+>
+  <File
+    src="../assets/quick-reference.txt"
+    name="Quick reference"
+    description="Local text file · downloads by default"
+  />
+</CodeSnippet>
+
+`File` turns a local or remote resource into a compact, recognisable download
+card. Use it for a template, checklist, sample data set, archive, or reference
+document that supports the page without forcing readers to hunt through a
+paragraph of links. Without `src` or `href`, the same component remains a leaf
+item for `Tree`.
+
+## Link to local downloads from the page that needs them
+
+Use a relative `src` for a file checked into the project. The path is resolved
+from the current MDX file, copied to the production build, and downloaded by
+default when a reader selects the card.
+
+```mdx
+<File
+  src="./assets/content-template.zip"
+  name="Content template"
+  description="Starter MDX files and example navigation"
+/>
+```
+
+This works well at the end of a quickstart, where a reader may want a complete
+starter structure after understanding the manual steps. Give the card a human
+name and say what it contains; a raw file name rarely provides enough context.
+
+## Distinguish downloads from external resources
+
+Use `href` for a regular link URL. External files open in a new tab with a safe
+`noreferrer` relationship, while local files download by default. Set
+`download={false}` for a local PDF or text file that should open in the browser
+instead of downloading.
+
+<CodeSnippet
+  code={`<File
+  href="https://example.com/brand-guidelines.pdf"
+  name="Brand guidelines"
+  description="External PDF · opens in a new tab"
+/>`}
+>
+  <File
+    href="https://example.com/brand-guidelines.pdf"
+    name="Brand guidelines"
+    description="External PDF · opens in a new tab"
+  />
+</CodeSnippet>
+
+Use an external link when another team or service owns the latest file. For a
+resource that is part of the documentation contract—such as a migration
+template or a required schema—prefer a versioned local file so it stays in sync
+with the guide.
+
+## Keep downloads purposeful
+
+One well-labelled file card is easier to notice than a large collection of
+attachments. Put the download near the step that uses it, state the format when
+it matters, and explain whether readers should edit, upload, or simply read the
+file after opening it.
+
+## Properties
+
+<Properties>
+  <Property name="src" type="string">
+    A local relative or remote URL for the resource. It is an alias for
+    <code>href</code>; use it when the file is part of the current docs source.
+  </Property>
+  <Property name="href" type="string">
+    A regular destination URL. Use it for externally maintained resources or
+    when the same URL is already used elsewhere as a link.
+  </Property>
+  <Property name="name" type="ReactNode">
+    The visible title of the file card. When omitted, File uses its children or
+    derives a name from the URL.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Supporting metadata shown under the title, such as file contents, format,
+    size, or the action readers should take.
+  </Property>
+  <Property name="download" type="boolean">
+    Controls downloading for a local linked file. It defaults to
+    <code>true</code>; set it to <code>false</code> when a browser-readable
+    local file should open normally.
+  </Property>
+  <Property name="children" type="ReactNode">
+    A fallback label for a linked File, or the text shown by a tree-style File
+    when neither <code>src</code> nor <code>href</code> is supplied.
+  </Property>
+</Properties>

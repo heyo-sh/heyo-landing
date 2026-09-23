@@ -1,0 +1,248 @@
+---
+title: Changelog (Demo)
+description: A detailed demo timeline of releases, improvements, migrations, and fixes.
+---
+
+# Changelog (Demo)
+
+<Update label="September 2026 · v3.8" date="2026-09-03" tags={["New release", "API", "Improvements"]}>
+
+## Workflow Studio and typed run history
+
+We shipped a visual workflow editor for multi-step automations. Every run now
+stores a durable input, output, attempt count, actor, and execution timeline,
+so teams can debug a failed hand-off without reconstructing it from logs.
+
+### Highlights
+
+- Compose trigger, condition, delay, transform, HTTP, and notification steps.
+- Replay an individual failed step or clone an entire run into a safe sandbox.
+- Query workflow runs through the new `GET /workflow-runs` API endpoint.
+- Use the new `workflow.run.failed` webhook event for incident automation.
+
+### Media embed demo
+
+<Image
+  src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
+  alt="Animated loading spinner"
+  caption="GIF loaded from a remote URL."
+/>
+
+<Video
+  src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+  caption="MP4 loaded in the native video player."
+/>
+
+### Migration note
+
+Legacy rule-based automations remain available until 31 January 2027. Existing
+rules have been copied into a **Legacy rules** folder and can be converted from
+the editor. The `automation_id` field is now also returned as `workflow_id` in
+all new API responses; keep using `automation_id` while you migrate.
+
+</Update>
+
+<Update label="August 2026 · v3.7" date="2026-08-12" tags={["New release", "Improvements"]}>
+
+## Command Center analytics
+
+The home dashboard is now a configurable Command Center. Pin up to twelve
+widgets per workspace, choose a time zone for reporting, and share a read-only
+link with stakeholders.
+
+| Widget            | What it shows                                  | Refresh |
+| ----------------- | ---------------------------------------------- | ------- |
+| Activation funnel | Sign-up to first-value conversion              | 15 min  |
+| API health        | Success rate, p95 latency, and top error codes | 5 min   |
+| Revenue pulse     | MRR, expansion, churn, and invoices due        | Hourly  |
+| Workflow queue    | Active, delayed, failed, and replayed runs     | Live    |
+
+We also reduced the payload used by chart queries by 42% for large date ranges
+and added CSV export for every analytics tile.
+
+</Update>
+
+<Update label="July 2026 · v3.6" date="2026-07-21" tags={["New release", "Security"]}>
+
+## Scheduled exports with encrypted delivery
+
+Reports can now be scheduled hourly, daily, weekly, or monthly. Each delivery
+can write a CSV or JSONL archive to S3-compatible storage, SFTP, or a signed
+download link. Export files are encrypted at rest and expire after the
+retention period selected by an administrator.
+
+### New controls
+
+- Restrict schedules to saved views, projects, or a specific organization.
+- Add an optional PGP public key for delivery-time encryption.
+- Receive `export.completed` and `export.failed` webhooks.
+- Inspect the exact query, row count, checksum, and delivery attempts in Audit
+  logs.
+
+</Update>
+
+<Update label="June 2026 · v3.5" date="2026-06-16" tags={["API", "Improvements"]}>
+
+## Webhook delivery centre
+
+Webhook subscriptions now include per-endpoint delivery telemetry. The detail
+view shows request headers, response status, duration, retry timing, and a
+redacted body preview for each attempt.
+
+Retries now use exponential backoff over 24 hours: 1 minute, 5 minutes,
+30 minutes, 2 hours, 8 hours, and 24 hours. A response with `410 Gone` pauses
+the subscription and alerts its owner instead of continuing to send events.
+
+```text
+event.created → signed payload → delivery attempt → retry or success
+```
+
+</Update>
+
+<Update label="May 2026 · v3.4" date="2026-05-08" tags={["API", "Improvements"]}>
+
+## Documentation search, keyboard navigation, and API examples
+
+Documentation search now indexes endpoint summaries, parameter names, response
+schemas, changelog tags, and page headings. Press `/` to focus search, use the
+arrow keys to move through results, then press Enter to open a result.
+
+We also added generated cURL, JavaScript, Python, and TypeScript examples to
+the API reference. Examples update as a reader changes the base URL,
+authentication token, parameters, or JSON body.
+
+### Accessibility improvements
+
+- Better focus rings and skip links in both light and dark themes.
+- Announced request state for the interactive API console.
+- Reduced-motion support for the timeline and navigation panels.
+- Improved contrast for method badges and inline code.
+
+</Update>
+
+<Update label="April 2026 · v3.3" date="2026-04-14" tags={["New release", "API"]}>
+
+## Billing profiles, invoices, and usage limits
+
+Organizations can now maintain multiple billing profiles and switch the active
+profile before a renewal. The new billing API exposes subscription status,
+upcoming invoices, payment method summaries, metered usage, and spend limits.
+
+| Change            | Available to          | Default        |
+| ----------------- | --------------------- | -------------- |
+| Budget alerts     | Growth and Enterprise | 80%, 95%, 100% |
+| Invoice downloads | Billing admins        | PDF + JSON     |
+| Cost-centre field | Enterprise            | Optional       |
+| Usage API         | All plans             | 90-day history |
+
+</Update>
+
+<Update label="March 2026 · v3.2" date="2026-03-19" tags={["New release", "Improvements"]}>
+
+## Changelog pages and sharable filters
+
+Changelogs now have a dedicated timeline layout with a stable link for every
+update. Select one or more tags to narrow the visible entries; the selection
+stays in the page URL so a filtered release history can be shared with a team.
+
+This release also improves sticky navigation spacing, keyboard focus states,
+and text selection around embedded code blocks.
+
+</Update>
+
+<Update label="February 2026 · v3.1" date="2026-02-10" tags={["New release", "Security"]}>
+
+## Integration directory and OAuth connections
+
+The new integration directory includes Slack, Linear, GitHub, Notion, HubSpot,
+and a generic OAuth 2.1 connector. Workspace owners can set connection scopes,
+rotate credentials, and choose which projects are allowed to use a connection.
+
+OAuth callbacks now validate PKCE for public clients. Existing private clients
+continue to work; move them to PKCE before 1 September 2026 to avoid a future
+warning banner.
+
+</Update>
+
+<Update label="January 2026 · v3.0" date="2026-01-22" tags={["New release", "API"]}>
+
+## Platform 3.0
+
+Version 3.0 introduces organization-level roles, project environments, scoped
+API keys, audit-log retention policies, and a refreshed navigation model. The
+v2 endpoints remain online, but new capabilities are exposed only from `/v3`.
+
+### Breaking changes
+
+- Timestamps are ISO 8601 strings in UTC, replacing numeric Unix seconds.
+- List responses now use `{ data, page }` instead of a bare array.
+- `X-API-Key` is preferred; query-string API keys are rejected.
+- Pagination cursors are opaque and must not be parsed by clients.
+
+</Update>
+
+<Update label="December 2025 · v2.9" date="2025-12-11" tags={["Improvements", "Bug fixes"]}>
+
+## Faster imports and resilient bulk jobs
+
+CSV imports now stream validation results while the upload is still being
+processed. A 100,000-row file starts producing actionable feedback in seconds,
+rather than waiting for the full job to finish.
+
+We fixed an edge case where a paused bulk job could be resumed twice after a
+browser reconnect. Jobs are now protected with a lease, and duplicate resumes
+return a clear `409 bulk_job_locked` response.
+
+</Update>
+
+<Update label="November 2025 · v2.8" date="2025-11-05" tags={["Improvements"]}>
+
+## Comments, mentions, and approval requests
+
+Teams can comment on documents, data imports, dashboards, and workflow runs.
+Mentions notify the selected members, while approval requests record the
+decision, required reviewers, expiry date, and final immutable snapshot.
+
+The responsive approval drawer is now fully usable on narrow screens, including
+keyboard shortcuts for approve, request changes, and assign reviewer.
+
+</Update>
+
+<Update label="October 2025 · v2.7" date="2025-10-17" tags={["API", "Improvements"]}>
+
+## Multipart file uploads and virus scanning
+
+The Files API supports multipart uploads up to 25 GB. Start an upload, send
+parts directly to storage, complete it with part checksums, and poll the file
+status while malware scanning runs.
+
+Downloads are available only after a file reaches `ready`. A file flagged as
+`quarantined` exposes metadata to admins but never produces a download URL.
+
+</Update>
+
+<Update label="September 2025 · v2.6" date="2025-09-09" tags={["Security", "Improvements"]}>
+
+## SSO, SCIM, and session controls
+
+Enterprise workspaces can configure SAML SSO, domain discovery, and SCIM user
+provisioning. Administrators may now limit session lifetime, require step-up
+authentication for billing changes, and view active sessions by member.
+
+SCIM deprovisioning removes a user's project access immediately while retaining
+their audit history under a redacted actor label.
+
+</Update>
+
+<Update label="August 2025 · v2.5" date="2025-08-01" tags={["New release", "Improvements"]}>
+
+## Cohort reports enter beta
+
+The first analytics beta adds retention cohorts, segmentation by properties,
+and weekly email summaries. Cohorts are calculated in the workspace time zone
+and can be exported to CSV for deeper modelling.
+
+Tell us what dimensions, visualizations, or export destinations you need next;
+the beta is deliberately broad so we can tune the final reporting model.
+
+</Update>

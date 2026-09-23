@@ -1,0 +1,84 @@
+---
+title: Fonts
+description: Change the project-level font import and --heyo-docs-font-family token used by built-in themes.
+---
+
+# Fonts
+
+Fonts are selected by the application, not by `heyo-docs.config.ts`. This keeps
+font files statically imported and lets the chosen framework bundle only the
+family the documentation actually uses.
+
+The supplied projects use Figtree Variable and expose it to the active theme through the
+`--heyo-docs-font-family` CSS custom property.
+
+## Find the application stylesheet
+
+| Framework    | Stylesheet           |
+| ------------ | -------------------- |
+| React Router | `app/app.css`        |
+| Next.js      | `app/app.css`        |
+| Astro        | `src/styles/app.css` |
+
+Each generated stylesheet imports a Fontsource package and sets the custom
+property. The framework root separately loads the stylesheet generated for the
+selected Heyo Docs theme:
+
+```css
+@import "@fontsource-variable/figtree";
+
+:root {
+  --heyo-docs-font-family: "Figtree Variable", sans-serif;
+}
+```
+
+The built-in themes map that variable to their sans and heading font tokens.
+It is also used by Mermaid diagrams, so a single change keeps prose, controls,
+and diagrams visually consistent.
+
+## Replace the family
+
+Install a local variable font package, update the CSS import, and set the
+matching family name:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {"bun add @fontsource-variable/manrope"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {"npm install @fontsource-variable/manrope"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {"pnpm add @fontsource-variable/manrope"}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {"yarn add @fontsource-variable/manrope"}
+  </CodeBlock>
+</CodeBlockGroup>
+
+```css title="app/app.css"
+@import "@fontsource-variable/manrope";
+
+:root {
+  --heyo-docs-font-family: "Manrope Variable", ui-sans-serif, sans-serif;
+}
+```
+
+Use the family name published by the package. Keep the system fallbacks so the
+site remains readable if a font request is delayed or a browser blocks a
+resource.
+
+The project must also remove the old font import and dependency when Figtree
+is no longer used. That avoids shipping two families merely because the
+starter stylesheet was left unchanged.
+
+## Separate body and code fonts when needed
+
+The code blocks in the built-in themes use a monospace system font stack
+independently of `--heyo-docs-font-family`. This preserves source-code
+alignment even when the documentation uses a display-oriented body family.
+
+If a project needs a custom code font, override the code-block font rule in
+the application stylesheet and check wrapping, line numbers, copy controls,
+and both color modes. A monospaced family with clear punctuation and
+distinguishable characters is more important than matching the body font.

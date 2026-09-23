@@ -1,0 +1,101 @@
+---
+title: Button
+description: Add a clear call to action or a styled documentation link.
+---
+
+<CodeSnippet code={`<Button href="https://heyo.sh/heyo-docs/quickstart">Start building</Button>`}>
+  <Button href="https://heyo.sh/heyo-docs/quickstart">Start building</Button>
+</CodeSnippet>
+
+# Button
+
+`Button` gives a documentation call to action the same visual language as the
+rest of the site. Add `href` to render a link, or omit it for a regular button
+when the page supplies an interaction. The component handles the layout around
+the control, so it can sit naturally between blocks of MDX content.
+
+## Variants and alignment
+
+Use the default variant for the primary next step. `outline`, `secondary`, and
+`ghost` work well for supporting actions, while `destructive` should be limited
+to irreversible or dangerous actions. Use `align` to place a standalone action
+in the reading column.
+
+<Button align="center" href="https://heyo.sh/heyo-docs/manage-website/configuration" variant="outline">
+  Configure your site
+</Button>
+
+For external destinations, set `target="_blank"`; the component adds a safe
+`noreferrer` relationship unless you supply a different `rel` value.
+
+## Present a clear next step
+
+Pair a primary action with supporting choices when a reader reaches a natural
+decision point in a guide.
+
+<CodeSnippet
+  code={`<div className="rounded-xl border border-foreground/10 bg-muted/30 p-5">
+  <p className="mb-1 text-sm font-medium text-foreground">Ready to publish?</p>
+  <p className="mb-4 text-sm text-muted-foreground">
+    Validate the site locally, then send it to your preferred host.
+  </p>
+  <div className="flex flex-wrap gap-2">
+    <Button href="https://heyo.sh/heyo-docs/deploying/vercel">Deploy to Vercel</Button>
+    <Button href="https://heyo.sh/heyo-docs/deploying/cloudflare" variant="outline">
+      Use Cloudflare
+    </Button>
+  </div>
+</div>`}
+>
+  <div className="rounded-xl border border-foreground/10 bg-muted/30 p-5">
+    <p className="mb-1 text-sm font-medium text-foreground">
+      Ready to publish?
+    </p>
+    <p className="mb-4 text-sm text-muted-foreground">
+      Validate the site locally, then send it to your preferred host.
+    </p>
+    <div className="flex flex-wrap gap-2">
+      <Button href="https://heyo.sh/heyo-docs/deploying/vercel">Deploy to Vercel</Button>
+      <Button href="https://heyo.sh/heyo-docs/deploying/cloudflare" variant="outline">
+        Use Cloudflare
+      </Button>
+    </div>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="href" type="string">
+    Makes the button render as a link to this destination. Omit it for a native
+    button.
+  </Property>
+  <Property
+    name="variant"
+    type='"default" | "outline" | "secondary" | "ghost" | "destructive" | "link"'
+  >
+    Selects the visual importance of the action. It defaults to
+    <code>default</code>.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "default" | "lg"'>
+    Controls the button's size. It defaults to <code>default</code>.
+  </Property>
+  <Property name="align" type='"left" | "center" | "right"'>
+    Positions the button inside the documentation column. It defaults to
+    <code>left</code>.
+  </Property>
+  <Property name="target" type="string">
+    The link target. Use <code>_blank</code> when the destination should open in
+    another tab.
+  </Property>
+  <Property name="rel" type="string">
+    The relationship applied to a linked button. External targets default to
+    <code>noreferrer</code>.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Disables a native button and prevents interaction.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The action label or inline content.
+  </Property>
+</Properties>

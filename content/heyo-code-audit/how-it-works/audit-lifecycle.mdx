@@ -1,0 +1,57 @@
+---
+title: Audit lifecycle
+description: How Heyo discovers, verifies, and publishes pull-request findings.
+---
+
+# Audit lifecycle
+
+Heyo separates candidate discovery from verification so a single model response
+does not become a published review by itself.
+
+## 1. Read the pull request
+
+The Action reads GitHub pull-request metadata, the diff, changed paths, and
+bounded repository context. The collected diff is limited to 160 kB; an
+overflow is marked as truncated rather than failing before the audit begins.
+
+## 2. Discover candidates
+
+A Pi session reviews the changed code for the selected checks. The result is a
+set of structured candidate findings, not a public report.
+
+## 3. Verify independently
+
+With the default `verification: true`, Heyo starts a separate Pi session for
+each candidate. The verifier can inspect
+only the required bounded context and use a fixed `git diff --check` command.
+It must confirm the candidate before Heyo keeps it.
+
+## 4. Publish current results
+
+Immediately before writing, Heyo checks that the pull-request head did not
+change. A stale run publishes no Check, review comment, or incremental state.
+For a current head, verified findings are rendered according to the configured
+[report mode](https://heyo.sh/heyo-code-audit/configuration/reporting).
+
+<Callout type="info" title="Findings are about the pull request">
+  Heyo annotates only changed lines. A verified issue outside the changed diff
+  may be included in the Check summary but cannot become an inline comment.
+</Callout>
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic
+    icon="arrowRight"
+    name="Learn how incremental audits handle later commits"
+    src="https://heyo.sh/heyo-code-audit/how-it-works/incremental-audits"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Configure reporting and severity thresholds"
+    src="https://heyo.sh/heyo-code-audit/configuration/reporting"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Review Heyo's safety boundaries"
+    src="https://heyo.sh/heyo-code-audit/how-it-works/safety"
+  />
+</RelatedTopics>

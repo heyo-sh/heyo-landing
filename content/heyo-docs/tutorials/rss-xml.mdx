@@ -1,0 +1,136 @@
+---
+title: rss.xml
+description: Publish an RSS 2.0 feed for changelog updates defined in your Heyo Docs content.
+---
+
+# rss.xml
+
+<Callout type="info" title="Included with create-heyo-docs">
+  This is already configured in projects created with <code>create-heyo-docs</code>. No action is required if you used the creator to install Heyo Docs.
+</Callout>
+
+Heyo Docs publishes an RSS 2.0 feed at `/rss.xml` from the `<Update>` entries
+in configured changelog pages. Regular documentation pages are deliberately
+not included, so subscribers receive product updates rather than every content
+edit.
+
+## Configure a changelog
+
+Add a changelog group and point `updates` to the MDX page that contains its
+entries. Set `siteUrl` at the same time so feed item links use the production
+origin.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  siteUrl: "https://docs.example.com",
+  groups: [
+    {
+      group: "Changelog",
+      type: "changelog",
+      updates: ["changelog"],
+    },
+  ],
+  // ...
+});
+```
+
+Each update needs a label. A date is optional, but lets the feed publish an RSS
+`pubDate`; tags become RSS categories.
+
+```mdx title="content/changelog.mdx"
+---
+title: Changelog
+---
+
+# Changelog
+
+<Update label="Version 2.4" date="2026-08-24" tags={["New releases", "Search"]}>
+
+## Faster documentation search
+
+Improved result ranking for API operations.
+
+</Update>
+```
+
+The generated item URL includes the update anchor, for example
+`https://docs.example.com/changelog#version-2-4`. Feed text is XML-escaped and
+the response uses `application/rss+xml; charset=utf-8`.
+
+## Add the route
+
+Generate the feed from the server-side page registry with `rssXml()`. Do not
+copy changelog data into a separate feed: the registry keeps the feed and UI in
+sync.
+
+### React Router
+
+Register the resource route before the documentation catch-all:
+
+```ts title="app/routes.ts"
+route("rss.xml", "routes/rss.ts"),
+route("*", "routes/page.tsx"),
+```
+
+Then create `app/routes/rss.ts`:
+
+```ts title="app/routes/rss.ts"
+import { rssXml } from "@heyo-sh/heyo-docs/rss";
+import type { LoaderFunctionArgs } from "react-router";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content/server";
+
+export function loader({ request }: LoaderFunctionArgs) {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(rssXml(pages, config, siteUrl), {
+    headers: { "content-type": "application/rss+xml; charset=utf-8" },
+  });
+}
+```
+
+For static React Router deployments, include `/rss.xml` in `prerender()`.
+
+### Astro
+
+Create `src/pages/rss.xml.ts`:
+
+```ts title="src/pages/rss.xml.ts"
+import type { APIRoute } from "astro";
+import { rssXml } from "@heyo-sh/heyo-docs/rss";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content/server";
+
+export const GET: APIRoute = ({ request }) => {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(rssXml(pages, config, siteUrl), {
+    headers: { "content-type": "application/rss+xml; charset=utf-8" },
+  });
+};
+```
+
+Astro emits this route at build time when the project uses static output.
+
+### Next.js
+
+Create `app/rss.xml/route.ts`:
+
+```ts title="app/rss.xml/route.ts"
+import { rssXml } from "@heyo-sh/heyo-docs/rss";
+
+import { config, markdownPages } from "../lib/docs";
+
+export function GET(request: Request) {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(rssXml(markdownPages, config, siteUrl), {
+    headers: { "content-type": "application/rss+xml; charset=utf-8" },
+  });
+}
+```
+
+The starter calls its generated server-side registry `markdownPages`; it is the
+frontmatter-free page data used by both RSS and the AI-facing resources.

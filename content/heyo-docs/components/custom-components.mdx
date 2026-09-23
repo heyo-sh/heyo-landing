@@ -1,0 +1,86 @@
+---
+title: Custom components
+description: Register application-owned React components and use them directly in every MDX page.
+---
+
+<CodeSnippet
+  language="tsx"
+  code={`<div className="not-prose relative h-40 w-full overflow-hidden rounded-xl border border-foreground/10 bg-muted/30">
+  <FlickeringGrid
+    className="absolute inset-0 opacity-70"
+    color="rgb(161, 161, 170)"
+    flickerChance={0.35}
+    gridGap={6}
+    maxOpacity={0.45}
+    squareSize={4}
+  />
+</div>`}
+>
+  <div className="not-prose relative h-40 w-full overflow-hidden rounded-xl border border-foreground/10 bg-muted/30">
+    <FlickeringGrid
+      className="absolute inset-0 opacity-70"
+      color="rgb(161, 161, 170)"
+      flickerChance={0.35}
+      gridGap={6}
+      maxOpacity={0.45}
+      squareSize={4}
+    />
+  </div>
+</CodeSnippet>
+
+# Custom components
+
+Custom components let documentation use application-owned React UI without
+adding an import to every MDX file. The preview above uses `FlickeringGrid`, a
+canvas component copied from Paragraph and registered by this documentation
+application.
+
+The component is safe to render on the server: it emits an empty canvas during
+SSR and starts measuring, observing, and animating only after hydration.
+
+## Register a component once
+
+Keep custom components in application code, then add them to the map passed to
+`DocsApp`. The map key becomes the JSX tag that MDX can render.
+
+Fenced code blocks preserve every newline as a hard line break, so the imports
+and component map below render exactly as written.
+
+```tsx title="app/components/docs-mdx-components.tsx"
+import type { MdxComponents } from "@heyo-sh/heyo-docs/types";
+import { FlickeringGrid } from "./ui/flickering-grid";
+
+export const docsMdxComponents = {
+  FlickeringGrid,
+} satisfies MdxComponents;
+```
+
+```tsx title="app/routes/docs.tsx"
+import { docsMdxComponents } from "../components/docs-mdx-components";
+
+<DocsApp
+  // config, pages, pathname, and other adapter props
+  mdxComponents={docsMdxComponents}
+/>;
+```
+
+`mdxComponents` is runtime UI, so it belongs next to the framework shell rather
+than in `heyo-docs.config.ts`. The same API is used by React Router, Next.js,
+and Astro; each framework simply passes the map from the component that renders
+`DocsApp`.
+
+## Use the tag in MDX
+
+After registering it, use `FlickeringGrid` exactly like any built-in MDX
+component. The source in the `CodeSnippet` is a complete example; tailor its
+container and visual props to the page you are writing.
+
+```mdx
+<div className="not-prose relative h-64 overflow-hidden rounded-xl">
+  <FlickeringGrid
+    className="absolute inset-0"
+    color="rgb(161, 161, 170)"
+    flickerChance={0.35}
+  />
+</div>
+```

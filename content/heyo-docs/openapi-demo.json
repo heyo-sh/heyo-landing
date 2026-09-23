@@ -1,0 +1,3016 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Heyo Platform API — Demo",
+    "version": "3.8.0",
+    "description": "A deliberately broad mock SaaS API with organizations, product data, customer data, billing, files, asynchronous jobs, audit trails, and webhooks. Every example is fictional."
+  },
+  "servers": [
+    {
+      "url": "https://api.demo.heyo.example/v3",
+      "description": "Demo production environment"
+    },
+    {
+      "url": "https://sandbox.demo.heyo.example/v3",
+      "description": "Sandbox environment"
+    }
+  ],
+  "security": [{ "BearerAuth": [] }],
+  "paths": {
+    "/auth/sessions": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "Create a member session",
+        "description": "Exchanges mock credentials for a short-lived member access token and a refresh token.",
+        "tags": ["Identity"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SessionCreateInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Session" }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials were rejected.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many sign-in attempts.",
+            "headers": {
+              "Retry-After": { "schema": { "type": "integer", "example": 60 } }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "refreshSession",
+        "summary": "Refresh a member session",
+        "description": "Rotates a refresh token and returns a fresh access-token pair.",
+        "tags": ["Identity"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RefreshInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session refreshed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Session" }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token is invalid or expired.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "revokeSession",
+        "summary": "Revoke a member session",
+        "description": "Immediately invalidates one active session.",
+        "tags": ["Identity"],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }],
+        "responses": {
+          "204": { "description": "Session revoked." },
+          "404": {
+            "description": "Session does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "operationId": "listOrganizations",
+        "summary": "List organizations",
+        "description": "Returns organizations visible to the current actor.",
+        "tags": ["Organizations"],
+        "parameters": [
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "plan",
+            "in": "query",
+            "description": "Filter by active plan.",
+            "schema": {
+              "type": "string",
+              "enum": ["free", "growth", "enterprise"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrganizationList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrganization",
+        "summary": "Create an organization",
+        "description": "Creates an organization and makes the caller its owner.",
+        "tags": ["Organizations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrganizationInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organization created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Organization" }
+              }
+            }
+          },
+          "422": {
+            "description": "Organization name or slug is invalid.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}": {
+      "get": {
+        "operationId": "getOrganization",
+        "summary": "Get an organization",
+        "description": "Returns organization profile, plan, settings, and limits.",
+        "tags": ["Organizations"],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": {
+            "description": "Organization found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Organization" }
+              }
+            }
+          },
+          "404": { "description": "Organization not found." }
+        }
+      },
+      "patch": {
+        "operationId": "updateOrganization",
+        "summary": "Update an organization",
+        "description": "Updates editable organization properties. Send the current ETag to avoid replacing a newer change.",
+        "tags": ["Organizations"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IfMatch" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrganizationPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Organization updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Organization" }
+              }
+            }
+          },
+          "409": {
+            "description": "ETag does not match the latest organization.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members": {
+      "get": {
+        "operationId": "listOrganizationMembers",
+        "summary": "List organization members",
+        "description": "Lists active, invited, and suspended members.",
+        "tags": ["Members"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "invited", "suspended"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MemberList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "inviteOrganizationMember",
+        "summary": "Invite an organization member",
+        "description": "Sends an invitation with the requested workspace role and project access.",
+        "tags": ["Members"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MemberInviteInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Member" }
+              }
+            }
+          },
+          "409": { "description": "Member is already active or invited." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members/{memberId}": {
+      "patch": {
+        "operationId": "updateOrganizationMember",
+        "summary": "Update a member role",
+        "description": "Changes a member's role, project access, or account state.",
+        "tags": ["Members"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/MemberId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MemberPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Member" }
+              }
+            }
+          },
+          "422": { "description": "Role transition is invalid." }
+        }
+      },
+      "delete": {
+        "operationId": "removeOrganizationMember",
+        "summary": "Remove an organization member",
+        "description": "Revokes the member's access while retaining their audit history.",
+        "tags": ["Members"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/MemberId" }
+        ],
+        "responses": {
+          "204": { "description": "Member removed." },
+          "409": {
+            "description": "Organization must retain at least one owner."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List projects",
+        "description": "Lists projects with optional status, owner, and tag filters.",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "active", "archived"]
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": { "type": "string", "example": "mobile" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProject",
+        "summary": "Create a project",
+        "description": "Creates a project and its initial development environment.",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProjectInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
+          },
+          "409": { "description": "Project slug already exists." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/projects/{projectId}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get a project",
+        "description": "Returns project configuration, owner, metrics summary, and environments.",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
+          },
+          "404": { "description": "Project not found." }
+        }
+      },
+      "patch": {
+        "operationId": "updateProject",
+        "summary": "Update a project",
+        "description": "Updates project name, owner, tags, status, and notification settings.",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/IfMatch" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProjectPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Project updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
+          },
+          "409": { "description": "The project changed since it was read." }
+        }
+      },
+      "delete": {
+        "operationId": "archiveProject",
+        "summary": "Archive a project",
+        "description": "Archives a project. Its data remains readable to administrators for 30 days.",
+        "tags": ["Projects"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Archive job accepted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AsyncJob" }
+              }
+            }
+          },
+          "409": { "description": "Project is already archived." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/projects/{projectId}/environments": {
+      "get": {
+        "operationId": "listEnvironments",
+        "summary": "List project environments",
+        "description": "Lists development, staging, production, and custom environments.",
+        "tags": ["Environments"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Environment list.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvironmentList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEnvironment",
+        "summary": "Create a project environment",
+        "description": "Creates an isolated environment with configurable variables and deployment protection.",
+        "tags": ["Environments"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnvironmentInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Environment created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Environment" }
+              }
+            }
+          },
+          "422": { "description": "Environment configuration is invalid." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/projects/{projectId}/documents": {
+      "get": {
+        "operationId": "listDocuments",
+        "summary": "List project documents",
+        "description": "Lists project documents with draft, published, archived, owner, and label filters.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "published", "archived"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DocumentList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDocument",
+        "summary": "Create a project document",
+        "description": "Creates a draft document with Markdown content and optional labels.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DocumentInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Document" }
+              }
+            }
+          },
+          "422": { "description": "Document fields are invalid." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/projects/{projectId}/documents/{documentId}": {
+      "get": {
+        "operationId": "getDocument",
+        "summary": "Get a document",
+        "description": "Retrieves the latest document content and publication metadata.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/DocumentId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Document" }
+              }
+            }
+          },
+          "404": { "description": "Document not found." }
+        }
+      },
+      "patch": {
+        "operationId": "updateDocument",
+        "summary": "Update a document",
+        "description": "Updates draft content, title, labels, and review state.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/DocumentId" },
+          { "$ref": "#/components/parameters/IfMatch" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DocumentPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Document" }
+              }
+            }
+          },
+          "409": { "description": "Document was edited by another actor." }
+        }
+      },
+      "delete": {
+        "operationId": "archiveDocument",
+        "summary": "Archive a document",
+        "description": "Moves a document to the archive; it can be restored for 30 days.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/DocumentId" }
+        ],
+        "responses": { "204": { "description": "Document archived." } }
+      }
+    },
+    "/organizations/{organizationId}/projects/{projectId}/documents/{documentId}/publish": {
+      "post": {
+        "operationId": "publishDocument",
+        "summary": "Publish a document",
+        "description": "Creates an immutable published version of a draft document.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ProjectId" },
+          { "$ref": "#/components/parameters/DocumentId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PublishInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document published.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Document" }
+              }
+            }
+          },
+          "409": { "description": "Document has no changes to publish." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "List contacts",
+        "description": "Lists customer contacts with search, lifecycle, tag, and creation-date filters.",
+        "tags": ["Contacts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string", "example": "mira" }
+          },
+          {
+            "name": "lifecycle",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["lead", "active", "churned"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createContact",
+        "summary": "Create a contact",
+        "description": "Creates a contact and optionally associates it with tags and external identifiers.",
+        "tags": ["Contacts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contact created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Contact" }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already belongs to an existing contact."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/contacts/{contactId}": {
+      "get": {
+        "operationId": "getContact",
+        "summary": "Get a contact",
+        "description": "Returns profile, traits, tags, consent state, and activity summary.",
+        "tags": ["Contacts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ContactId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Contact" }
+              }
+            }
+          },
+          "404": { "description": "Contact not found." }
+        }
+      },
+      "patch": {
+        "operationId": "updateContact",
+        "summary": "Update a contact",
+        "description": "Updates supported profile fields, traits, tags, and consent state.",
+        "tags": ["Contacts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ContactId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Contact" }
+              }
+            }
+          },
+          "422": { "description": "Trait or consent value is invalid." }
+        }
+      },
+      "delete": {
+        "operationId": "deleteContact",
+        "summary": "Delete a contact",
+        "description": "Schedules a contact for deletion and PII redaction.",
+        "tags": ["Contacts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ContactId" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Deletion job accepted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AsyncJob" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/events": {
+      "get": {
+        "operationId": "listEvents",
+        "summary": "List product events",
+        "description": "Returns immutable product events for an organization and a selected time window.",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "event_name",
+            "in": "query",
+            "schema": { "type": "string", "example": "document.published" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-09-01T00:00:00Z"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-09-03T23:59:59Z"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/analytics/overview": {
+      "get": {
+        "operationId": "getAnalyticsOverview",
+        "summary": "Get analytics overview",
+        "description": "Returns headline adoption, API reliability, workflow, and revenue metrics.",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["24h", "7d", "30d", "90d"],
+              "default": "30d"
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "schema": { "type": "string", "example": "Europe/Warsaw" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics overview.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnalyticsOverview" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workflows": {
+      "get": {
+        "operationId": "listWorkflows",
+        "summary": "List workflows",
+        "description": "Lists automation workflows and their recent run health.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "active", "paused"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWorkflow",
+        "summary": "Create a workflow",
+        "description": "Creates a draft workflow with typed trigger, condition, and action steps.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkflowInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Workflow" }
+              }
+            }
+          },
+          "422": { "description": "Workflow graph is invalid." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workflows/{workflowId}/runs": {
+      "get": {
+        "operationId": "listWorkflowRuns",
+        "summary": "List workflow runs",
+        "description": "Lists workflow runs with triggering event, state, duration, and failed step details.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WorkflowId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["queued", "running", "succeeded", "failed", "cancelled"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow run page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowRunList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/webhooks": {
+      "get": {
+        "operationId": "listWebhookSubscriptions",
+        "summary": "List webhook subscriptions",
+        "description": "Lists endpoints, subscribed events, state, and recent delivery health.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "paused", "disabled"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWebhookSubscription",
+        "summary": "Create a webhook subscription",
+        "description": "Registers an HTTPS endpoint for selected events and returns the signing secret once.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebhookInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookSecret" }
+              }
+            }
+          },
+          "422": { "description": "Webhook URL or event names are invalid." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/webhooks/{webhookId}": {
+      "get": {
+        "operationId": "getWebhookSubscription",
+        "summary": "Get a webhook subscription",
+        "description": "Returns a webhook's configuration and the latest delivery summary; secrets are redacted.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WebhookId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Webhook" }
+              }
+            }
+          },
+          "404": { "description": "Webhook not found." }
+        }
+      },
+      "patch": {
+        "operationId": "updateWebhookSubscription",
+        "summary": "Update a webhook subscription",
+        "description": "Updates URL, description, events, and state for a subscription.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WebhookId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebhookPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Webhook" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhookSubscription",
+        "summary": "Delete a webhook subscription",
+        "description": "Permanently deletes a subscription and cancels any scheduled retries.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WebhookId" }
+        ],
+        "responses": { "204": { "description": "Webhook deleted." } }
+      }
+    },
+    "/organizations/{organizationId}/webhooks/{webhookId}/deliveries": {
+      "get": {
+        "operationId": "listWebhookDeliveries",
+        "summary": "List webhook deliveries",
+        "description": "Lists delivery attempts with event metadata, response status, duration, and retry state.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WebhookId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookDeliveryList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/webhooks/{webhookId}/deliveries/{deliveryId}/replay": {
+      "post": {
+        "operationId": "replayWebhookDelivery",
+        "summary": "Replay a webhook delivery",
+        "description": "Queues a new delivery using the original event and the current subscription URL.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/WebhookId" },
+          { "$ref": "#/components/parameters/DeliveryId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Replay queued.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookDelivery" }
+              }
+            }
+          },
+          "409": { "description": "Delivery is already being replayed." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/files": {
+      "get": {
+        "operationId": "listFiles",
+        "summary": "List files",
+        "description": "Lists uploaded files, scan state, size, content type, and metadata.",
+        "tags": ["Files"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "uploading",
+                "scanning",
+                "ready",
+                "quarantined",
+                "deleted"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FileList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/files/uploads": {
+      "post": {
+        "operationId": "createFileUpload",
+        "summary": "Create a multipart file upload",
+        "description": "Creates an upload session and returns pre-signed part URLs for files up to 25 GB.",
+        "tags": ["Files"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FileUploadInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload session created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FileUpload" }
+              }
+            }
+          },
+          "413": {
+            "description": "Requested file is larger than the plan limit."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/files/{fileId}": {
+      "get": {
+        "operationId": "getFile",
+        "summary": "Get file metadata",
+        "description": "Returns file metadata and a short-lived download URL when the scan state is ready.",
+        "tags": ["Files"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/FileId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "File found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/File" }
+              }
+            }
+          },
+          "423": { "description": "File is still scanning or quarantined." }
+        }
+      },
+      "delete": {
+        "operationId": "deleteFile",
+        "summary": "Delete a file",
+        "description": "Schedules permanent deletion and invalidates all active download URLs.",
+        "tags": ["Files"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/FileId" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Deletion scheduled.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AsyncJob" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/billing/subscription": {
+      "get": {
+        "operationId": "getSubscription",
+        "summary": "Get current subscription",
+        "description": "Returns plan, billing cycle, limits, payment status, and upcoming renewal.",
+        "tags": ["Billing"],
+        "parameters": [{ "$ref": "#/components/parameters/OrganizationId" }],
+        "responses": {
+          "200": {
+            "description": "Subscription found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subscription" }
+              }
+            }
+          },
+          "404": { "description": "Organization has no active subscription." }
+        }
+      },
+      "patch": {
+        "operationId": "updateSubscription",
+        "summary": "Update subscription settings",
+        "description": "Updates seats, budget alerts, cost centre, and renewal preference.",
+        "tags": ["Billing"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubscriptionPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subscription" }
+              }
+            }
+          },
+          "422": { "description": "Seat count is lower than active members." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/billing/invoices": {
+      "get": {
+        "operationId": "listInvoices",
+        "summary": "List invoices",
+        "description": "Lists historical, open, paid, and void invoices for an organization.",
+        "tags": ["Billing"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "open", "paid", "void", "uncollectible"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InvoiceList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/billing/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "summary": "Get metered usage",
+        "description": "Returns consumption and included allowances for each metered feature in a billing period.",
+        "tags": ["Billing"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          {
+            "name": "period_start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-09-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage summary.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UsageSummary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/api-keys": {
+      "get": {
+        "operationId": "listApiKeys",
+        "summary": "List API keys",
+        "description": "Lists key metadata, scopes, expiration, and last-use time; secrets are never returned.",
+        "tags": ["API Keys"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiKeyList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApiKey",
+        "summary": "Create an API key",
+        "description": "Creates a scoped service API key and returns its secret exactly once.",
+        "tags": ["API Keys"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApiKeyInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API key created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiKeySecret" }
+              }
+            }
+          },
+          "422": { "description": "Scopes or expiry date are invalid." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/api-keys/{apiKeyId}/revoke": {
+      "post": {
+        "operationId": "revokeApiKey",
+        "summary": "Revoke an API key",
+        "description": "Revokes an API key immediately and records an immutable audit event.",
+        "tags": ["API Keys"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/ApiKeyId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key revoked.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiKey" }
+              }
+            }
+          },
+          "404": { "description": "API key not found." }
+        }
+      }
+    },
+    "/organizations/{organizationId}/audit-logs": {
+      "get": {
+        "operationId": "listAuditLogs",
+        "summary": "List audit logs",
+        "description": "Lists security and configuration events with actor, target, IP, and request metadata.",
+        "tags": ["Audit logs"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": { "type": "string", "example": "api_key.revoked" }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "schema": { "type": "string", "example": "usr_01J8F0ZK3E9X" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit-log page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditLogList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/exports": {
+      "get": {
+        "operationId": "listExports",
+        "summary": "List exports",
+        "description": "Lists scheduled and one-off export jobs with delivery, encryption, and file details.",
+        "tags": ["Exports"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["queued", "running", "completed", "failed", "expired"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export page.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExportList" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createExport",
+        "summary": "Create an export",
+        "description": "Creates an asynchronous CSV or JSONL export from a saved dataset and filter snapshot.",
+        "tags": ["Exports"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrganizationId" },
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExportInput" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Export accepted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Export" }
+              }
+            }
+          },
+          "422": {
+            "description": "Selected columns or delivery settings are invalid."
+          }
+        }
+      }
+    },
+    "/system/health": {
+      "get": {
+        "operationId": "getSystemHealth",
+        "summary": "Get API health",
+        "description": "Returns public API component health. This endpoint requires no authentication.",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Current health status.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthStatus" }
+              }
+            }
+          },
+          "503": {
+            "description": "One or more components are unavailable.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthStatus" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key or member access token"
+      }
+    },
+    "parameters": {
+      "OrganizationId": {
+        "name": "organizationId",
+        "in": "path",
+        "required": true,
+        "description": "Opaque organization identifier.",
+        "schema": {
+          "type": "string",
+          "example": "org_01J8F1Q6N6VTX4E8W9R2D0A7B3"
+        }
+      },
+      "ProjectId": {
+        "name": "projectId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "prj_01J8F5KM4MAB0V7YQ6P3N2R8D1"
+        }
+      },
+      "DocumentId": {
+        "name": "documentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "doc_01J8F8W4S3P2N9B6M7K5Q1R0T"
+        }
+      },
+      "MemberId": {
+        "name": "memberId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "mem_01J8F3D2P9Q7V6N5M4K" }
+      },
+      "ContactId": {
+        "name": "contactId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "con_01J8FA5Q9M6T4X2K7P3" }
+      },
+      "WorkflowId": {
+        "name": "workflowId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "wfl_01J8FC8R3N4V6Q9P2K7" }
+      },
+      "WebhookId": {
+        "name": "webhookId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "whk_01J8FD1M5T7Q9P2V4K6" }
+      },
+      "DeliveryId": {
+        "name": "deliveryId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "dlv_01J8FATB4RZ3F6W2P0N9" }
+      },
+      "FileId": {
+        "name": "fileId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "fil_01J8FE2X7M5P9Q4V6K1" }
+      },
+      "ApiKeyId": {
+        "name": "apiKeyId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "key_01J8FF6Q2N4T8P9V3M5" }
+      },
+      "SessionId": {
+        "name": "sessionId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "ses_01J8F0ZK3E9X" }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Maximum records to return. Defaults to 25.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 25,
+          "example": 25
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Opaque cursor from a prior response.",
+        "schema": {
+          "type": "string",
+          "example": "eyJjcmVhdGVkX2F0IjoiMjAyNi0wOS0wMVQxMDowMDowMFoifQ"
+        }
+      },
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "description": "Current resource ETag for optimistic concurrency.",
+        "schema": { "type": "string", "example": "W/\"org-204\"" }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "description": "Unique key for retry-safe writes, retained for 24 hours.",
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "example": "5ba89923-8c6d-44a3-9ab7-2fbbdb865f9a"
+        }
+      }
+    },
+    "schemas": {
+      "Page": {
+        "type": "object",
+        "properties": {
+          "next_cursor": {
+            "type": ["string", "null"],
+            "example": "eyJvZmZzZXQiOjI1fQ"
+          },
+          "previous_cursor": { "type": ["string", "null"], "example": null },
+          "has_more": { "type": "boolean", "example": true }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error", "request_id"],
+        "example": {
+          "error": {
+            "code": "validation_failed",
+            "message": "One or more fields need attention.",
+            "details": [
+              {
+                "path": "name",
+                "code": "too_short",
+                "message": "Use at least 3 characters."
+              }
+            ]
+          },
+          "request_id": "req_01J8F6C4YTP8B2S9QK1M"
+        },
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": { "type": "array", "items": { "type": "object" } }
+            }
+          },
+          "request_id": { "type": "string" }
+        }
+      },
+      "SessionCreateInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "example": {
+          "email": "mira@northstar.example",
+          "password": "demo-only-password",
+          "device_name": "Mira’s MacBook Pro"
+        },
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" },
+          "device_name": { "type": "string" }
+        }
+      },
+      "RefreshInput": {
+        "type": "object",
+        "required": ["refresh_token"],
+        "example": { "refresh_token": "refresh_demo_01J8F0ZK3E9X" },
+        "properties": { "refresh_token": { "type": "string" } }
+      },
+      "Session": {
+        "type": "object",
+        "example": {
+          "id": "ses_01J8F0ZK3E9X",
+          "access_token": "heyo_demo_01J8F2X6ZJ5Q3F7A4K9N",
+          "refresh_token": "refresh_demo_01J8F0ZK3E9X",
+          "expires_at": "2026-09-03T14:40:12Z",
+          "member": {
+            "id": "mem_01J8F3D2P9Q7V6N5M4K",
+            "email": "mira@northstar.example",
+            "role": "admin"
+          }
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "access_token": { "type": "string" },
+          "refresh_token": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "member": { "type": "object" }
+        }
+      },
+      "OrganizationInput": {
+        "type": "object",
+        "required": ["name", "slug"],
+        "example": {
+          "name": "Northstar Labs",
+          "slug": "northstar-labs",
+          "timezone": "Europe/Warsaw",
+          "industry": "developer-tools"
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "timezone": { "type": "string" },
+          "industry": { "type": "string" }
+        }
+      },
+      "OrganizationPatch": {
+        "type": "object",
+        "example": {
+          "name": "Northstar Labs Europe",
+          "timezone": "Europe/Warsaw",
+          "settings": {
+            "week_starts_on": "monday",
+            "allow_public_exports": false
+          }
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "timezone": { "type": "string" },
+          "settings": { "type": "object" }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "example": {
+          "id": "org_01J8F1Q6N6VTX4E8W9R2D0A7B3",
+          "name": "Northstar Labs",
+          "slug": "northstar-labs",
+          "plan": "enterprise",
+          "timezone": "Europe/Warsaw",
+          "member_count": 42,
+          "limits": { "projects": 100, "api_requests_per_minute": 5000 },
+          "etag": "W/\"org-204\"",
+          "created_at": "2025-01-12T09:15:00Z",
+          "updated_at": "2026-09-03T10:20:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "plan": { "type": "string" },
+          "timezone": { "type": "string" },
+          "member_count": { "type": "integer" },
+          "limits": { "type": "object" },
+          "etag": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrganizationList": {
+        "type": "object",
+        "example": {
+          "data": [
+            {
+              "id": "org_01J8F1Q6N6VTX4E8W9R2D0A7B3",
+              "name": "Northstar Labs",
+              "slug": "northstar-labs",
+              "plan": "enterprise"
+            }
+          ],
+          "page": { "next_cursor": null, "has_more": false },
+          "request_id": "req_01J8G1Q6N6VTX4E8W9R2"
+        },
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Organization" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "MemberInviteInput": {
+        "type": "object",
+        "required": ["email", "role"],
+        "example": {
+          "email": "jon@northstar.example",
+          "role": "editor",
+          "project_ids": ["prj_01J8F5KM4MAB0V7YQ6P3N2R8D1"],
+          "message": "Welcome to the launch team!"
+        },
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "admin", "editor", "viewer", "billing"]
+          },
+          "project_ids": { "type": "array", "items": { "type": "string" } },
+          "message": { "type": "string" }
+        }
+      },
+      "MemberPatch": {
+        "type": "object",
+        "example": {
+          "role": "admin",
+          "status": "active",
+          "project_ids": ["prj_01J8F5KM4MAB0V7YQ6P3N2R8D1"]
+        },
+        "properties": {
+          "role": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "suspended"] },
+          "project_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "example": {
+          "id": "mem_01J8F3D2P9Q7V6N5M4K",
+          "email": "mira@northstar.example",
+          "name": "Mira Kowalska",
+          "role": "admin",
+          "status": "active",
+          "last_seen_at": "2026-09-03T12:08:41Z",
+          "created_at": "2025-01-12T09:15:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "status": { "type": "string" },
+          "last_seen_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MemberList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Member" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ProjectInput": {
+        "type": "object",
+        "required": ["name", "slug"],
+        "example": {
+          "name": "Northstar mobile",
+          "slug": "northstar-mobile",
+          "owner_id": "mem_01J8F3D2P9Q7V6N5M4K",
+          "tags": ["mobile", "q4-launch"],
+          "notification_settings": { "failed_deployments": true }
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "owner_id": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "notification_settings": { "type": "object" }
+        }
+      },
+      "ProjectPatch": {
+        "type": "object",
+        "example": {
+          "name": "Northstar mobile app",
+          "status": "active",
+          "tags": ["mobile", "launch", "priority"],
+          "notification_settings": {
+            "failed_deployments": true,
+            "weekly_digest": false
+          }
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "owner_id": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "archived"]
+          },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "notification_settings": { "type": "object" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "example": {
+          "id": "prj_01J8F5KM4MAB0V7YQ6P3N2R8D1",
+          "organization_id": "org_01J8F1Q6N6VTX4E8W9R2D0A7B3",
+          "name": "Northstar mobile",
+          "slug": "northstar-mobile",
+          "status": "active",
+          "owner": { "id": "mem_01J8F3D2P9Q7V6N5M4K", "name": "Mira Kowalska" },
+          "tags": ["mobile", "q4-launch"],
+          "environment_count": 3,
+          "metrics": {
+            "weekly_active_users": 12840,
+            "api_success_rate": 99.98
+          },
+          "etag": "W/\"project-86\"",
+          "created_at": "2026-02-12T14:00:00Z",
+          "updated_at": "2026-09-02T16:42:10Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "organization_id": { "type": "string" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "status": { "type": "string" },
+          "owner": { "type": "object" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "environment_count": { "type": "integer" },
+          "metrics": { "type": "object" },
+          "etag": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ProjectList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Project" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "EnvironmentInput": {
+        "type": "object",
+        "required": ["name", "slug"],
+        "example": {
+          "name": "Staging",
+          "slug": "staging",
+          "protection": "approval_required",
+          "variables": {
+            "API_ORIGIN": "https://staging-api.northstar.example",
+            "FEATURE_NEW_EDITOR": "true"
+          }
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "protection": {
+            "type": "string",
+            "enum": ["none", "approval_required", "locked"]
+          },
+          "variables": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "Environment": {
+        "type": "object",
+        "example": {
+          "id": "env_01J8F7M3Q9X5V2K6P4N",
+          "name": "Staging",
+          "slug": "staging",
+          "protection": "approval_required",
+          "variables_count": 12,
+          "last_deployment_at": "2026-09-02T18:20:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "protection": { "type": "string" },
+          "variables_count": { "type": "integer" },
+          "last_deployment_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EnvironmentList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Environment" }
+          },
+          "request_id": { "type": "string" }
+        }
+      },
+      "DocumentInput": {
+        "type": "object",
+        "required": ["title", "content"],
+        "example": {
+          "title": "Mobile launch runbook",
+          "content": "# Launch checklist\n\n- Verify monitoring\n- Approve release",
+          "labels": ["release", "mobile"],
+          "reviewer_ids": ["mem_01J8F3D2P9Q7V6N5M4K"]
+        },
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "labels": { "type": "array", "items": { "type": "string" } },
+          "reviewer_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DocumentPatch": {
+        "type": "object",
+        "example": {
+          "title": "Mobile launch runbook v2",
+          "content": "# Launch checklist\n\n- Verify monitoring\n- Approve release\n- Share status",
+          "labels": ["release", "mobile", "approved"],
+          "review_state": "approved"
+        },
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "labels": { "type": "array", "items": { "type": "string" } },
+          "review_state": {
+            "type": "string",
+            "enum": [
+              "not_requested",
+              "in_review",
+              "changes_requested",
+              "approved"
+            ]
+          }
+        }
+      },
+      "PublishInput": {
+        "type": "object",
+        "example": {
+          "message": "Approved by the mobile launch team",
+          "notify_subscribers": true
+        },
+        "properties": {
+          "message": { "type": "string" },
+          "notify_subscribers": { "type": "boolean", "default": true }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "example": {
+          "id": "doc_01J8F8W4S3P2N9B6M7K5Q1R0T",
+          "project_id": "prj_01J8F5KM4MAB0V7YQ6P3N2R8D1",
+          "title": "Mobile launch runbook",
+          "slug": "mobile-launch-runbook",
+          "content": "# Launch checklist\n\n- Verify monitoring\n- Approve release",
+          "state": "published",
+          "version": 4,
+          "labels": ["release", "mobile"],
+          "review_state": "approved",
+          "published_at": "2026-09-02T18:00:00Z",
+          "etag": "W/\"document-4\""
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "content": { "type": "string" },
+          "state": { "type": "string" },
+          "version": { "type": "integer" },
+          "labels": { "type": "array", "items": { "type": "string" } },
+          "review_state": { "type": "string" },
+          "published_at": { "type": ["string", "null"], "format": "date-time" },
+          "etag": { "type": "string" }
+        }
+      },
+      "DocumentList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Document" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ContactInput": {
+        "type": "object",
+        "required": ["email"],
+        "example": {
+          "email": "aleks@acme.example",
+          "first_name": "Aleks",
+          "last_name": "Nowak",
+          "company": "Acme Studio",
+          "lifecycle": "lead",
+          "tags": ["webinar-september", "poland"],
+          "traits": { "plan_interest": "growth", "company_size": 48 },
+          "consent": { "marketing": true, "product_updates": true }
+        },
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "company": { "type": "string" },
+          "lifecycle": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "traits": { "type": "object" },
+          "consent": { "type": "object" }
+        }
+      },
+      "ContactPatch": {
+        "type": "object",
+        "example": {
+          "lifecycle": "active",
+          "tags": ["customer", "poland"],
+          "traits": { "plan": "growth", "seats": 50 },
+          "consent": { "marketing": false, "product_updates": true }
+        },
+        "properties": {
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "company": { "type": "string" },
+          "lifecycle": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "traits": { "type": "object" },
+          "consent": { "type": "object" }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "example": {
+          "id": "con_01J8FA5Q9M6T4X2K7P3",
+          "email": "aleks@acme.example",
+          "first_name": "Aleks",
+          "last_name": "Nowak",
+          "company": "Acme Studio",
+          "lifecycle": "lead",
+          "tags": ["webinar-september", "poland"],
+          "traits": { "plan_interest": "growth", "company_size": 48 },
+          "consent": { "marketing": true, "product_updates": true },
+          "activity": {
+            "event_count": 16,
+            "last_seen_at": "2026-09-03T09:12:00Z"
+          },
+          "created_at": "2026-08-21T11:05:00Z",
+          "updated_at": "2026-09-03T09:12:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "company": { "type": "string" },
+          "lifecycle": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "traits": { "type": "object" },
+          "consent": { "type": "object" },
+          "activity": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ContactList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Contact" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "example": {
+          "id": "evt_01J8FB7D3P6Q9T2V5M4",
+          "name": "document.published",
+          "occurred_at": "2026-09-03T10:21:30Z",
+          "actor": { "type": "member", "id": "mem_01J8F3D2P9Q7V6N5M4K" },
+          "subject": {
+            "type": "document",
+            "id": "doc_01J8F8W4S3P2N9B6M7K5Q1R0T"
+          },
+          "properties": { "version": 4, "source": "api" }
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "occurred_at": { "type": "string", "format": "date-time" },
+          "actor": { "type": "object" },
+          "subject": { "type": "object" },
+          "properties": { "type": "object" }
+        }
+      },
+      "EventList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Event" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "AnalyticsOverview": {
+        "type": "object",
+        "example": {
+          "period": {
+            "from": "2026-08-04T00:00:00Z",
+            "to": "2026-09-03T23:59:59Z",
+            "timezone": "Europe/Warsaw"
+          },
+          "activation": { "signups": 1842, "activated": 920, "rate": 49.95 },
+          "api": {
+            "requests": 1820043,
+            "success_rate": 99.98,
+            "p95_latency_ms": 184
+          },
+          "workflows": { "runs": 48912, "failed": 23, "replayed": 18 },
+          "revenue": {
+            "mrr": 184200,
+            "currency": "USD",
+            "expansion_mrr": 12200,
+            "churned_mrr": 2100
+          },
+          "request_id": "req_01J8G3P4M5N6Q7R8S9T"
+        },
+        "properties": {
+          "period": { "type": "object" },
+          "activation": { "type": "object" },
+          "api": { "type": "object" },
+          "workflows": { "type": "object" },
+          "revenue": { "type": "object" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "WorkflowInput": {
+        "type": "object",
+        "required": ["name", "trigger", "steps"],
+        "example": {
+          "name": "Alert enterprise CSM about failed exports",
+          "trigger": { "event": "export.failed" },
+          "steps": [
+            {
+              "id": "filter_enterprise",
+              "type": "condition",
+              "expression": "event.organization.plan == 'enterprise'"
+            },
+            {
+              "id": "notify_slack",
+              "type": "notification",
+              "channel": "slack",
+              "template": "Export {{ event.id }} failed"
+            }
+          ],
+          "state": "draft"
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "trigger": { "type": "object" },
+          "steps": { "type": "array", "items": { "type": "object" } },
+          "state": { "type": "string", "enum": ["draft", "active"] }
+        }
+      },
+      "Workflow": {
+        "type": "object",
+        "example": {
+          "id": "wfl_01J8FC8R3N4V6Q9P2K7",
+          "name": "Alert enterprise CSM about failed exports",
+          "state": "active",
+          "trigger": { "event": "export.failed" },
+          "steps_count": 2,
+          "run_health": { "last_24h": 42, "failed": 0 },
+          "created_at": "2026-08-12T13:20:00Z",
+          "updated_at": "2026-09-01T08:00:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "state": { "type": "string" },
+          "trigger": { "type": "object" },
+          "steps_count": { "type": "integer" },
+          "run_health": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WorkflowList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Workflow" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "WorkflowRun": {
+        "type": "object",
+        "example": {
+          "id": "run_01J8G0A4P6Q7T9V2M3K",
+          "workflow_id": "wfl_01J8FC8R3N4V6Q9P2K7",
+          "status": "failed",
+          "triggered_by": {
+            "event_id": "evt_01J8FB7D3P6Q9T2V5M4",
+            "event_name": "export.failed"
+          },
+          "started_at": "2026-09-03T11:10:00Z",
+          "finished_at": "2026-09-03T11:10:03Z",
+          "duration_ms": 3210,
+          "failed_step": {
+            "id": "notify_slack",
+            "message": "Remote service timed out"
+          },
+          "attempt": 2
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "workflow_id": { "type": "string" },
+          "status": { "type": "string" },
+          "triggered_by": { "type": "object" },
+          "started_at": { "type": "string", "format": "date-time" },
+          "finished_at": { "type": "string", "format": "date-time" },
+          "duration_ms": { "type": "integer" },
+          "failed_step": { "type": "object" },
+          "attempt": { "type": "integer" }
+        }
+      },
+      "WorkflowRunList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkflowRun" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "WebhookInput": {
+        "type": "object",
+        "required": ["url", "events"],
+        "example": {
+          "url": "https://hooks.acme.example/heyo",
+          "description": "Acme production event receiver",
+          "events": ["contact.created", "document.published", "export.failed"],
+          "metadata": { "team": "platform", "service": "event-ingest" }
+        },
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "description": { "type": "string" },
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "metadata": { "type": "object" }
+        }
+      },
+      "WebhookPatch": {
+        "type": "object",
+        "example": {
+          "url": "https://hooks.acme.example/heyo/v2",
+          "events": ["contact.created", "contact.updated", "export.failed"],
+          "status": "active"
+        },
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "description": { "type": "string" },
+          "events": { "type": "array", "items": { "type": "string" } },
+          "status": {
+            "type": "string",
+            "enum": ["active", "paused", "disabled"]
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "example": {
+          "id": "whk_01J8FD1M5T7Q9P2V4K6",
+          "url": "https://hooks.acme.example/heyo",
+          "description": "Acme production event receiver",
+          "events": ["contact.created", "document.published", "export.failed"],
+          "status": "active",
+          "signing_secret_last4": "4K6Z",
+          "delivery_health": {
+            "success_rate": 99.5,
+            "failed_last_24h": 1,
+            "last_delivery_at": "2026-09-03T11:05:00Z"
+          },
+          "created_at": "2026-06-17T12:12:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "description": { "type": "string" },
+          "events": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string" },
+          "signing_secret_last4": { "type": "string" },
+          "delivery_health": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookSecret": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Webhook" },
+          {
+            "type": "object",
+            "example": {
+              "id": "whk_01J8FD1M5T7Q9P2V4K6",
+              "url": "https://hooks.acme.example/heyo",
+              "events": ["contact.created"],
+              "status": "active",
+              "signing_secret": "whsec_demo_01J8FG8N2P5Q7T4V6M9"
+            },
+            "properties": {
+              "signing_secret": {
+                "type": "string",
+                "description": "Returned only when the subscription is created."
+              }
+            }
+          }
+        ]
+      },
+      "WebhookList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Webhook" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "WebhookDelivery": {
+        "type": "object",
+        "example": {
+          "id": "dlv_01J8FATB4RZ3F6W2P0N9",
+          "event_id": "evt_01J8FB7D3P6Q9T2V5M4",
+          "event_name": "document.published",
+          "status": "failed",
+          "attempt": 2,
+          "response": {
+            "status_code": 504,
+            "duration_ms": 10012,
+            "body_preview": "gateway timeout"
+          },
+          "next_retry_at": "2026-09-03T12:35:00Z",
+          "created_at": "2026-09-03T12:05:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "event_id": { "type": "string" },
+          "event_name": { "type": "string" },
+          "status": { "type": "string" },
+          "attempt": { "type": "integer" },
+          "response": { "type": "object" },
+          "next_retry_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookDeliveryList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WebhookDelivery" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "FileUploadInput": {
+        "type": "object",
+        "required": ["filename", "content_type", "size_bytes"],
+        "example": {
+          "filename": "northstar-september-export.csv",
+          "content_type": "text/csv",
+          "size_bytes": 42829120,
+          "checksum_sha256": "a7bc2a1e8fa70b02e5c3c28eaf7a315f9767a81700c31ee1d6987b16ef0295c2",
+          "metadata": { "source": "analytics", "contains_pii": false }
+        },
+        "properties": {
+          "filename": { "type": "string" },
+          "content_type": { "type": "string" },
+          "size_bytes": { "type": "integer", "minimum": 1 },
+          "checksum_sha256": { "type": "string" },
+          "metadata": { "type": "object" }
+        }
+      },
+      "FileUpload": {
+        "type": "object",
+        "example": {
+          "id": "upl_01J8FH2P6Q4T9V7M3K5",
+          "file_id": "fil_01J8FE2X7M5P9Q4V6K1",
+          "part_size_bytes": 8388608,
+          "parts": [
+            {
+              "part_number": 1,
+              "url": "https://uploads.demo.heyo.example/…",
+              "expires_at": "2026-09-03T13:00:00Z"
+            }
+          ],
+          "complete_url": "https://api.demo.heyo.example/v3/uploads/upl_01J8FH2P6Q4T9V7M3K5/complete",
+          "expires_at": "2026-09-03T13:00:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "file_id": { "type": "string" },
+          "part_size_bytes": { "type": "integer" },
+          "parts": { "type": "array", "items": { "type": "object" } },
+          "complete_url": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "File": {
+        "type": "object",
+        "example": {
+          "id": "fil_01J8FE2X7M5P9Q4V6K1",
+          "filename": "northstar-september-export.csv",
+          "content_type": "text/csv",
+          "size_bytes": 42829120,
+          "status": "ready",
+          "checksum_sha256": "a7bc2a1e8fa70b02e5c3c28eaf7a315f9767a81700c31ee1d6987b16ef0295c2",
+          "download_url": "https://downloads.demo.heyo.example/signed/fil_01J8FE2X7M5P9Q4V6K1",
+          "download_expires_at": "2026-09-03T13:00:00Z",
+          "metadata": { "source": "analytics", "contains_pii": false },
+          "created_at": "2026-09-03T10:00:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "filename": { "type": "string" },
+          "content_type": { "type": "string" },
+          "size_bytes": { "type": "integer" },
+          "status": { "type": "string" },
+          "checksum_sha256": { "type": "string" },
+          "download_url": { "type": ["string", "null"] },
+          "download_expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "metadata": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FileList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/File" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "SubscriptionPatch": {
+        "type": "object",
+        "example": {
+          "seats": 50,
+          "budget_alerts": [80, 95, 100],
+          "cost_center": "PL-ENG-042",
+          "renewal_preference": "manual"
+        },
+        "properties": {
+          "seats": { "type": "integer" },
+          "budget_alerts": { "type": "array", "items": { "type": "integer" } },
+          "cost_center": { "type": "string" },
+          "renewal_preference": {
+            "type": "string",
+            "enum": ["automatic", "manual"]
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "example": {
+          "id": "sub_01J8FJ7M3Q9P2V4K6N5",
+          "plan": "enterprise",
+          "status": "active",
+          "seats": 42,
+          "billing_interval": "monthly",
+          "current_period_start": "2026-09-01T00:00:00Z",
+          "current_period_end": "2026-10-01T00:00:00Z",
+          "renewal_preference": "automatic",
+          "cost_center": "PL-ENG-042",
+          "budget_alerts": [80, 95, 100],
+          "payment_status": "paid"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "plan": { "type": "string" },
+          "status": { "type": "string" },
+          "seats": { "type": "integer" },
+          "billing_interval": { "type": "string" },
+          "current_period_start": { "type": "string", "format": "date-time" },
+          "current_period_end": { "type": "string", "format": "date-time" },
+          "renewal_preference": { "type": "string" },
+          "cost_center": { "type": "string" },
+          "budget_alerts": { "type": "array", "items": { "type": "integer" } },
+          "payment_status": { "type": "string" }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "example": {
+          "id": "inv_01J8FK4Q7P2V9M6K3N5",
+          "number": "HEYO-2026-0901",
+          "status": "paid",
+          "currency": "USD",
+          "subtotal": 184200,
+          "tax": 0,
+          "total": 184200,
+          "amount_due": 0,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "due_date": "2026-09-01",
+          "paid_at": "2026-09-01T06:03:00Z",
+          "invoice_pdf_url": "https://billing.demo.heyo.example/invoices/inv_01J8FK4Q7P2V9M6K3N5.pdf"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "number": { "type": "string" },
+          "status": { "type": "string" },
+          "currency": { "type": "string" },
+          "subtotal": { "type": "integer" },
+          "tax": { "type": "integer" },
+          "total": { "type": "integer" },
+          "amount_due": { "type": "integer" },
+          "period_start": { "type": "string", "format": "date" },
+          "period_end": { "type": "string", "format": "date" },
+          "due_date": { "type": "string", "format": "date" },
+          "paid_at": { "type": ["string", "null"], "format": "date-time" },
+          "invoice_pdf_url": { "type": "string" }
+        }
+      },
+      "InvoiceList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Invoice" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "UsageSummary": {
+        "type": "object",
+        "example": {
+          "period": { "start": "2026-09-01", "end": "2026-09-30" },
+          "meters": [
+            {
+              "key": "api_requests",
+              "included": 5000000,
+              "used": 1820043,
+              "unit": "requests"
+            },
+            {
+              "key": "workflow_runs",
+              "included": 100000,
+              "used": 48912,
+              "unit": "runs"
+            },
+            {
+              "key": "file_storage",
+              "included": 107374182400,
+              "used": 27659589312,
+              "unit": "bytes"
+            }
+          ],
+          "request_id": "req_01J8G5Q2P9M4V7K6N3T"
+        },
+        "properties": {
+          "period": { "type": "object" },
+          "meters": { "type": "array", "items": { "type": "object" } },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ApiKeyInput": {
+        "type": "object",
+        "required": ["name", "scopes"],
+        "example": {
+          "name": "Production data sync",
+          "scopes": ["contacts:write", "exports:read", "webhooks:write"],
+          "expires_at": "2027-09-03T00:00:00Z",
+          "project_ids": ["prj_01J8F5KM4MAB0V7YQ6P3N2R8D1"]
+        },
+        "properties": {
+          "name": { "type": "string" },
+          "scopes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "project_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiKey": {
+        "type": "object",
+        "example": {
+          "id": "key_01J8FF6Q2N4T8P9V3M5",
+          "name": "Production data sync",
+          "prefix": "heyo_live_",
+          "scopes": ["contacts:write", "exports:read", "webhooks:write"],
+          "project_ids": ["prj_01J8F5KM4MAB0V7YQ6P3N2R8D1"],
+          "status": "active",
+          "last_used_at": "2026-09-03T11:45:00Z",
+          "expires_at": "2027-09-03T00:00:00Z",
+          "created_at": "2026-09-01T09:00:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "prefix": { "type": "string" },
+          "scopes": { "type": "array", "items": { "type": "string" } },
+          "project_ids": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string" },
+          "last_used_at": { "type": ["string", "null"], "format": "date-time" },
+          "expires_at": { "type": ["string", "null"], "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApiKeySecret": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiKey" },
+          {
+            "type": "object",
+            "example": {
+              "id": "key_01J8FF6Q2N4T8P9V3M5",
+              "name": "Production data sync",
+              "secret": "heyo_live_demo_01J8FF6Q2N4T8P9V3M5"
+            },
+            "properties": {
+              "secret": {
+                "type": "string",
+                "description": "Returned only once during key creation."
+              }
+            }
+          }
+        ]
+      },
+      "ApiKeyList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ApiKey" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "example": {
+          "id": "aud_01J8FM2P6Q9T4V7K3N5",
+          "action": "api_key.revoked",
+          "actor": {
+            "type": "member",
+            "id": "mem_01J8F3D2P9Q7V6N5M4K",
+            "name": "Mira Kowalska"
+          },
+          "target": {
+            "type": "api_key",
+            "id": "key_01J8FF6Q2N4T8P9V3M5",
+            "name": "Production data sync"
+          },
+          "ip_address": "203.0.113.42",
+          "request_id": "req_01J8G6P2Q4M9V7K3N5T",
+          "metadata": { "reason": "routine rotation" },
+          "occurred_at": "2026-09-03T12:20:00Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "action": { "type": "string" },
+          "actor": { "type": "object" },
+          "target": { "type": "object" },
+          "ip_address": { "type": "string" },
+          "request_id": { "type": "string" },
+          "metadata": { "type": "object" },
+          "occurred_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuditLogList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AuditLog" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ExportInput": {
+        "type": "object",
+        "required": ["resource", "format"],
+        "example": {
+          "resource": "contacts",
+          "format": "csv",
+          "filters": { "lifecycle": ["active"], "tag": "customer" },
+          "columns": ["id", "email", "company", "lifecycle", "created_at"],
+          "delivery": { "type": "signed_download", "expires_in_hours": 72 },
+          "encryption": { "type": "none" }
+        },
+        "properties": {
+          "resource": {
+            "type": "string",
+            "enum": ["contacts", "events", "audit_logs", "invoices"]
+          },
+          "format": { "type": "string", "enum": ["csv", "jsonl"] },
+          "filters": { "type": "object" },
+          "columns": { "type": "array", "items": { "type": "string" } },
+          "delivery": { "type": "object" },
+          "encryption": { "type": "object" }
+        }
+      },
+      "Export": {
+        "type": "object",
+        "example": {
+          "id": "exp_01J8FN7Q2P4T9V6K3M5",
+          "resource": "contacts",
+          "format": "csv",
+          "status": "completed",
+          "row_count": 18942,
+          "file": {
+            "id": "fil_01J8FE2X7M5P9Q4V6K1",
+            "download_url": "https://downloads.demo.heyo.example/signed/fil_01J8FE2X7M5P9Q4V6K1"
+          },
+          "delivery": {
+            "type": "signed_download",
+            "expires_at": "2026-09-06T12:00:00Z"
+          },
+          "created_at": "2026-09-03T11:20:00Z",
+          "completed_at": "2026-09-03T11:22:14Z"
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "resource": { "type": "string" },
+          "format": { "type": "string" },
+          "status": { "type": "string" },
+          "row_count": { "type": ["integer", "null"] },
+          "file": { "type": "object" },
+          "delivery": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "completed_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "ExportList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Export" }
+          },
+          "page": { "$ref": "#/components/schemas/Page" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "AsyncJob": {
+        "type": "object",
+        "example": {
+          "id": "job_01J8FP3Q7M5T9V2K4N6",
+          "type": "contact.deletion",
+          "status": "queued",
+          "progress": 0,
+          "created_at": "2026-09-03T12:30:00Z",
+          "links": { "self": "/v3/jobs/job_01J8FP3Q7M5T9V2K4N6" }
+        },
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "running", "completed", "failed"]
+          },
+          "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "links": { "type": "object" }
+        }
+      },
+      "HealthStatus": {
+        "type": "object",
+        "example": {
+          "status": "operational",
+          "checked_at": "2026-09-03T12:35:00Z",
+          "components": [
+            { "name": "public_api", "status": "operational", "latency_ms": 42 },
+            {
+              "name": "event_delivery",
+              "status": "operational",
+              "latency_ms": 81
+            },
+            {
+              "name": "file_processing",
+              "status": "degraded",
+              "latency_ms": 920
+            }
+          ],
+          "incident": null
+        },
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["operational", "degraded", "outage"]
+          },
+          "checked_at": { "type": "string", "format": "date-time" },
+          "components": { "type": "array", "items": { "type": "object" } },
+          "incident": { "type": ["object", "null"] }
+        }
+      }
+    }
+  }
+}

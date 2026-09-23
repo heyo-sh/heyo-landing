@@ -1,0 +1,144 @@
+---
+title: robots.txt
+description: Publish a robots.txt file that allows documentation indexing and points crawlers to the sitemap.
+---
+
+# robots.txt
+
+<Callout type="info" title="Included with create-heyo-docs">
+  This is already configured in projects created with <code>create-heyo-docs</code>. No action is required if you used the creator to install Heyo Docs.
+</Callout>
+
+`robots.txt` tells crawlers that the public documentation may be indexed while
+keeping Heyo Docs' internal Markdown resource route out of search results. A
+new Heyo Docs project already serves this file at `/robots.txt`.
+
+## Set the sitemap URL
+
+Set `siteUrl` to the canonical production address. Heyo Docs uses it for the
+absolute sitemap URL in the generated response and falls back to the incoming
+request origin when it is not set.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  siteUrl: "https://docs.example.com",
+  // ...
+});
+```
+
+The response has the following shape:
+
+```text
+User-agent: *
+Allow: /
+Disallow: /__heyo-docs/
+
+Sitemap: https://docs.example.com/sitemap.xml
+```
+
+`robots.txt` is advisory, not access control. Keep private content out of the
+published documentation directory and protect private application routes
+separately.
+
+## Add the route
+
+The response is the same in every framework, but the route convention is not.
+Add the implementation for your framework before the documentation catch-all
+route.
+
+### React Router
+
+Register the resource route in `app/routes.ts`:
+
+```ts title="app/routes.ts"
+import { route, type RouteConfig } from "@react-router/dev/routes";
+
+export default [
+  // Existing routes…
+  route("robots.txt", "routes/robots.ts"),
+  route("*", "routes/page.tsx"),
+] satisfies RouteConfig;
+```
+
+Then create `app/routes/robots.ts`:
+
+```ts title="app/routes/robots.ts"
+import type { Route } from "./+types/robots";
+
+import config from "../../heyo-docs.config";
+
+export function loader({ request }: Route.LoaderArgs) {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(
+    [
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /__heyo-docs/",
+      "",
+      `Sitemap: ${siteUrl}/sitemap.xml`,
+      "",
+    ].join("\n"),
+    { headers: { "content-type": "text/plain; charset=utf-8" } },
+  );
+}
+```
+
+For a static React Router deployment, also retain `/robots.txt` in the array
+returned by `prerender()` in `react-router.config.ts`.
+
+### Astro
+
+Create `src/pages/robots.txt.ts`:
+
+```ts title="src/pages/robots.txt.ts"
+import type { APIRoute } from "astro";
+
+import config from "../../heyo-docs.config";
+
+export const GET: APIRoute = ({ request }) => {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(
+    [
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /__heyo-docs/",
+      "",
+      `Sitemap: ${siteUrl}/sitemap.xml`,
+      "",
+    ].join("\n"),
+    { headers: { "content-type": "text/plain; charset=utf-8" } },
+  );
+};
+```
+
+Astro maps this file to `/robots.txt` and emits it during a static build.
+
+### Next.js
+
+Create `app/robots.txt/route.ts`:
+
+```ts title="app/robots.txt/route.ts"
+import { config } from "../lib/docs";
+
+export function GET(request: Request) {
+  const siteUrl = config.siteUrl ?? new URL(request.url).origin;
+
+  return new Response(
+    [
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /__heyo-docs/",
+      "",
+      `Sitemap: ${siteUrl}/sitemap.xml`,
+      "",
+    ].join("\n"),
+    { headers: { "content-type": "text/plain; charset=utf-8" } },
+  );
+}
+```
+
+`config` is the same Heyo Docs configuration used to build the documentation
+model. Import it directly from `heyo-docs.config.ts` instead if the project
+does not have the starter's `app/lib/docs.ts` helper.

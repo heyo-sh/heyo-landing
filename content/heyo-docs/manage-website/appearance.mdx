@@ -1,0 +1,114 @@
+---
+title: Appearance
+description: Choose a built-in theme, color mode, primary and secondary colors, and CSS token overrides.
+---
+
+# Appearance
+
+Heyo Docs includes three responsive documentation themes, each with a sticky
+header, sidebar navigation, local search, a reading column, and a desktop table
+of contents. Theme choice and initial color mode are configured in
+`heyo-docs.config.ts`; deeper visual changes are ordinary project CSS.
+
+## Select the theme and initial mode
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  theme: "grain",
+  mode: "system",
+});
+```
+
+Choose one of the built-in theme names: `grain`, `shade`, or `moss`. The
+configuration validates theme names, so an unavailable theme fails instead of
+falling back silently. The selected framework integration generates and loads
+the matching theme stylesheet automatically.
+
+`mode` accepts three values:
+
+| Value    | Initial behavior                                      |
+| -------- | ----------------------------------------------------- |
+| `system` | Follow the operating-system light or dark preference. |
+| `light`  | Start with the light palette.                         |
+| `dark`   | Start with the dark palette.                          |
+
+The generated theme provider stores a reader's manual choice in local storage
+under `heyo-docs-theme`. That stored preference takes precedence over `mode` on
+later visits. The theme toggle changes the current reader preference; it does
+not rewrite the project configuration.
+
+## Set primary and secondary colors
+
+Use CSS color values for the two common accents:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  colors: {
+    primary: "oklch(0.48 0.19 265)",
+    secondary: "oklch(0.95 0.03 265)",
+  },
+});
+```
+
+The active theme passes these values to its layout as the `--primary` and
+`--secondary` CSS custom properties. Standard CSS formats such as hex, RGB,
+HSL, and OKLCH work as long as the browser can parse them.
+
+> The configuration changes only `--primary` and `--secondary`. It does not
+> calculate matching `--primary-foreground` or `--secondary-foreground`
+> values. Check contrast for buttons and other text-on-color combinations.
+
+## Overriding styles
+
+Add project overrides in the application stylesheet. In this React Router
+example, use `app/app.css`:
+
+```css title="app/app.css"
+@import "@fontsource-variable/figtree";
+
+:root {
+  --primary: oklch(0.48 0.19 265);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.58 0.15 265);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --primary: oklch(0.78 0.12 265);
+  --primary-foreground: oklch(0.18 0.02 265);
+  --ring: oklch(0.72 0.12 265);
+}
+```
+
+Every built-in theme exposes shadcn-style CSS variables for background,
+foreground, card, popover, primary, secondary, muted, accent, destructive,
+border, input, ring, sidebar, and radius values. Override the variables rather
+than trying to restyle generated markup one component at a time.
+
+The equivalent stylesheet is `app/app.css` in generated Next.js projects and
+`src/styles/app.css` in generated Astro projects.
+
+## How theme styles load
+
+React Router and Astro projects import `virtual:heyo-docs-theme.css` from their
+root document. Next.js projects import the generated
+`app/_heyo-docs/theme.css` file from `app/layout.tsx`. The official templates
+already contain these imports, so changing `theme` updates the stylesheet with
+the rest of the generated documentation model.
+
+Do not import `@heyo-sh/heyo-docs/theme/*.css` again in a generated project:
+the duplicate stylesheet adds the base theme twice and can make CSS ordering
+hard to predict.
+
+If an application renders `DocsApp` without an official framework adapter, it
+does not get the generated import. Load exactly the same theme as the
+configuration once from that application's root entry or root stylesheet:
+
+```ts title="src/main.tsx"
+import "@heyo-sh/heyo-docs/theme/shade.css";
+```
+
+For a broad design-system change, first change a token and verify both light
+and dark modes before adding selector overrides.

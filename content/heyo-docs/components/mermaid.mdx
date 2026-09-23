@@ -1,0 +1,73 @@
+---
+title: Mermaid
+description: Render Mermaid diagrams directly in MDX with SVG or terminal-style ASCII output.
+---
+
+<CodeSnippet
+  code={`<Mermaid
+  chart={"flowchart LR\\n  Draft --> Review\\n  Review --> Publish"}
+/>`}
+>
+  <Mermaid chart={"flowchart LR\n  Draft --> Review\n  Review --> Publish"} />
+</CodeSnippet>
+
+`Mermaid` turns a Mermaid chart definition into a diagram inside a documentation page. It renders on the client using the active Heyo Docs colour tokens, while the raw chart source remains visible during server rendering and before the diagram library has loaded. This keeps diagrams useful in static output and lets them adapt to the current documentation theme.
+
+## When to use it
+
+Use `Mermaid` for flows, state transitions, architecture overviews, sequence diagrams, and other relationships that are harder to understand in a list. Keep the source in the MDX page so the visual remains near the explanation and can be reviewed alongside the rest of the documentation.
+
+Pass a chart via `chart` when a compact self-closing component is easiest to read. Alternatively, write the chart as the component's children; this is convenient for longer, multi-line diagrams. The `chart` prop takes precedence whenever both forms are provided.
+
+The default `svg` output is best for web documentation: it adopts the theme and scales as a vector graphic. Choose `ascii` for terminal-oriented guides, plain-text-friendly diagrams, or a deliberately low-visual-weight representation. The renderer supports the Mermaid syntax understood by the bundled diagram runtime; validate a complex diagram in the page before relying on it in production.
+
+## ASCII output
+
+<Mermaid variant="ascii">
+  {`flowchart LR
+  Content --> Build
+  Build --> Documentation`}
+</Mermaid>
+
+If rendering fails, the component keeps the source visible and shows an error message instead of removing the diagram. Avoid placing secrets in a chart definition: the source is present in the page markup before the client-side renderer finishes.
+
+## Map a release pipeline
+
+Use subgraphs and labelled branches when a process has several owners or an
+important feedback loop. The diagram stays compact, but gives the reader the
+shape of the whole workflow at a glance.
+
+<CodeSnippet
+  code={`<Mermaid
+  chart={"flowchart LR\\n  subgraph Authoring\\n    Draft[Draft] --> Review[Review]\\n  end\\n  subgraph Publishing\\n    Review --> Build[Build]\\n    Build --> Preview[Preview]\\n    Preview --> Publish[Publish]\\n  end\\n  Preview -. feedback .-> Draft"}
+/>`}
+>
+  <Mermaid
+    chart={
+      "flowchart LR\n  subgraph Authoring\n    Draft[Draft] --> Review[Review]\n  end\n  subgraph Publishing\n    Review --> Build[Build]\n    Build --> Preview[Preview]\n    Preview --> Publish[Publish]\n  end\n  Preview -. feedback .-> Draft"
+    }
+  />
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="chart" type="string">
+    The Mermaid definition to render. When supplied, it takes precedence over
+    the component's children. Use JavaScript newlines such as <code>\n</code> in
+    an expression, or use children for naturally formatted multi-line source.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Alternative chart source. The component converts its text content to a
+    trimmed string. This form is usually the most readable for longer diagrams.
+  </Property>
+  <Property name="variant" type='"svg" | "ascii"'>
+    The output format. It defaults to <code>svg</code>, which uses the active
+    documentation colour tokens. Use <code>ascii</code> for a monospaced,
+    text-style diagram.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes applied to the framed diagram container. Use it to adjust
+    spacing, width, or the surrounding surface.
+  </Property>
+</Properties>

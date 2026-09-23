@@ -1,0 +1,200 @@
+---
+title: OpenAPI
+description: Load an OpenAPI document from a local file, public asset, or URL and generate an API reference.
+---
+
+# OpenAPI
+
+Add an OpenAPI document to generate an API reference from its operations. The
+official starters already load the Heyo Docs integration; you only need to add
+the schema to the documentation configuration.
+
+<Callout type="warning" title="Try it requires a server endpoint">
+  The interactive <strong>Try it</strong> panel sends a <code>POST</code>{" "}
+  request to <code>/heyo-docs-internal/openapi-request</code>. It will not work
+  until the host application provides that endpoint. The generated API reference
+  remains static and works without it.
+</Callout>
+
+## Add a schema
+
+Place the schema where its generated endpoint sections should appear in the
+sidebar. It accepts JSON or YAML and needs a top-level `paths` object.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  groups: [
+    {
+      group: "API Reference",
+      icon: "code",
+      sections: [{ schema: "./openapi.json" }],
+    },
+  ],
+});
+```
+
+The schema object contains only `schema`. Heyo Docs replaces it with endpoint
+sections grouped by OpenAPI tag. You can place regular MDX pages before or
+after it for an overview, authentication, or migration guide.
+
+## Choose the source
+
+| Source       | Example                                  | Use when                                               |
+| ------------ | ---------------------------------------- | ------------------------------------------------------ |
+| Local file   | `"./openapi.json"` or `"./openapi.yaml"` | The schema lives under `content/`.                     |
+| Public asset | `"/openapi.json"`                        | The file is served from the app's `public/` directory. |
+| URL          | `"https://api.example.com/openapi.json"` | The schema is publicly available during the build.     |
+
+Remote schemas are fetched during development and each production build, so
+use a stable or pinned URL. Private URLs that require credentials are not
+supported; commit the schema or provide a public build artifact instead.
+
+## Add the Try it endpoint
+
+The endpoint forwards only operations and servers declared by the generated
+OpenAPI model. It is not an open proxy, but it still forwards a reader's bearer
+token and request values to the declared API server. Protect and monitor the
+API itself as usual; the proxy is not a substitute for authentication,
+authorization, rate limiting, or audit logging.
+
+### React Router
+
+Add this entry to the existing route array:
+
+```ts title="app/routes.ts"
+import { route, type RouteConfig } from "@react-router/dev/routes";
+
+export default [
+  // Existing routes…
+  route("heyo-docs-internal/openapi-request", "routes/openapi-request.ts"),
+] satisfies RouteConfig;
+```
+
+Then create `app/routes/openapi-request.ts`:
+
+```ts title="app/routes/openapi-request.ts"
+import { createDocsModel } from "@heyo-sh/heyo-docs/model";
+import { handleOpenApiRequest } from "@heyo-sh/heyo-docs/openapi/request";
+import type { ActionFunctionArgs } from "react-router";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content";
+import { openApiDocuments } from "virtual:heyo-docs-openapi";
+
+export function loader() {
+  return new Response("Method Not Allowed", {
+    headers: { Allow: "POST" },
+    status: 405,
+  });
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== "POST")
+    return new Response("Method Not Allowed", {
+      headers: { Allow: "POST" },
+      status: 405,
+    });
+
+  return handleOpenApiRequest(
+    request,
+    createDocsModel(config, pages, openApiDocuments).endpoints,
+  );
+}
+```
+
+### Astro
+
+Create `src/lib/openapi-request.ts`:
+
+```ts title="src/lib/openapi-request.ts"
+import { createDocsModel } from "@heyo-sh/heyo-docs/model";
+import { handleOpenApiRequest as forwardOpenApiRequest } from "@heyo-sh/heyo-docs/openapi/request";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content";
+import { openApiDocuments } from "virtual:heyo-docs-openapi";
+
+export async function handleOpenApiRequest(request: Request) {
+  if (request.method !== "POST")
+    return new Response("Method Not Allowed", {
+      headers: { Allow: "POST" },
+      status: 405,
+    });
+
+  return forwardOpenApiRequest(
+    request,
+    createDocsModel(config, pages, openApiDocuments).endpoints,
+  );
+}
+```
+
+Then create `src/pages/heyo-docs-internal/openapi-request.ts`:
+
+```ts title="src/pages/heyo-docs-internal/openapi-request.ts"
+import type { APIRoute } from "astro";
+
+import { handleOpenApiRequest } from "../../lib/openapi-request";
+
+export const prerender = false;
+
+export const GET: APIRoute = () =>
+  new Response("Method Not Allowed", {
+    headers: { Allow: "POST" },
+    status: 405,
+  });
+
+export const POST: APIRoute = ({ request }) => handleOpenApiRequest(request);
+```
+
+### Next.js
+
+Create `app/lib/openapi-request.ts`:
+
+```ts title="app/lib/openapi-request.ts"
+import { handleOpenApiRequest as forwardOpenApiRequest } from "@heyo-sh/heyo-docs/openapi/request";
+
+import { docsModel } from "./docs";
+
+export async function handleOpenApiRequest(request: Request) {
+  if (request.method !== "POST")
+    return new Response("Method Not Allowed", {
+      headers: { Allow: "POST" },
+      status: 405,
+    });
+
+  return forwardOpenApiRequest(request, docsModel.endpoints);
+}
+```
+
+Then create `app/heyo-docs-internal/openapi-request/route.ts`:
+
+```ts title="app/heyo-docs-internal/openapi-request/route.ts"
+import { handleOpenApiRequest } from "../../lib/openapi-request";
+
+export async function POST(request: Request) {
+  return handleOpenApiRequest(request);
+}
+```
+
+The Astro route must run in a server or hybrid deployment rather than a fully
+static-only output. In a custom `DocsApp` shell, point the client at the same
+route:
+
+```tsx
+<DocsApp openApiRequestUrl="/heyo-docs-internal/openapi-request" {...props} />
+```
+
+## What is generated
+
+Each API operation becomes a static reference page. Tags organize the sidebar;
+the operation method, path, parameters, request body, responses, and local
+schemas are displayed automatically. A schema change requires a new build and
+deployment. The browser receives a compact endpoint index while route-specific
+details are emitted as static assets, so a large schema is not eagerly loaded
+for every page.
+
+The normal documentation pages remain prerendered whether or not **Try it** is
+enabled. If interactive requests are unnecessary, omit
+`openApiRequestUrl` and the endpoint route without changing the generated API
+reference.

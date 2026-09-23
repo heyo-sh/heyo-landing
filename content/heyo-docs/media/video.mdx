@@ -1,0 +1,118 @@
+---
+title: Video
+description: Embed accessible, responsive video with native controls, captions, posters, and sensible loading behaviour.
+---
+
+<CodeSnippet
+  code={`<Video
+  src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+  caption="A short video using the browser's native player."
+/>`}
+>
+  <Video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    caption="A short video using the browser's native player."
+  />
+</CodeSnippet>
+
+`Video` adds the same framed treatment as `Image` around the browser's native
+video player. It enables controls, inline playback, and metadata-only loading
+by default, which makes it a good fit for product walkthroughs, short demos,
+and visual explanations that benefit from play, pause, and seeking.
+
+## Use video when motion explains the task
+
+Choose video for interactions that a static screenshot cannot show clearly:
+dragging an item, navigating a multi-step UI, or showing a before-and-after
+state. Keep it focused on one task and explain the expected outcome in nearby
+prose so readers can decide whether they need to watch it.
+
+```mdx
+<Video
+  src="./assets/create-page.mp4"
+  poster="./assets/create-page-poster.webp"
+  caption="Create and preview a documentation page."
+/>
+```
+
+Use a local relative path for a clip that ships with your documentation. Heyo
+Docs copies both the video and its poster into the production build. For a
+remote source, use a stable HTTPS URL and verify that it permits playback from
+your deployed domain.
+
+## Make playback intentional
+
+Native controls are available by default, so readers control when a tutorial
+starts and stops. Use `muted` together with `autoPlay` only for a brief,
+non-essential loop; browsers may block autoplay with sound, and a narrative
+demo should not start unexpectedly.
+
+<CodeSnippet
+  code={`<Video
+  autoPlay
+  loop
+  muted
+  poster="https://interactive-examples.mdn.mozilla.net/media/examples/flower.jpg"
+  src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+  caption="A muted looping visual with a poster while the video loads."
+/>`}
+>
+  <Video
+    autoPlay
+    loop
+    muted
+    poster="https://interactive-examples.mdn.mozilla.net/media/examples/flower.jpg"
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    caption="A muted looping visual with a poster while the video loads."
+  />
+</CodeSnippet>
+
+This pattern works for a small decorative product moment, such as an animated
+diagram on an overview page. For instructional content, leave autoplay off and
+provide a descriptive caption; publish a transcript or written steps when the
+spoken or visual information is essential.
+
+## Prepare accessible source material
+
+Use a caption to explain what the clip demonstrates, but do not treat it as a
+replacement for subtitles or a transcript. Add a `track` element for captions
+when the video has speech, and place the written procedure in the page when a
+reader needs to complete the task without watching.
+
+## Properties
+
+<Properties>
+  <Property name="src" type="string" required>
+    The local relative path or remote HTTPS URL of the video. Local paths are
+    bundled with the documentation build.
+  </Property>
+  <Property name="caption" type="ReactNode">
+    Optional explanatory text displayed below the video frame. Use it to state
+    what the reader will see or why the clip is relevant.
+  </Property>
+  <Property name="controls" type="boolean">
+    Shows the browser's play, pause, volume, and seek controls. It defaults to
+    <code>true</code>.
+  </Property>
+  <Property name="playsInline" type="boolean">
+    Requests inline playback on mobile browsers instead of automatically opening
+    a full-screen player. It defaults to <code>true</code>.
+  </Property>
+  <Property name="preload" type='"none" | "metadata" | "auto"'>
+    Controls how much video the browser fetches before playback. It defaults to
+    <code>metadata</code>, which keeps the page light while making duration and
+    controls available.
+  </Property>
+  <Property name="poster" type="string">
+    A local or remote image displayed before the first frame is available.
+    Provide one when the first frame is not a useful preview.
+  </Property>
+  <Property name="autoPlay / loop / muted" type="boolean">
+    Native playback settings. Use autoplay only with muted, non-essential
+    content; use loop for a short repeating visual rather than an instruction.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Optional native video content such as <code>&lt;track&gt;</code> elements
+    for captions.
+  </Property>
+</Properties>

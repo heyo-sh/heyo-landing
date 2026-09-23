@@ -1,0 +1,113 @@
+---
+title: Steps
+description: Present a chronological task as a numbered sequence of rich MDX steps.
+---
+
+<CodeSnippet
+  code={`<Steps>
+  <Step title="Install the package">
+    Add Heyo Docs to your application.
+  </Step>
+  <Step title="Add content">
+    Create your first MDX page.
+  </Step>
+</Steps>`}
+>
+  <Steps>
+    <Step title="Install the package">Add Heyo Docs to your application.</Step>
+    <Step title="Add content">Create your first MDX page.</Step>
+  </Steps>
+</CodeSnippet>
+
+`Steps` presents an ordered process as a vertical timeline, and `Step` supplies each item. The component assigns consecutive numbers automatically, keeps the connecting line aligned with the markers, and supports rich content inside each step. This makes it suitable for setup guides where an instruction may need a command, callout, or explanation in addition to a title.
+
+## When to use it
+
+Use `Steps` when order matters: installation, configuration, migration, deployment, onboarding, or an incident response flow. A numbered sequence makes dependencies clear and gives readers a visible sense of progress.
+
+Each step may contain regular Markdown and other MDX components. Add a `CodeBlock` for a command, a `Callout` for a warning, or an `Accordion` for an optional detail. Keep one user goal per step; if a step becomes a full guide, link to that guide instead of making the sequence difficult to scan.
+
+Only direct `Step` elements are numbered. If you need to maintain an externally defined sequence, give a particular step an explicit `number`. Explicit numbers change only their own marker; the surrounding automatically numbered steps retain their positional numbers.
+
+## Rich step content
+
+<Steps>
+  <Step title="Install the package">
+    Add the documentation runtime to the app.
+
+    <CodeBlock language="bash" title="Terminal">
+      {"bun add @heyo-sh/heyo-docs"}
+    </CodeBlock>
+
+  </Step>
+  <Step number={3} title="Publish">
+    Deploy once the page builds successfully. This step intentionally carries an explicit number.
+  </Step>
+</Steps>
+
+## Turn onboarding into a guided flow
+
+Because every step accepts MDX, you can make a compact setup sequence feel
+complete without sending a reader back and forth between several pages.
+
+<CodeSnippet
+  code={`<Steps>
+  <Step title="Create a preview">
+    Start the development server and open the local URL.
+
+    <CodeBlock language="bash" title="Terminal">
+      {"bun dev"}
+    </CodeBlock>
+
+  </Step>
+  <Step title="Share it with reviewers">
+    <Callout type="tip" title="Use one stable link">
+      A single preview URL makes feedback easier to collect and compare.
+    </Callout>
+  </Step>
+  <Step title="Publish with confidence">
+    Confirm navigation, search, and metadata before deploying.
+  </Step>
+</Steps>`}
+>
+  <Steps>
+    <Step title="Create a preview">
+      Start the development server and open the local URL.
+
+      <CodeBlock language="bash" title="Terminal">
+        {"bun dev"}
+      </CodeBlock>
+    </Step>
+    <Step title="Share it with reviewers">
+      <Callout type="tip" title="Use one stable link">
+        A single preview URL makes feedback easier to collect and compare.
+      </Callout>
+    </Step>
+    <Step title="Publish with confidence">
+      Confirm navigation, search, and metadata before deploying.
+    </Step>
+
+  </Steps>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" type="Step[]">
+    Direct <code>Step</code> elements to render in order. The parent reads their
+    sequence and supplies an automatic number where one was not provided.
+  </Property>
+  <Property name="title" type="ReactNode">
+    A <code>Step</code> heading. It appears beside the numbered marker. Omit it
+    for a terse step that contains only its body content.
+  </Property>
+  <Property name="number" type="number">
+    An optional <code>Step</code> marker. By default, the first step is{" "}
+    <code>1</code> and every following step increments by one. Use an explicit
+    value for a referenced, skipped, or externally numbered procedure.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The body of an individual <code>Step</code>. It accepts prose, fenced
+    Markdown code, and other built-in MDX components.
+  </Property>
+</Properties>

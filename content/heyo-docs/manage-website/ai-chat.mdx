@@ -1,0 +1,232 @@
+---
+title: AI Chat
+description: Add a documentation-aware AI chat with server-only Pi provider authentication.
+---
+
+# AI Chat
+
+AI Chat answers questions using the pages in your Heyo Docs site. It uses
+[Pi](https://github.com/badlogic/pi-mono)'s provider catalog and supplies the
+model with tools to search and read your documentation. Configure the provider
+and model in `heyo-docs.config.ts`, then give the server endpoint credentials
+for each request. The browser never receives the provider, model, or
+authentication settings.
+
+## Configure the chat
+
+Add `ai.chat` to the site configuration. `provider` must be a lowercase Pi
+provider identifier and `model` must be an available model identifier for that
+provider. The official templates use OpenAI as the example:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  ai: {
+    chat: {
+      provider: "openai",
+      model: "gpt-5-mini",
+      variant: "right",
+      icon: "chat",
+      text: "AI Chat",
+      name: "Docs Assistant",
+      placeholder: "Ask AI about the docs",
+    },
+  },
+});
+```
+
+Only `provider` and `model` are required in `ai.chat`. The endpoint must pass
+authentication unless `auth` is configured here on the server.
+
+| Setting       | Default                 | Purpose                                                                 |
+| ------------- | ----------------------- | ----------------------------------------------------------------------- |
+| `provider`    | Required                | A Pi provider identifier, for example `openai`.                         |
+| `model`       | Required                | A model identifier available from that provider.                        |
+| `auth`        | Endpoint-provided       | Optional server-only fallback authentication.                           |
+| `variant`     | `right`                 | `right` shows a trigger; `center` shows a compact prompt at the bottom. |
+| `icon`        | `chat`                  | Icon in the `right` trigger.                                            |
+| `text`        | `AI Chat`               | Label in the `right` trigger.                                           |
+| `name`        | `AI`                    | Drawer title and assistant message label.                               |
+| `placeholder` | `Ask AI about the docs` | Text in both the `center` prompt and drawer composer.                   |
+
+With `variant: "center"`, submitting the compact prompt opens the drawer.
+With `variant: "right"`, the reader opens the drawer from its floating
+trigger. The drawer remains available while readers move between pages.
+
+## Choose server authentication
+
+Pass authentication to `createAiChatResponse` from the request handler when a
+platform resolves secrets or credentials per request. This is the recommended
+shape for API keys and platform bindings:
+
+```ts
+auth: { type: "api-key", token: process.env.OPENAI_API_KEY! },
+```
+
+`ai.chat.auth` is an optional fallback for server-only configuration. Pi's
+provider determines which authentication type is valid:
+
+| Type             | Use for                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| `api-key`        | Providers that accept a secret token: `{ type: "api-key", token }`.         |
+| `oauth`          | Providers using a fresh access token: `{ type: "oauth", getAccessToken }`.  |
+| `aws`            | Amazon Bedrock's AWS credential chain, with optional `region` or `profile`. |
+| `bedrock-bearer` | Amazon Bedrock bearer authentication, with `token` and optional `region`.   |
+
+The runtime checks that the provider supports the supplied authentication
+type. Keep all of these values on the server; the client receives only the
+chat label, icon, variant, name, and placeholder.
+
+## Authorize before calling a provider
+
+Use the optional server-only `ai.authorize` guard for authentication,
+rate-limiting, or an abuse check. Return a `Response` to stop the request
+before Heyo Docs resolves a provider or starts a stream:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  ai: {
+    chat: { provider: "openai", model: "gpt-5-mini" },
+    authorize: async (request) => {
+      if (!request.headers.get("authorization"))
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+    },
+  },
+});
+```
+
+The guard runs only in the request handler. Do not put browser-only session
+state or a provider secret in the public configuration.
+
+## Add the chat endpoint
+
+The chat UI sends `POST` requests to `/heyo-docs-internal/ai-chat`. Add this
+endpoint before enabling `ai.chat`; `createAiChatResponse` supplies the model
+with the loaded documentation pages and streams its answer back to the UI.
+
+### React Router
+
+Add this entry to the existing route array:
+
+```ts title="app/routes.ts"
+import { route, type RouteConfig } from "@react-router/dev/routes";
+
+export default [
+  // Existing routes…
+  route("heyo-docs-internal/ai-chat", "routes/ai-chat.ts"),
+] satisfies RouteConfig;
+```
+
+Then create `app/routes/ai-chat.ts`:
+
+```ts title="app/routes/ai-chat.ts"
+import type { ActionFunctionArgs } from "react-router";
+
+import config from "../../heyo-docs.config";
+import { pages } from "virtual:heyo-docs-content";
+import { pages as markdownPages } from "virtual:heyo-docs-content/server";
+
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== "POST")
+    return new Response("Method Not Allowed", {
+      headers: { Allow: "POST" },
+      status: 405,
+    });
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey)
+    return Response.json(
+      { error: "OPENAI_API_KEY is not configured." },
+      { status: 500 },
+    );
+
+  const { createAiChatResponse } = await import("@heyo-sh/heyo-docs/ai");
+  return createAiChatResponse(request, {
+    ai: config.ai,
+    auth: { type: "api-key", token: apiKey },
+    markdownPages,
+    pages,
+    title: config.title,
+  });
+}
+```
+
+### Astro
+
+Create `src/pages/heyo-docs-internal/ai-chat.ts`:
+
+```ts title="src/pages/heyo-docs-internal/ai-chat.ts"
+import { createAiChatResponse } from "@heyo-sh/heyo-docs/ai";
+import type { APIRoute } from "astro";
+
+import config from "../../../heyo-docs.config";
+import { pages as markdownPages } from "virtual:heyo-docs-content/server";
+
+export const prerender = false;
+
+export const POST: APIRoute = ({ request }) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey)
+    return Response.json(
+      { error: "OPENAI_API_KEY is not configured." },
+      { status: 500 },
+    );
+
+  return createAiChatResponse(request, {
+    ai: config.ai,
+    auth: { type: "api-key", token: apiKey },
+    markdownPages,
+    pages: markdownPages.map((page) => ({
+      description: page.description,
+      searchContent: page.raw,
+      slug: page.slug,
+      title: page.title,
+    })),
+    title: config.title,
+  });
+};
+```
+
+### Next.js
+
+Create `app/heyo-docs-internal/ai-chat/route.ts`:
+
+```ts title="app/heyo-docs-internal/ai-chat/route.ts"
+import { createAiChatResponse } from "@heyo-sh/heyo-docs/ai";
+
+import config from "../../../heyo-docs.config";
+import { docsPages, markdownPages } from "../../_heyo-docs/server";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey)
+    return Response.json(
+      { error: "OPENAI_API_KEY is not configured." },
+      { status: 500 },
+    );
+
+  return createAiChatResponse(request, {
+    ai: config.ai,
+    auth: { type: "api-key", token: apiKey },
+    markdownPages,
+    pages: docsPages,
+    title: config.title,
+  });
+}
+```
+
+For Cloudflare, read the secret from the Worker binding instead of
+`process.env`, then pass it as the same `api-key` auth object. The generated
+Cloudflare overlays read `HEYO_DOCS_AI_API_KEY` unless `ai.chat.auth` is
+already configured; set the binding with Wrangler's secret management rather
+than in `wrangler.jsonc` or client code.
+
+## Keep credentials server-only
+
+Use a server environment variable, platform binding, or OAuth resolver for
+credentials. Do not put an API key in client code or commit it to the
+repository. The framework integrations remove `provider`, `model`, and `auth`
+from the browser-side configuration; the endpoint retains what is needed to
+call the provider.

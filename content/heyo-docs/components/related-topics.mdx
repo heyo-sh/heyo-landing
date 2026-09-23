@@ -1,0 +1,146 @@
+---
+title: Related Topics
+description: Guide readers to adjacent documentation with a compact, linked topic list.
+---
+
+<CodeSnippet
+  code={`<RelatedTopics>
+  <RelatedTopic
+    icon="book"
+    name="Start building your first documentation site"
+    src="https://heyo.sh/heyo-docs/quickstart"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Create interactive code snippets in MDX"
+    src="https://heyo.sh/heyo-docs/components/code-snippet"
+  />
+  <RelatedTopic
+    icon="globe"
+    name="Read the shadcn Hover Card documentation"
+    src="https://ui.shadcn.com/docs/components/base/hover-card"
+  />
+</RelatedTopics>`}
+>
+  <RelatedTopics>
+    <RelatedTopic
+      icon="book"
+      name="Start building your first documentation site"
+      src="https://heyo.sh/heyo-docs/quickstart"
+    />
+    <RelatedTopic
+      icon="code"
+      name="Create interactive code snippets in MDX"
+      src="https://heyo.sh/heyo-docs/components/code-snippet"
+    />
+    <RelatedTopic
+      icon="globe"
+      name="Read the shadcn Hover Card documentation"
+      src="https://ui.shadcn.com/docs/components/base/hover-card"
+    />
+  </RelatedTopics>
+</CodeSnippet>
+
+`RelatedTopics` creates a compact list of useful next pages, while `RelatedTopic` renders each row. It is a focused alternative to repeating inline links throughout a page: readers can finish the current explanation, then choose a logical next topic from one predictable place.
+
+## When to use it
+
+Use this component near the end of a guide, reference page, or conceptual overview to point to pages a reader is likely to need next. It is especially helpful for sibling concepts, optional deep dives, prerequisites that do not belong in the main flow, and links to external references.
+
+Prefer three to five genuinely relevant destinations. A long list behaves like another navigation menu and makes it harder to choose a next step. Keep the label action-oriented and specific, such as **Configure navigation** rather than **More information**.
+
+Relative `src` values stay in the documentation site. Full URLs are recognised as external links and open in a new tab with `noreferrer`. Omitting `src` renders a non-clickable row, which is useful for showing an unavailable or upcoming topic but should be the exception.
+
+## Custom heading and external links
+
+<RelatedTopics title="Continue learning">
+  <RelatedTopic
+    icon="book"
+    name="Browse the MDX components"
+    src="https://heyo.sh/heyo-docs/components/code-snippet"
+  />
+  <RelatedTopic
+    icon="externalLink"
+    name="View the Base UI Preview Card documentation"
+    src="https://base-ui.com/react/components/preview-card"
+  />
+</RelatedTopics>
+
+## Curate an implementation bundle
+
+Related topics can also close an overview page: use a focused heading and three
+well-chosen destinations to give a reader an obvious route through the work.
+
+<CodeSnippet
+  code={`<RelatedTopics title="Build your launch checklist">
+  <RelatedTopic
+    icon="code"
+    name="Create reusable MDX components"
+    src="https://heyo.sh/heyo-docs/components/custom-components"
+  />
+  <RelatedTopic
+    icon="search"
+    name="Make every page easy to find"
+    src="https://heyo.sh/heyo-docs/manage-website/search"
+  />
+  <RelatedTopic
+    icon="arrowRight"
+    name="Deploy a production-ready site"
+    src="https://heyo.sh/heyo-docs/deploying/vercel"
+  />
+</RelatedTopics>`}
+>
+  <RelatedTopics title="Build your launch checklist">
+    <RelatedTopic
+      icon="code"
+      name="Create reusable MDX components"
+      src="https://heyo.sh/heyo-docs/components/custom-components"
+    />
+    <RelatedTopic
+      icon="search"
+      name="Make every page easy to find"
+      src="https://heyo.sh/heyo-docs/manage-website/search"
+    />
+    <RelatedTopic
+      icon="arrowRight"
+      name="Deploy a production-ready site"
+      src="https://heyo.sh/heyo-docs/deploying/vercel"
+    />
+  </RelatedTopics>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="title" type="ReactNode">
+    A <code>RelatedTopics</code> heading. It defaults to{" "}
+    <code>Related topics</code>. Supply a short title such as{" "}
+    <code>Continue learning</code> when the links represent a particular next
+    action.
+  </Property>
+  <Property name="children" type="RelatedTopic[]">
+    The topic rows to display. Place <code>RelatedTopic</code> elements directly
+    inside the list so the component can preserve its accessible list structure.
+  </Property>
+  <Property name="className" type="string">
+    Extra classes for the outer <code>RelatedTopics</code> section.
+  </Property>
+  <Property name="name" type="ReactNode">
+    A <code>RelatedTopic</code> label. If it is omitted, the component uses the
+    topic's children as the label.
+  </Property>
+  <Property name="src" type="string">
+    A <code>RelatedTopic</code> destination. Relative paths render as normal
+    documentation links; absolute URLs render as external links in a new tab.
+    Omit it to render a static, non-clickable row.
+  </Property>
+  <Property name="icon" type="string">
+    A <code>RelatedTopic</code> icon name. It defaults to <code>book</code>.
+    Choose a name from the configured Heyo Docs icon set that matches the
+    destination's purpose.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Fallback content for an individual <code>RelatedTopic</code> when{" "}
+    <code>name</code> is not set.
+  </Property>
+</Properties>

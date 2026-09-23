@@ -1,0 +1,108 @@
+---
+title: Columns
+description: Arrange related documentation content in a responsive grid of cards or plain columns.
+---
+
+<CodeSnippet
+  code={`<Columns columns={2}>
+  <Column title="Quickstart" href="https://heyo.sh/heyo-docs/quickstart">
+    Create your first documentation page.
+  </Column>
+  <Column title="Configuration" href="https://heyo.sh/heyo-docs/manage-website/configuration">
+    Set site-wide options in one file.
+  </Column>
+</Columns>`}
+>
+  <Columns columns={2}>
+    <Column title="Quickstart" href="https://heyo.sh/heyo-docs/quickstart">
+      Create your first documentation page.
+    </Column>
+    <Column title="Configuration" href="https://heyo.sh/heyo-docs/manage-website/configuration">
+      Set site-wide options in one file.
+    </Column>
+  </Columns>
+</CodeSnippet>
+
+`Columns` arranges direct `Column` children in a responsive grid. It is ideal for a compact group of next steps, feature summaries, installation choices, or related guides. A column can be a static content block or a linked card, so the same layout works for explanatory content and navigation.
+
+## Responsive behaviour and common uses
+
+All grids use one column on narrow screens. A two-column grid becomes two columns from the `sm` breakpoint; a three-column grid becomes two columns from `sm` and three from `xl`. This lets you use the same MDX source for desktop overview pages and mobile reading without writing breakpoint-specific markup.
+
+Use the default `card` surface when each column represents an equal destination or self-contained idea. Add `href` to make an entire card clickable. Use `variant="plain"` for lighter, editorial layouts where the grid should organise content without introducing a border around every item. A `Column` can override the variant inherited from `Columns`.
+
+Only direct `Column` elements are rendered by `Columns`. Put regular Markdown, code blocks, or other MDX components inside a `Column` when you need arbitrary content side by side.
+
+<Columns columns={3} variant="plain">
+  <Column title="Install">Add the package to an existing application.</Column>
+  <Column title="Configure">
+    Choose the content directory and navigation.
+  </Column>
+  <Column title="Publish" variant="card">
+    Deploy the generated documentation site.
+  </Column>
+</Columns>
+
+## Build a learning path
+
+Use three concise linked cards to make an overview page feel like a guided
+journey rather than a flat list of pages.
+
+<CodeSnippet
+  code={`<Columns columns={3}>
+  <Column title="Plan" href="https://heyo.sh/heyo-docs/introduction">
+    Understand the building blocks before changing your site.
+  </Column>
+  <Column title="Build" href="https://heyo.sh/heyo-docs/quickstart">
+    Create a focused first page with MDX and components.
+  </Column>
+  <Column title="Publish" href="https://heyo.sh/heyo-docs/deploying/vercel">
+    Ship the documentation once the preview looks right.
+  </Column>
+</Columns>`}
+>
+  <Columns columns={3}>
+    <Column title="Plan" href="https://heyo.sh/heyo-docs/introduction">
+      Understand the building blocks before changing your site.
+    </Column>
+    <Column title="Build" href="https://heyo.sh/heyo-docs/quickstart">
+      Create a focused first page with MDX and components.
+    </Column>
+    <Column title="Publish" href="https://heyo.sh/heyo-docs/deploying/vercel">
+      Ship the documentation once the preview looks right.
+    </Column>
+  </Columns>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="columns" type="2 | 3">
+    The number of columns at the widest supported layout. It defaults to{" "}
+    <code>2</code>. Use <code>3</code> for short, equally weighted items; use{" "}
+    <code>2</code> when cards contain more text.
+  </Property>
+  <Property name="variant" type='"card" | "plain"'>
+    The default presentation for every child column. It defaults to{" "}
+    <code>card</code>. A child can override this value with its own{" "}
+    <code>variant</code> prop.
+  </Property>
+  <Property name="children" type="Column[]">
+    Direct <code>Column</code> elements to place in the grid. Non-element
+    children are ignored, so keep the grid's content inside a{" "}
+    <code>Column</code>.
+  </Property>
+  <Property name="title" type="ReactNode">
+    A <code>Column</code> prop that adds a heading above the column content.
+    Omit it when the child content already provides its own heading.
+  </Property>
+  <Property name="href" type="string">
+    A <code>Column</code> prop that changes the column from a <code>div</code>{" "}
+    into an anchor. Use a relative path for another documentation page or a full
+    URL for an external destination.
+  </Property>
+  <Property name="variant" type='"card" | "plain"'>
+    A <code>Column</code> prop that overrides the parent grid's variant for one
+    item. It defaults to the value provided by <code>Columns</code>.
+  </Property>
+</Properties>

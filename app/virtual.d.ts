@@ -1,0 +1,51 @@
+declare module "virtual:heyo-docs-content" {
+  import type { DocsPage } from "@heyo-sh/heyo-docs/types";
+  export const pages: DocsPage[];
+}
+
+declare module "virtual:heyo-docs-config" {
+  import type { HeyoDocsConfig } from "@heyo-sh/heyo-docs/types";
+  export const config: HeyoDocsConfig;
+}
+
+declare module "virtual:heyo-docs-theme.css";
+
+declare module "virtual:heyo-docs-code-audit-content" {
+  import type { DocsPage } from "@heyo-sh/heyo-docs/types";
+  export const pages: DocsPage[];
+}
+
+declare module "virtual:heyo-docs-code-audit-config" {
+  import type { HeyoDocsConfig } from "@heyo-sh/heyo-docs/types";
+  export const config: HeyoDocsConfig;
+}
+
+declare module "virtual:heyo-docs-code-audit-content/server" {
+  import type { MarkdownPage } from "@heyo-sh/heyo-docs/types";
+  export const pages: MarkdownPage[];
+}
+
+declare module "virtual:heyo-docs-code-audit-openapi" {
+  import type { OpenApiDocumentSource } from "@heyo-sh/heyo-docs/types";
+  export const openApiDocuments: OpenApiDocumentSource[];
+}
+
+declare module "virtual:heyo-docs-code-audit-openapi/index" {
+  import type { OpenApiEndpoint } from "@heyo-sh/heyo-docs/types";
+  export const openApiEndpoints: OpenApiEndpoint[];
+}
+
+declare module "virtual:heyo-docs-content/server" {
+  import type { MarkdownPage } from "@heyo-sh/heyo-docs/types";
+  export const pages: MarkdownPage[];
+}
+
+declare module "virtual:heyo-docs-openapi" {
+  import type { OpenApiDocumentSource } from "@heyo-sh/heyo-docs/types";
+  export const openApiDocuments: OpenApiDocumentSource[];
+}
+
+declare module "virtual:heyo-docs-openapi/index" {
+  import type { OpenApiEndpoint } from "@heyo-sh/heyo-docs/types";
+  export const openApiEndpoints: OpenApiEndpoint[];
+}

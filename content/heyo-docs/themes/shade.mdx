@@ -1,0 +1,45 @@
+---
+title: Shade
+description: A crisp monochrome documentation theme modeled on the shadcn/ui documentation template.
+---
+
+# Shade
+
+Shade is a high-contrast, monochrome documentation theme modeled on the
+[shadcn/ui documentation template](https://ui.shadcn.com/docs). It uses
+precise borders, compact controls, and neutral tones so code, API details, and
+navigation have a familiar shadcn-like treatment.
+
+## Documentation previews
+
+<Image
+  lightSrc="/themes/shade-light.png"
+  darkSrc="/themes/shade-dark.png"
+  alt="Shade theme rendering of the Introduction page"
+  width={1440}
+  height={960}
+/>
+
+## Configure Shade
+
+Set `theme` to `"shade"` in `heyo-docs.config.ts`. The `mode` setting defines
+the initial palette, while the reader's later choice is remembered by the
+application.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  theme: "shade",
+  mode: "system",
+});
+```
+
+The official React Router, Next.js, and Astro integrations generate and load
+Shade's stylesheet from the selected `theme` automatically. To customize
+colors, radius, or typography, see
+[Overriding styles](https://heyo.sh/heyo-docs/manage-website/appearance#overriding-styles).
+
+Shade places group tabs and search in the header, keeping the sidebar dedicated
+to the current group's navigation. Its neutral palette and small radius follow
+the visual language of the shadcn template. Add token overrides when the
+project needs its own accent color or typography.

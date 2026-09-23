@@ -1,0 +1,206 @@
+---
+title: ".md endpoints"
+description: Serve every documentation page as clean, frontmatter-free Markdown for AI agents and other programmatic readers.
+---
+
+# .md endpoints
+
+<Callout type="info" title="Included with create-heyo-docs">
+  This is already configured in projects created with <code>create-heyo-docs</code>. No action is required if you used the creator to install Heyo Docs.
+</Callout>
+
+Heyo Docs can expose every documentation page as public Markdown. For example,
+`/guides/installation` is also available at `/guides/installation.md`; the
+home page is available as `/index.md`. These endpoints return the generated,
+frontmatter-free source with:
+
+```text
+content-type: text/markdown; charset=utf-8
+```
+
+Markdown preserves headings, lists, links, and code examples without
+navigation, search controls, or other rendered HTML. It is the preferred
+retrieval surface for AI agents, especially when used with
+[`llms.txt`](https://heyo.sh/heyo-docs/tutorials/llms-txt).
+
+## Use the generated page registry
+
+Use `markdownForPage()` with the generated page registry instead of maintaining
+a second set of AI-facing files. That keeps the documentation UI, search index,
+`llms.txt`, `llms-full.txt`, and Markdown endpoints on the same release.
+
+The Markdown is public content. Do not put secrets, private runbooks, or
+browser-only instructions that should not be exposed in the configured content
+directory.
+
+## Add the endpoints
+
+The public `*.md` URL needs different routing glue in each framework. All three
+implementations return `404 Not Found` for an unknown Markdown pathname rather
+than falling through to the rendered documentation shell.
+
+### React Router
+
+Register an internal resource route before the documentation catch-all:
+
+```ts title="app/routes.ts"
+route("__heyo-docs/markdown/*", "routes/markdown.ts"),
+route("*", "routes/page.tsx"),
+```
+
+Create `app/routes/markdown.ts`:
+
+```ts title="app/routes/markdown.ts"
+import {
+  markdownForPage,
+  pathnameFromMarkdownPath,
+} from "@heyo-sh/heyo-docs/llm";
+import type { LoaderFunctionArgs } from "react-router";
+
+import { pages } from "virtual:heyo-docs-content/server";
+
+export function loader({ params }: LoaderFunctionArgs) {
+  const pagePathname = pathnameFromMarkdownPath(`/${params["*"] ?? ""}`);
+  const page = pagePathname
+    ? pages.find((candidate) => candidate.slug === pagePathname)
+    : undefined;
+
+  if (!page)
+    return new Response("Not Found", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+
+  return new Response(markdownForPage(page), {
+    headers: { "content-type": "text/markdown; charset=utf-8" },
+  });
+}
+```
+
+Finally, redirect a public `*.md` URL to that internal resource route from the
+root middleware in `app/root.tsx`:
+
+```tsx title="app/root.tsx"
+import { pathnameFromMarkdownPath } from "@heyo-sh/heyo-docs/llm";
+
+const markdownResourcePrefix = "/__heyo-docs/markdown";
+
+const markdownMiddleware: Route.MiddlewareFunction = async (
+  { request },
+  next,
+) => {
+  const url = new URL(request.url);
+  if (
+    !url.pathname.startsWith(`${markdownResourcePrefix}/`) &&
+    pathnameFromMarkdownPath(url.pathname) !== undefined
+  ) {
+    return Response.redirect(
+      new URL(`${markdownResourcePrefix}${url.pathname}${url.search}`, url),
+      307,
+    );
+  }
+  return next();
+};
+
+export const middleware = [markdownMiddleware];
+```
+
+### Astro
+
+Create `src/pages/[...slug].md.ts`. `getStaticPaths()` emits one Markdown route
+per known documentation page and maps the home page to `index.md`:
+
+```ts title="src/pages/[...slug].md.ts"
+import type { APIRoute } from "astro";
+import {
+  markdownForPage,
+  pathnameFromMarkdownPath,
+} from "@heyo-sh/heyo-docs/llm";
+
+import { pages } from "virtual:heyo-docs-content/server";
+
+export function getStaticPaths() {
+  return pages.map((page) => ({
+    params: { slug: page.slug === "/" ? "index" : page.slug.slice(1) },
+  }));
+}
+
+export const GET: APIRoute = ({ params }) => {
+  const pagePathname = pathnameFromMarkdownPath(`/${params.slug ?? ""}.md`);
+  const page = pagePathname
+    ? pages.find((candidate) => candidate.slug === pagePathname)
+    : undefined;
+
+  if (!page)
+    return new Response("Not Found", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+
+  return new Response(markdownForPage(page), {
+    headers: { "content-type": "text/markdown; charset=utf-8" },
+  });
+};
+```
+
+This is a static route in the Astro starter; rebuilding after an MDX change
+updates the matching Markdown file.
+
+### Next.js
+
+First add a `beforeFiles` rewrite in `next.config.ts`. It keeps the resource
+route internal while preserving the public `*.md` URLs:
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/:path*.md",
+          destination: "/heyo-docs-internal/markdown/:path*.md",
+        },
+      ],
+    };
+  },
+};
+
+export default nextConfig;
+```
+
+Then create `app/heyo-docs-internal/markdown/[[...slug]]/route.ts`:
+
+```ts title="app/heyo-docs-internal/markdown/[[...slug]]/route.ts"
+import {
+  markdownForPage,
+  pathnameFromMarkdownPath,
+} from "@heyo-sh/heyo-docs/llm";
+
+import { markdownPages } from "../../../lib/docs";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ slug?: string[] }> },
+) {
+  const { slug } = await params;
+  const pagePathname = pathnameFromMarkdownPath(`/${slug?.join("/") ?? ""}`);
+  const page = pagePathname
+    ? markdownPages.find((candidate) => candidate.slug === pagePathname)
+    : undefined;
+
+  if (!page)
+    return new Response("Not Found", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+
+  return new Response(markdownForPage(page), {
+    headers: { "content-type": "text/markdown; charset=utf-8" },
+  });
+}
+```
+
+The Next.js starter's `markdownPages` is its generated server-only registry.
+Use the corresponding registry if your project stores it elsewhere.

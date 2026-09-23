@@ -1,0 +1,89 @@
+---
+title: Quickstart
+description: Create a ready-to-use documentation project with create-heyo-docs.
+---
+
+# Quickstart
+
+The fastest way to start with Heyo Docs is `create-heyo-docs`. The creator
+generates a standalone project, lets you choose a framework, and sets up your
+first documentation page.
+
+## Create a project
+
+Run the creator and answer its questions about the project directory,
+framework, deployment target, theme, and package manager. When it finishes,
+follow the printed commands to move into the new directory and start the
+development server:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-docs`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-docs@latest`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-docs`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-docs`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+Then edit `content/index.mdx` and configure the site name, description, and
+theme in [`heyo-docs.config.ts`](https://heyo.sh/heyo-docs/manage-website/configuration). The starter
+creates its first sidebar automatically; add explicit groups only when you
+need a custom order. Read the [content guide](https://heyo.sh/heyo-docs/manage-website/content) to
+learn more about the file structure.
+
+<Callout type="info" title="Recommended installation">
+  Choose <code>create-heyo-docs</code> when starting a new project. The
+  generated starter also includes SEO configuration, a sitemap,
+  <code>robots.txt</code>, RSS, and files for [AI agents](https://heyo.sh/heyo-docs/tutorials/llms-txt).
+</Callout>
+
+## Manual installation
+
+Manual installation is useful when documentation needs to live inside an
+existing application. Find complete framework-specific instructions in the
+articles below.
+
+<Columns columns={3}>
+  <Column
+    title={
+      <span className="flex items-center gap-2">
+        <img src="/react-router.svg" alt="" className="h-5 w-auto" />
+        React Router
+      </span>
+    }
+    href="https://heyo.sh/heyo-docs/framework/react-router"
+  >
+    Add Heyo Docs to an existing React Router application.
+  </Column>
+  <Column
+    title={
+      <span className="flex items-center gap-2">
+        <img src="/nextjs.svg" alt="" className="size-5" />
+        Next.js
+      </span>
+    }
+    href="https://heyo.sh/heyo-docs/framework/nextjs"
+  >
+    Configure documentation in an existing Next.js App Router application.
+  </Column>
+  <Column
+    title={
+      <span className="flex items-center gap-2">
+        <img src="/astro.svg" alt="" className="h-5 w-auto" />
+        Astro
+      </span>
+    }
+    href="https://heyo.sh/heyo-docs/framework/astro"
+  >
+    Add Heyo Docs to an existing Astro project.
+  </Column>
+</Columns>
+
+When your documentation is ready, continue with deployment to
+[Vercel](https://heyo.sh/heyo-docs/deploying/vercel) or [Cloudflare](https://heyo.sh/heyo-docs/deploying/cloudflare).

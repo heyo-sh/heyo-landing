@@ -1,0 +1,45 @@
+---
+title: Grain
+description: A clear, product-focused documentation theme inspired by Better Auth.
+---
+
+# Grain
+
+Grain is a focused documentation shell with a structured sidebar, breadcrumbs
+in the header, and a quiet reading column. Its visual direction is inspired by
+[Better Auth](https://www.better-auth.com/): restrained borders, a compact
+header, and an interface that keeps product documentation in the foreground.
+
+## Documentation previews
+
+<Image
+  lightSrc="/themes/grain-light.png"
+  darkSrc="/themes/grain-dark.png"
+  alt="Grain theme rendering of the Introduction page"
+  width={1440}
+  height={960}
+/>
+
+## Configure Grain
+
+Choose Grain in `heyo-docs.config.ts` and set the initial color mode. `system`
+follows the visitor's operating-system preference; `light` and `dark` select a
+fixed initial palette. A visitor can still switch modes from the interface.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  theme: "grain",
+  mode: "system",
+});
+```
+
+The official React Router, Next.js, and Astro integrations generate and load
+Grain's stylesheet from the selected `theme` automatically. To customize
+colors, radius, or typography, see
+[Overriding styles](https://heyo.sh/heyo-docs/manage-website/appearance#overriding-styles).
+
+Grain keeps navigation, search, and group tabs in the sidebar. On desktop the
+header shows the current breadcrumb, while the article remains the primary
+reading surface. Override semantic CSS variables to adapt color, radius, or
+typography without changing the page structure.

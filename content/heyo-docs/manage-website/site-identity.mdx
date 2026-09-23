@@ -1,0 +1,108 @@
+---
+title: Site Identity
+description: Set the documentation title, brand mark, canonical URL, favicon, and language metadata.
+---
+
+# Site Identity
+
+The configuration separates the documentation identity used by search engines
+from the compact brand mark shown in the application shell. Set both
+deliberately: a visitor should recognise the product, and every generated
+metadata file should describe the same public site.
+
+## Define the title and description
+
+`title` and `description` are the site-wide fallback metadata. An MDX page can
+replace them with frontmatter, but the root route, discovery files, and any
+page without a description use these values.
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  title: "Acme Developer Docs",
+  description: "Reference and implementation guides for the Acme platform.",
+  content: "content",
+});
+```
+
+Use a concise product name for `title` and a factual description that can work
+as a search-result excerpt. Page titles are rendered with the site title in
+browser and social metadata; a specific page description is preferable when
+the page has a distinct purpose.
+
+## Configure the header brand
+
+`branding.name` is the accessible name of the header link. It falls back to
+`title` when omitted. `branding.logo` is an image URL, normally an asset
+served from `public`:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  title: "Acme Developer Docs",
+  content: "content",
+  branding: {
+    name: "Acme",
+    logo: "/logo.svg",
+  },
+});
+```
+
+Every built-in theme links the brand mark to `/`. When `logo` is present, it
+renders that image with empty alternative text because the surrounding link
+already carries the brand name. When no logo is configured, Grain and Shade
+show their built-in geometric mark; Moss shows that mark alongside the visible
+brand name. Include lettering in the logo asset when the mark alone would be
+ambiguous.
+
+Keep the header asset small and legible. Grain and Shade render logos at up to
+24 pixels high; Moss permits up to 28 pixels and caps its width. An SVG in
+`public/logo.svg` is a good default because its `/logo.svg` URL works at every
+nested documentation route.
+
+## Set a canonical public origin
+
+`siteUrl` identifies the production site, not the source repository or a
+temporary deployment:
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  title: "Acme Developer Docs",
+  content: "content",
+  siteUrl: "https://docs.acme.com",
+});
+```
+
+This value supplies canonical URLs and absolute links in the sitemap, RSS
+feed, `llms.txt` files, and social metadata. It accepts only a clean HTTP(S)
+base URL; query strings and fragments are rejected. Use the exact hostname
+that should appear in search results, then rebuild after a domain change.
+
+## Replace the favicon
+
+The favicon is part of the framework shell rather than the Heyo Docs
+configuration. This project exposes `public/favicon.svg` and links it in
+`app/root.tsx`. Replace that file while retaining the same public path, or
+change the framework root layout to reference a different asset.
+
+Generated projects make the equivalent link in their root document:
+
+| Framework    | Shell file                      |
+| ------------ | ------------------------------- |
+| React Router | `app/root.tsx`                  |
+| Next.js      | `app/layout.tsx`                |
+| Astro        | `src/layouts/docs-layout.astro` |
+
+Use an SVG or a complete set of raster favicon assets appropriate for the
+product. Favicon changes are build assets, so check them in a production build
+as well as in a browser tab during development.
+
+## Set the document language
+
+The supplied React Router shell declares `<html lang="en">`. If the
+documentation is written primarily in another language, update that attribute
+in the application shell. This is separate from MDX content and helps screen
+readers, spelling tools, and search engines interpret the site correctly.
+
+The same change belongs in the root layout for the selected framework, not in
+individual pages. A single site language keeps all generated routes
+consistent; use the normal HTML `lang` attribute on a specific MDX element
+only for a genuine passage in another language.
