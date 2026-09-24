@@ -10,15 +10,9 @@ function Arrow() {
   );
 }
 
-const HEYO_ASCII_ART = `   ________  ________  ________  ________
-  ╱    ╱   ╲╱        ╲╱    ╱   ╲╱        ╲
- ╱         ╱    o    ╱         ╱    o    ╱
-╱         ╱        _╱╲__      ╱         ╱
-╲___╱____╱╲________╱   ╲_____╱╲________╱`;
-
 const footerGroups = [
   {
-    heading: "Products",
+    heading: "Product",
     links: [
       ["heyo-docs", "/heyo-docs/introduction"],
       ["heyo-code-audit", "/heyo-code-audit/introduction"],
@@ -39,18 +33,10 @@ const navigationLink =
 export function Footer() {
   return (
     <footer className="px-6 pt-16 pb-8 sm:px-10 lg:px-16">
-      <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-7">
-        <div
-          className="col-span-2 overflow-x-auto md:col-span-3"
-          style={{ containerType: "inline-size" }}
-        >
-          <pre className="w-fit font-mono text-left text-xs leading-tight whitespace-pre text-muted-foreground opacity-50">
-            {HEYO_ASCII_ART}
-          </pre>
-        </div>
+      <div className="grid grid-cols-4 gap-x-8 gap-y-10">
         {footerGroups.map((group) => (
           <section
-            className="col-span-1 md:col-span-2 mt-2.5"
+            className="col-span-1 mt-2.5"
             key={group.heading}
           >
             <h2 className="px-3 text-xs text-primary">{group.heading}</h2>
