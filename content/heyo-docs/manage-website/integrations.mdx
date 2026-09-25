@@ -217,6 +217,33 @@ hostname as a referrer/origin for that key. Configure the Clearbit tags or
 destinations that should receive data, then confirm the tag request is accepted
 from the deployed site. [Clearbit JavaScript installation](https://help.clearbit.com/hc/en-us/articles/360063559573-Install-Clearbit-JavaScript)
 
+### Databuddy
+
+```ts
+analytics: {
+  databuddy: {
+    clientId: "YOUR_CLIENT_ID",
+    // trackWebVitals: true,
+    // trackErrors: true,
+    // skipPatterns: ["/admin/**"],
+    // maskPatterns: ["/users/*"],
+    // scriptUrl: "https://analytics.example.com/databuddy.js", // proxy or self-hosted
+    // apiUrl: "https://basket.example.com", // proxy or self-hosted, no trailing slash
+  },
+}
+```
+
+Create the website in Databuddy and copy the client ID from its install
+snippet. Everything beyond page views is opt-in: `trackWebVitals`,
+`trackErrors`, `trackOutgoingLinks`, `trackInteractions`, `trackAttributes`,
+and `trackHashChanges` default to `false`. `enableBatching` defaults to `true`
+and accepts an integer `batchSize` between 1 and 50 plus a `batchTimeout` in
+milliseconds, `samplingRate` accepts `0.0`–`1.0`, and `skipPatterns` and
+`maskPatterns` take absolute paths that are matched against the page path.
+Set `scriptUrl` and `apiUrl` only when proxying or self-hosting the tracker.
+The browser tracker follows client-side navigation on its own, so verify that
+one page view is recorded per in-app route change. [Databuddy script installation](https://www.databuddy.cc/docs/sdk/vanilla-js)
+
 ### Fathom
 
 ```ts
