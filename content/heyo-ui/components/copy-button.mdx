@@ -1,0 +1,103 @@
+---
+title: Copy Button
+description: Copy to clipboard, with the one piece of feedback that matters.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<CopyButton value="dpl_8f21c3d9" />
+<CopyButton value="dpl_8f21c3d9" variant="outline">Copy ID</CopyButton>`}
+>
+  <HeyoUiCopyButton value="dpl_8f21c3d9" />
+  <HeyoUiCopyButton value="dpl_8f21c3d9" variant="outline">
+    Copy ID
+  </HeyoUiCopyButton>
+</CodeSnippet>
+
+# Copy Button
+
+`CopyButton` is a [`Button`](/components/button) that writes a string to the
+clipboard and then says so: the icon becomes a tick and stays that way long
+enough to be believed. Without the hold, a copy button is indistinguishable
+from a button that did nothing.
+
+It takes every `Button` prop except `icon` and `onClick` — those two are what
+the component is. A labelled button also swaps its own text for "Copied" while
+the tick is up, and it falls back to the old `execCommand` trick when the
+Clipboard API is unavailable, so it still works over plain HTTP.
+
+## Usage
+
+```tsx
+import { CopyButton } from "@heyo-sh/heyo-ui";
+
+<CopyButton value={deployment.id} variant="ghost" shape="square" />;
+```
+
+## Icon only or labelled
+
+Omit `children` for an icon-only button — it is square automatically and
+announces itself as "Copy" to a screen reader. Pass a label when the button
+sits on its own and the icon has no context to borrow from.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<CopyButton value="npx heyo-ui@latest" variant="ghost" />
+<CopyButton value="npx heyo-ui@latest" size="sm">Copy</CopyButton>
+<CopyButton value="npx heyo-ui@latest" variant="primary">Copy command</CopyButton>`}
+>
+  <HeyoUiCopyButton value="npx heyo-ui@latest" variant="ghost" />
+  <HeyoUiCopyButton value="npx heyo-ui@latest" size="sm">
+    Copy
+  </HeyoUiCopyButton>
+  <HeyoUiCopyButton value="npx heyo-ui@latest" variant="primary">
+    Copy command
+  </HeyoUiCopyButton>
+</CodeSnippet>
+
+## In a row
+
+The usual home for a copy button is the end of a row holding an identifier —
+quiet enough to ignore, close enough to hit.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<div className="flex items-center justify-between gap-3 rounded-lg bg-heyo-base px-3 py-2 ring-1 ring-heyo-line">
+  <code className="text-sm text-heyo-subtle">dpl_8f21c3d9</code>
+  <CopyButton value="dpl_8f21c3d9" variant="ghost" size="sm" />
+</div>`}
+>
+  <div className="flex w-full max-w-sm items-center justify-between gap-3 rounded-lg bg-heyo-base px-3 py-2 ring-1 ring-heyo-line">
+    <HeyoUiCode>dpl_8f21c3d9</HeyoUiCode>
+    <HeyoUiCopyButton value="dpl_8f21c3d9" variant="ghost" size="sm" />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Code blocks already have one">
+  [`CodeBlock`](/components/code-block) renders its own copy control in the
+  title bar. Pass `copy={false}` there if you would rather place your own.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="value" required type="string">
+    The text put on the clipboard.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The label beside the icon. Omit it for an icon-only button.
+  </Property>
+  <Property name="timeout" type="number">
+    How long the tick stays, in milliseconds. It defaults to `1600`.
+  </Property>
+  <Property name="onCopy" type="(value: string) => void">
+    Fires after a successful write — for analytics or a toast.
+  </Property>
+  <Property name="label" type="string">
+    The accessible name when there is no visible label. It defaults to `"Copy"`.
+  </Property>
+  <Property name="variant / size / shape" type="ButtonProps">
+    Every `Button` appearance prop. `variant` defaults to `ghost`, `size` to
+    `sm`, and `shape` to `square` whenever there is no label.
+  </Property>
+</Properties>

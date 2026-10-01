@@ -1,0 +1,131 @@
+---
+title: Meter
+description: A measurement inside a known range — quota, disk, capacity, budget. There is no separate Progress.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Meter label="Storage" value={68} showValue />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiMeter label="Storage" value={68} showValue />
+  </div>
+</CodeSnippet>
+
+# Meter
+
+`Meter` reports a value inside a known range. There is deliberately **no
+`Progress` component**: a task with a percentage is still just a measurement,
+and one bar that always means the same thing beats two that look identical and
+are chosen by accident.
+
+## Usage
+
+```tsx
+import { Meter } from "@heyo-sh/heyo-ui";
+
+<Meter label="Storage" value={68} showValue />;
+```
+
+## Tones
+
+The tone is yours to pick, because only your application knows when 80% is fine
+and when it is an incident.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Meter label="Requests" value={32} tone="neutral" showValue />
+<Meter label="Bandwidth" value={58} tone="brand" showValue />
+<Meter label="Build minutes" value={74} tone="warning" showValue />
+<Meter label="Quota" value={96} tone="danger" showValue />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-4">
+    <HeyoUiMeter label="Requests" value={32} tone="neutral" showValue />
+    <HeyoUiMeter label="Bandwidth" value={58} tone="brand" showValue />
+    <HeyoUiMeter label="Build minutes" value={74} tone="warning" showValue />
+    <HeyoUiMeter label="Quota" value={96} tone="danger" showValue />
+  </div>
+</CodeSnippet>
+
+## Sizes and ranges
+
+`min` and `max` set the range — a meter is not required to be a percentage.
+`format` controls how `showValue` prints it.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Meter size="sm" value={40} />
+<Meter size="base" label="Memory" value={384} min={0} max={512} showValue />
+<Meter size="lg" value={88} tone="success" />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-4">
+    <HeyoUiMeter size="sm" value={40} />
+    <HeyoUiMeter
+      size="base"
+      label="Memory"
+      value={384}
+      min={0}
+      max={512}
+      showValue
+    />
+    <HeyoUiMeter size="lg" value={88} tone="success" />
+  </div>
+</CodeSnippet>
+
+## Inside a stat
+
+A meter is small enough to be a stat's chart, which is the usual way a quota
+appears on a dashboard.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Stat
+  bordered
+  label="Storage"
+  value="6.8"
+  unit="GB of 10 GB"
+  chart={<Meter value={68} size="sm" tone="brand" />}
+/>`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiStat
+      bordered
+      label="Storage"
+      value="6.8"
+      unit="GB of 10 GB"
+      chart={<HeyoUiMeter value={68} size="sm" tone="brand" />}
+    />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="value" required type="number">
+    The measurement.
+  </Property>
+  <Property name="min / max" type="number">
+    The range. They default to `0` and `100`.
+  </Property>
+  <Property name="label" type="ReactNode">
+    The row above the track.
+  </Property>
+  <Property name="showValue" type="boolean">
+    Prints the value at the right end of the label row.
+  </Property>
+  <Property name="format" type="Intl.NumberFormatOptions">
+    How the printed value is formatted.
+  </Property>
+  <Property name="size" type='"sm" | "base" | "lg"'>
+    Track height: 4, 6 or 10px. It defaults to `base`.
+  </Property>
+  <Property
+    name="tone"
+    type='"neutral" | "brand" | "success" | "warning" | "danger"'
+  >
+    The fill colour. It defaults to `neutral`.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the root.
+  </Property>
+</Properties>

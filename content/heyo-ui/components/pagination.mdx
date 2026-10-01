@@ -1,0 +1,108 @@
+---
+title: Pagination
+description: Page numbers with a window around the current one, or a compact previous/next pair.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Pagination page={page} pageCount={12} onPageChange={setPage} />`}
+>
+  <HeyoUiState initial={4}>
+    {(page, setPage) => (
+      <HeyoUiPagination page={page} pageCount={12} onPageChange={setPage} />
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+# Pagination
+
+`Pagination` is fully controlled: it renders the window of page numbers around
+`page`, with ellipses where the run is broken, and calls `onPageChange`. It
+never owns the page itself, because the page almost always lives in the URL.
+
+## Usage
+
+```tsx
+import { Pagination } from "@heyo-sh/heyo-ui";
+
+<Pagination page={page} pageCount={12} onPageChange={setPage} />;
+```
+
+## Siblings
+
+`siblings` is how many numbers sit on each side of the current page. Two is
+right for a wide table; one keeps the control narrow enough for a card footer.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Pagination siblings={1} page={page} pageCount={20} onPageChange={setPage} />
+<Pagination siblings={3} page={page} pageCount={20} onPageChange={setPage} />`}
+>
+  <HeyoUiState initial={8}>
+    {(page, setPage) => (
+      <div className="flex flex-col items-center gap-4">
+        <HeyoUiPagination
+          siblings={1}
+          page={page}
+          pageCount={20}
+          onPageChange={setPage}
+        />
+        <HeyoUiPagination
+          siblings={3}
+          page={page}
+          pageCount={20}
+          onPageChange={setPage}
+        />
+      </div>
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+## Compact
+
+`compact` drops the numbers and keeps a previous/next pair with a counter
+between them. It is the right control under a narrow list, and on a phone.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Pagination compact page={page} pageCount={12} onPageChange={setPage} />`}
+>
+  <HeyoUiState initial={4}>
+    {(page, setPage) => (
+      <HeyoUiPagination
+        compact
+        page={page}
+        pageCount={12}
+        onPageChange={setPage}
+      />
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+<Callout type="note" title="Inside a table">
+  [`DataTable`](/components/data-table) has a `footer` slot made for this — put
+  the pagination there and it shares the table's single ring.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="page" required type="number">
+    The current page, 1-based.
+  </Property>
+  <Property name="pageCount" required type="number">
+    How many pages there are in total.
+  </Property>
+  <Property name="onPageChange" required type="(page: number) => void">
+    Fires with the requested page.
+  </Property>
+  <Property name="siblings" type="number">
+    How many page buttons to show on each side of the current one.
+  </Property>
+  <Property name="compact" type="boolean">
+    Drops the numbers and keeps previous/next plus a counter.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the `<nav>`.
+  </Property>
+</Properties>

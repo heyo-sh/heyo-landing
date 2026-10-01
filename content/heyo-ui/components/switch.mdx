@@ -1,0 +1,114 @@
+---
+title: Switch
+description: A binary toggle for a setting that applies immediately.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Switch
+  defaultChecked
+  label="Automatic deploys"
+  description="Deploy every push to main."
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSwitch
+      defaultChecked
+      label="Automatic deploys"
+      description="Deploy every push to main."
+    />
+  </div>
+</CodeSnippet>
+
+# Switch
+
+A `Switch` applies the moment it is flipped. That is the whole distinction from
+a [`Checkbox`](/components/checkbox): a checkbox is a value you are editing and
+will submit, a switch is a state you are changing now. If there is a Save
+button below it, it should probably be a checkbox.
+
+## Usage
+
+```tsx
+import { Switch } from "@heyo-sh/heyo-ui";
+
+<Switch label="Automatic deploys" defaultChecked onCheckedChange={save} />;
+```
+
+## Settings rows
+
+`align="end"` puts the control after the text, which is the layout a settings
+list wants: labels line up on the left, switches line up on the right.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Switch align="end" defaultChecked label="Automatic deploys" description="Deploy every push to main." />
+<Switch align="end" label="Preview comments" description="Comment on each pull request." />`}
+>
+  <div className="flex w-full max-w-sm flex-col divide-y divide-heyo-hairline">
+    <div className="py-3">
+      <HeyoUiSwitch
+        align="end"
+        defaultChecked
+        label="Automatic deploys"
+        description="Deploy every push to main."
+      />
+    </div>
+    <div className="py-3">
+      <HeyoUiSwitch
+        align="end"
+        label="Preview comments"
+        description="Comment on each pull request."
+      />
+    </div>
+  </div>
+</CodeSnippet>
+
+## Bare and disabled
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4"
+  code={`<Switch aria-label="Enabled" />
+<Switch defaultChecked aria-label="Enabled" />
+<Switch disabled aria-label="Enabled" />
+<Switch disabled defaultChecked aria-label="Enabled" />`}
+>
+  <HeyoUiSwitch aria-label="Enabled" />
+  <HeyoUiSwitch defaultChecked aria-label="Enabled" />
+  <HeyoUiSwitch disabled aria-label="Enabled" />
+  <HeyoUiSwitch disabled defaultChecked aria-label="Enabled" />
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="label" type="ReactNode">
+    An inline label. Its presence turns the component into the whole clickable
+    row.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the label.
+  </Property>
+  <Property name="align" type='"start" | "end"'>
+    Where the control sits relative to the text. It defaults to `start`; `end`
+    is the settings-row layout.
+  </Property>
+  <Property name="checked / defaultChecked" type="boolean">
+    Controlled and uncontrolled state.
+  </Property>
+  <Property name="onCheckedChange" type="(checked: boolean) => void">
+    Fires when the switch is flipped.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the row and ignores interaction.
+  </Property>
+  <Property name="wrapperClassName" type="string">
+    Class for the outer `<label>`.
+  </Property>
+  <Property name="className" type="string">
+    Class for the track itself.
+  </Property>
+  <Property name="name / required / value" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>

@@ -1,0 +1,190 @@
+---
+title: Tree
+description: A collapsible hierarchy with a guide line per level — file trees, resource explorers, nested config.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Tree
+  defaultExpanded={["src"]}
+  selected={selected}
+  onSelect={(node) => setSelected(node.id)}
+  nodes={[
+    {
+      id: "src",
+      label: "src",
+      icon: IconFolder,
+      children: [
+        { id: "index", label: "index.ts", icon: IconCode, meta: "2.1 kB" },
+        { id: "worker", label: "worker.ts", icon: IconCode, meta: "8.4 kB" },
+      ],
+    },
+    { id: "readme", label: "README.md", icon: IconCode },
+  ]}
+/>`}
+>
+  <HeyoUiState initial="index">
+    {(selected, setSelected) => (
+      <div className="w-full max-w-sm rounded-lg bg-heyo-base p-2 ring-1 ring-heyo-line">
+        <HeyoUiTree
+          defaultExpanded={["src"]}
+          selected={selected}
+          onSelect={(node) => setSelected(node.id)}
+          nodes={[
+            {
+              id: "src",
+              label: "src",
+              icon: <IconFolder />,
+              children: [
+                {
+                  id: "index",
+                  label: "index.ts",
+                  icon: <IconCode />,
+                  meta: "2.1 kB",
+                },
+                {
+                  id: "worker",
+                  label: "worker.ts",
+                  icon: <IconCode />,
+                  meta: "8.4 kB",
+                },
+              ],
+            },
+            { id: "readme", label: "README.md", icon: <IconCode /> },
+          ]}
+        />
+      </div>
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+# Tree
+
+`Tree` renders a hierarchy from data. Indentation is drawn as a **guide line
+per level** rather than as padding, so at depth five you can still see which
+branch a row belongs to.
+
+Rows are real buttons inside a `tree` role, so arrow keys and screen readers
+both work without anything extra from you.
+
+## Usage
+
+```tsx
+import { Tree } from "@heyo-sh/heyo-ui";
+
+<Tree
+  nodes={nodes}
+  defaultExpanded={["src"]}
+  onSelect={(node) => open(node.id)}
+/>;
+```
+
+## Branches and leaves
+
+`children` decides what a node is. An array — even an empty one — makes a
+branch with a chevron, which is how an empty folder stays a folder. Leave it
+`undefined` for a leaf.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Tree
+  defaultExpanded={["bindings"]}
+  nodes={[
+    {
+      id: "bindings",
+      label: "Bindings",
+      children: [
+        { id: "kv", label: "KV", meta: <Badge variant="count">2</Badge> },
+        { id: "r2", label: "R2", children: [] },
+      ],
+    },
+  ]}
+/>`}
+>
+  <div className="w-full max-w-sm rounded-lg bg-heyo-base p-2 ring-1 ring-heyo-line">
+    <HeyoUiTree
+      defaultExpanded={["bindings"]}
+      nodes={[
+        {
+          id: "bindings",
+          label: "Bindings",
+          children: [
+            {
+              id: "kv",
+              label: "KV",
+              meta: <HeyoUiBadge variant="count">2</HeyoUiBadge>,
+            },
+            { id: "r2", label: "R2", children: [] },
+          ],
+        },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+## Controlled expansion
+
+`expanded` with `onExpandedChange` hands the open branches to you — the way to
+persist them, or to expand a path when a route changes.
+
+```tsx
+const [expanded, setExpanded] = useState<string[]>(["src"]);
+
+<Tree nodes={nodes} expanded={expanded} onExpandedChange={setExpanded} />;
+```
+
+`openIcon` swaps the glyph for an open branch, which is how a closed folder and
+an open one end up looking different.
+
+## Properties
+
+<Properties>
+  <Property name="nodes" required type="TreeNode[]">
+    The hierarchy.
+  </Property>
+  <Property name="defaultExpanded" type="string[]">
+    Ids of the branches open on first render.
+  </Property>
+  <Property name="expanded" type="string[]">
+    Controlled open branches. Pair it with `onExpandedChange`.
+  </Property>
+  <Property name="onExpandedChange" type="(expanded: string[]) => void">
+    Fires when a branch opens or closes.
+  </Property>
+  <Property name="selected" type="string | null">
+    The selected node's id. Selection is always controlled.
+  </Property>
+  <Property name="onSelect" type="(node: TreeNode) => void">
+    Fires with the whole node, not just its id.
+  </Property>
+  <Property name="openIcon" type="IconLike">
+    The icon for an open branch, when it differs from `icon`.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the root.
+  </Property>
+</Properties>
+
+### TreeNode
+
+<Properties>
+  <Property name="id" required type="string">
+    Stable id, used for expansion, selection and React keys.
+  </Property>
+  <Property name="label" required type="ReactNode">
+    The row's text.
+  </Property>
+  <Property name="icon" type="IconLike">
+    The leading glyph.
+  </Property>
+  <Property name="meta" type="ReactNode">
+    A right-aligned hint — a count, a status dot, a size.
+  </Property>
+  <Property name="children" type="TreeNode[]">
+    Nested nodes. An empty array still renders a chevron; `undefined` makes a
+    leaf.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the row and ignores interaction.
+  </Property>
+</Properties>

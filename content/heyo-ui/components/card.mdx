@@ -1,0 +1,284 @@
+---
+title: Card
+description: A surface with four elevations, plus header, body and footer slots that keep their own padding.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Card variant="raised">
+  <CardHeader>
+    <div className="flex flex-col gap-0.5">
+      <CardTitle>Deployments</CardTitle>
+      <CardDescription>Last 3 builds of acme-api</CardDescription>
+    </div>
+    <Button size="sm" variant="ghost" icon={IconExternalLink}>
+      View all
+    </Button>
+  </CardHeader>
+  <CardBody className="p-0">
+    <Table interactive>
+      <Table.Head>
+        <Table.Row>
+          <Table.Header>Commit</Table.Header>
+          <Table.Header>Branch</Table.Header>
+          <Table.Header align="end">Duration</Table.Header>
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {builds.map(({ sha, branch, time }) => (
+          <Table.Row key={sha}>
+            <Table.Cell><Code>{sha}</Code></Table.Cell>
+            <Table.Cell className="text-heyo-subtle">{branch}</Table.Cell>
+            <Table.Cell align="end" numeric>{time}</Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
+  </CardBody>
+  <CardFooter>
+    <Button size="sm" variant="ghost">Cancel</Button>
+    <Button size="sm" variant="primary" icon={IconRocket}>Redeploy</Button>
+  </CardFooter>
+</Card>`}
+>
+  <HeyoUiCard className="w-full max-w-lg" variant="raised">
+    <HeyoUiCardHeader>
+      <div className="flex flex-col gap-0.5">
+        <HeyoUiCardTitle>Deployments</HeyoUiCardTitle>
+        <HeyoUiCardDescription>Last 3 builds of acme-api</HeyoUiCardDescription>
+      </div>
+      <HeyoUiButton size="sm" variant="ghost" icon={<IconExternalLink />}>
+        View all
+      </HeyoUiButton>
+    </HeyoUiCardHeader>
+    <HeyoUiCardBody className="p-0">
+      <HeyoUiTable interactive>
+        <HeyoUiTable.Head>
+          <HeyoUiTable.Row>
+            <HeyoUiTable.Header>Commit</HeyoUiTable.Header>
+            <HeyoUiTable.Header>Branch</HeyoUiTable.Header>
+            <HeyoUiTable.Header align="end">Duration</HeyoUiTable.Header>
+          </HeyoUiTable.Row>
+        </HeyoUiTable.Head>
+        <HeyoUiTable.Body>
+          {[
+            { sha: "a1b2c3d", branch: "main", time: "42s" },
+            { sha: "9f8e7d6", branch: "main", time: "38s" },
+            { sha: "4c5b6a7", branch: "fix/cors", time: "12s" },
+          ].map(({ sha, branch, time }) => (
+            <HeyoUiTable.Row key={sha}>
+              <HeyoUiTable.Cell>
+                <HeyoUiCode>{sha}</HeyoUiCode>
+              </HeyoUiTable.Cell>
+              <HeyoUiTable.Cell className="text-heyo-subtle">
+                <span className="flex items-center gap-1.5">
+                  <IconGitBranch className="size-3.5 shrink-0" />
+                  {branch}
+                </span>
+              </HeyoUiTable.Cell>
+              <HeyoUiTable.Cell align="end" numeric>
+                {time}
+              </HeyoUiTable.Cell>
+            </HeyoUiTable.Row>
+          ))}
+        </HeyoUiTable.Body>
+      </HeyoUiTable>
+    </HeyoUiCardBody>
+    <HeyoUiCardFooter>
+      <HeyoUiButton size="sm" variant="ghost">
+        Cancel
+      </HeyoUiButton>
+      <HeyoUiButton size="sm" variant="primary" icon={<IconRocket />}>
+        Redeploy
+      </HeyoUiButton>
+    </HeyoUiCardFooter>
+  </HeyoUiCard>
+</CodeSnippet>
+
+# Card
+
+`Card` is the box every grouped surface in an application is built from. The
+parts are independent: a card can be a header and a body, a body alone, or all
+three. Seams are only drawn where something actually follows, so a header
+without a body carries no stray rule.
+
+Every slot keeps its own padding, which is what lets a table or a list sit
+flush inside one — drop `p-0` on `CardBody` and the rows run edge to edge.
+
+## Usage
+
+```tsx
+import { Card, CardBody, CardHeader, CardTitle } from "@heyo-sh/heyo-ui";
+
+<Card>
+  <CardHeader>
+    <CardTitle>Usage</CardTitle>
+  </CardHeader>
+  <CardBody>142,318 requests this month.</CardBody>
+</Card>;
+```
+
+## Variants
+
+`flat` is the default and the right answer in a dense interface: a hairline is
+enough to separate a surface from the page. `raised` adds a real edge and a
+whisper of shadow for something that floats. `recessed` is a well — logs,
+diffs, empty states. `plain` keeps only the layout. Hierarchy comes from the
+surface, not from a border.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Card variant="flat">
+  <CardHeader>
+    <div className="flex flex-col gap-0.5">
+      <CardTitle>variant="flat"</CardTitle>
+      <CardDescription>Same padding, different elevation.</CardDescription>
+    </div>
+    <Badge variant="outline" size="sm">flat</Badge>
+  </CardHeader>
+  <CardBody>
+    <Text size="sm" tone="subtle">
+      Hierarchy comes from the surface, not from a border.
+    </Text>
+  </CardBody>
+</Card>`}
+>
+  <div className="grid w-full gap-4 sm:grid-cols-2">
+    {["plain", "flat", "raised", "recessed"].map((variant) => (
+      <HeyoUiCard key={variant} variant={variant}>
+        <HeyoUiCardHeader>
+          <div className="flex flex-col gap-0.5">
+            <HeyoUiCardTitle>variant="{variant}"</HeyoUiCardTitle>
+            <HeyoUiCardDescription>
+              Same padding, different elevation.
+            </HeyoUiCardDescription>
+          </div>
+          <HeyoUiBadge variant="outline" size="sm">
+            {variant}
+          </HeyoUiBadge>
+        </HeyoUiCardHeader>
+        <HeyoUiCardBody>
+          <HeyoUiText size="sm" tone="subtle">
+            Hierarchy comes from the surface, not from a border.
+          </HeyoUiText>
+        </HeyoUiCardBody>
+      </HeyoUiCard>
+    ))}
+  </div>
+</CodeSnippet>
+
+## The header is a row
+
+`CardHeader` is a flex row with `justify-between`, so a title on the left and a
+control on the right need no extra wrapper. Group the title and description in
+one element when both are present.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Card>
+  <CardHeader>
+    <CardTitle>Environment variables</CardTitle>
+    <Button size="sm" icon={IconPlus}>Add</Button>
+  </CardHeader>
+  <CardBody>
+    <Text size="sm" tone="subtle">No variables yet.</Text>
+  </CardBody>
+</Card>`}
+>
+  <HeyoUiCard className="w-full max-w-sm">
+    <HeyoUiCardHeader>
+      <HeyoUiCardTitle>Environment variables</HeyoUiCardTitle>
+      <HeyoUiButton size="sm" icon={<IconPlus />}>
+        Add
+      </HeyoUiButton>
+    </HeyoUiCardHeader>
+    <HeyoUiCardBody>
+      <HeyoUiText size="sm" tone="subtle">
+        No variables yet.
+      </HeyoUiText>
+    </HeyoUiCardBody>
+  </HeyoUiCard>
+</CodeSnippet>
+
+## Body only
+
+A card does not need three slots. One `CardBody` is the whole component when
+the content is a single figure.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Card>
+  <CardBody className="flex items-baseline justify-between">
+    <Text size="sm" tone="subtle" className="flex items-center gap-1.5">
+      <IconTrendingUp className="size-4 shrink-0" />
+      Requests today
+    </Text>
+    <Text size="xl" weight="medium" className="tabular-nums">1.24M</Text>
+  </CardBody>
+</Card>`}
+>
+  <HeyoUiCard className="w-full max-w-sm">
+    <HeyoUiCardBody className="flex items-baseline justify-between">
+      <HeyoUiText size="sm" tone="subtle" className="flex items-center gap-1.5">
+        <IconTrendingUp className="size-4 shrink-0" />
+        Requests today
+      </HeyoUiText>
+      <HeyoUiText size="xl" weight="medium" className="tabular-nums">
+        1.24M
+      </HeyoUiText>
+    </HeyoUiCardBody>
+  </HeyoUiCard>
+</CodeSnippet>
+
+## The footer is for actions
+
+`CardFooter` sits on the elevated surface and right-aligns its children, which
+is where a card's actions belong. It is not a second body — long content in a
+footer means the card wants another section instead.
+
+<Callout type="note" title="Pairs well with">
+  [`Stat`](/components/stat) is borderless by default so it can live inside a
+  card. [`Empty`](/components/empty) fills a card body that has nothing in it
+  yet.
+</Callout>
+
+## Properties
+
+### Card
+
+<Properties>
+  <Property name="variant" type='"flat" | "raised" | "recessed" | "plain"'>
+    The surface treatment. It defaults to `flat`.
+  </Property>
+  <Property name="className" type="string">
+    Merged through `tailwind-merge`, so a different radius or width is one
+    class.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Usually `CardHeader`, `CardBody` and `CardFooter`, in that order.
+  </Property>
+</Properties>
+
+### CardHeader, CardBody, CardFooter
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    `CardHeader` lays its children out as a row with the last item pushed right.
+    `CardBody` is the content column. `CardFooter` right-aligns actions on the
+    elevated surface.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the respective part — `p-0` on `CardBody` is how a table or a
+    list sits flush. Every part also carries a `data-slot` (`card-header`,
+    `card-body`, `card-footer`) for global overrides.
+  </Property>
+</Properties>
+
+### CardTitle and CardDescription
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    `CardTitle` renders an `<h3>` at 13px medium; `CardDescription` renders a
+    12px muted paragraph. Both have their margins reset.
+  </Property>
+</Properties>

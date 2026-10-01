@@ -1,0 +1,85 @@
+---
+title: Introduction
+description: heyo-ui is a flat, dense, developer-first React component library built on Base UI and Tailwind CSS v4.
+---
+
+# heyo-ui
+
+heyo-ui is a React component library for the kind of interface a developer
+spends the day inside: a dashboard, a console, an admin panel. It ships as a
+single compiled package — install it, import one line of CSS, and use the
+components. There is nothing to paste into your repository and nothing to
+configure.
+
+It is built on [Base UI](https://base-ui.com) for behaviour and accessibility,
+and on [Tailwind CSS v4](https://tailwindcss.com) for styling, with
+48 components covering layout, forms, navigation, data display, feedback and
+overlays.
+
+<GitHub repo="heyo-sh/heyo-ui" />
+
+## What makes it different
+
+<Columns columns={2}>
+  <Column title="Rings, not borders">
+    Edges are drawn with `ring-1`, so changing a variant never shifts the layout
+    by a pixel and controls sit flush inside a group.
+  </Column>
+  <Column title="Semantic tokens only">
+    `bg-heyo-base`, `text-heyo-subtle`, `ring-heyo-line`. Every token is named
+    by the role it plays, never by its hue.
+  </Column>
+  <Column title="No dark: variants">
+    Tokens resolve both colour modes through `light-dark()`. Flip one attribute
+    and the whole tree follows — components never branch on mode.
+  </Column>
+  <Column title="Dense by default">
+    A 12 / 13 / 14 / 16px type scale and 20 / 26 / 32 / 40px controls. Hierarchy
+    comes from weight and colour, not from size.
+  </Column>
+</Columns>
+
+## One package, one import
+
+Every component comes from the same module, pre-compiled and marked
+`"use client"`, so it drops into the Next.js App Router, React Router or Vite
+without a wrapper.
+
+```tsx
+import { Button, Input, Sidebar } from "@heyo-sh/heyo-ui";
+```
+
+Base UI, `clsx`, `cva` and `tailwind-merge` are bundled as regular
+dependencies — you never install or configure them. There is no
+`tailwind.config.js`, no `@source` directive, no provider to wrap your
+application in and no `cn()` helper to copy.
+
+<Callout type="tip" title="Start here">
+  [Installation](/installation) takes about a minute. [Theming](/theming)
+  explains the token system and how light and dark mode work.
+</Callout>
+
+## The catalogue
+
+| Group            | Components                                                                                                                                                                        |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Layout**       | `Accordion`, `Collapsible`, `Card`, `ScrollArea`, `Separator`, `Sidebar`                                                                                                          |
+| **Forms**        | `Field`, `Label`, `Input`, `Textarea`, `NumberField`, `OtpField`, `Select`, `Combobox`, `Checkbox`, `Radio`, `Switch`, `Slider`, `Toggle`, `Calendar`, `DatePicker`, `FileUpload` |
+| **Actions**      | `Button`, `ButtonGroup`, `CopyButton`, `Dropdown`, `Command`                                                                                                                      |
+| **Navigation**   | `Tabs`, `Breadcrumb`, `Pagination`, `Tree`                                                                                                                                        |
+| **Data display** | `Table`, `DataTable`, `Stat`, `Timeline`, `Avatar`, `StatusBar`                                                                                                                   |
+| **Feedback**     | `Badge`, `Meter`, `Empty`, `Skeleton`, `Spinner`, `Toaster` + `toast()`                                                                                                           |
+| **Overlays**     | `Dialog`, `Sheet`, `Popover`, `Tooltip`                                                                                                                                           |
+| **Typography**   | `Text`, `Heading`, `Code`, `Kbd`, `CodeBlock`                                                                                                                                     |
+
+## What it deliberately does not ship
+
+A missing component is usually a decision rather than an omission. heyo-ui has
+no icon dependency, no date library, no syntax grammars, no context menu and no
+virtualised table — [Design rules](/design-rules) explains each one, including
+the three that were built first and then removed.
+
+## Licence
+
+MIT. The source lives at
+[github.com/heyo-sh/heyo-ui](https://github.com/heyo-sh/heyo-ui).

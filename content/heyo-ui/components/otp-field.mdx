@@ -1,0 +1,138 @@
+---
+title: OTP Field
+description: A one-time code field — one square box per character, paste-aware, with the caret moving itself.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<OtpField
+  label="Verification code"
+  description="We sent a six-digit code to your email."
+  length={6}
+  groupAfter={3}
+/>`}
+>
+  <div className="w-fit">
+    <HeyoUiOtpField
+      label="Verification code"
+      description="We sent a six-digit code to your email."
+      length={6}
+      groupAfter={3}
+    />
+  </div>
+</CodeSnippet>
+
+# OTP Field
+
+`OtpField` is the two-factor box: one slot per character, the caret moving
+itself as you type, and a paste anywhere in the field filling every slot at
+once.
+
+The slots are **square**, and on the same 8px rhythm as every other control —
+`base` is the 32px control height. A taller-than-wide slot reads as a text
+field that has been squashed; a square one reads as a keycap, which is what it
+is.
+
+## Usage
+
+```tsx
+import { OtpField } from "@heyo-sh/heyo-ui";
+
+<OtpField length={6} groupAfter={3} onValueComplete={verify} />;
+```
+
+## Grouping
+
+`groupAfter` inserts a dash after _n_ slots. It is cosmetic, but it makes a
+six-digit code readable as two chunks instead of one blur.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<OtpField length={6} aria-label="Code" />
+<OtpField length={6} groupAfter={3} aria-label="Code" />
+<OtpField length={8} groupAfter={4} size="sm" aria-label="Backup code" />`}
+>
+  <div className="w-fit">
+    <HeyoUiOtpField length={6} />
+  </div>
+  <div className="w-fit">
+    <HeyoUiOtpField length={6} groupAfter={3} />
+  </div>
+  <div className="w-fit">
+    <HeyoUiOtpField length={8} groupAfter={4} size="sm" />
+  </div>
+</CodeSnippet>
+
+## Completion
+
+`onValueComplete` fires the moment the last slot is filled — by typing or by
+pasting — which is where verification belongs. There is no submit button to
+wait for.
+
+```tsx
+<OtpField
+  label="Verification code"
+  length={6}
+  onValueComplete={(code) => verify(code)}
+  error={failed ? "That code is not valid." : undefined}
+/>
+```
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<OtpField label="Verification code" length={6} error="That code is not valid." />`}
+>
+  <div className="w-fit">
+    <HeyoUiOtpField
+      label="Verification code"
+      length={6}
+      error="That code is not valid."
+    />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="length" type="number">
+    How many slots. It defaults to `6`.
+  </Property>
+  <Property name="groupAfter" type="number">
+    Inserts a dash after this many slots — `3` gives `123-456`.
+  </Property>
+  <Property name="size" type='"sm" | "base" | "lg"'>
+    28, 32 or 40px square. It defaults to `base`.
+  </Property>
+  <Property name="value / defaultValue" type="string">
+    Controlled and uncontrolled value.
+  </Property>
+  <Property name="onValueChange" type="(value: string) => void">
+    Fires on every keystroke.
+  </Property>
+  <Property name="onValueComplete" type="(value: string) => void">
+    Fires when every slot is filled.
+  </Property>
+  <Property name="mask" type="boolean">
+    Masks the entered characters.
+  </Property>
+  <Property name="autoSubmit" type="boolean">
+    Submits the owning form once the code is complete.
+  </Property>
+  <Property
+    name="validationType"
+    type='"numeric" | "alpha" | "alphanumeric" | "none"'
+  >
+    What the field accepts. It defaults to `numeric`, which also sets the
+    on-screen keyboard.
+  </Property>
+  <Property
+    name="label / description / error / optional / labelAside"
+    type="FieldOwnProps"
+  >
+    The same field layout every heyo-ui control composes. See
+    [`Field`](/components/field).
+  </Property>
+  <Property name="disabled / required / name" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>

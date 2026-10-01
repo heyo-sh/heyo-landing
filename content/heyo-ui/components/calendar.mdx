@@ -1,0 +1,167 @@
+---
+title: Calendar
+description: A month grid with no date library behind it — single dates or ranges, one or two months.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Calendar value={date} onSelect={setDate} />`}
+>
+  <HeyoUiState initial={null}>
+    {(date, setDate) => (
+      <div className="rounded-lg bg-heyo-base p-2 ring-1 ring-heyo-line">
+        <HeyoUiCalendar value={date} onSelect={setDate} />
+      </div>
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+# Calendar
+
+`Calendar` is the month grid. It is deliberately **dependency-free**:
+`Intl.DateTimeFormat` already knows every locale's month and weekday names, and
+the only arithmetic a calendar needs is "add a day", which `Date` does
+correctly across DST. A date library for this would cost more than the
+component.
+
+Everything works on _local midnight_ — storing a time component is how a
+calendar ends up off by one for anyone east of Greenwich after 23:00.
+
+## Usage
+
+```tsx
+import { Calendar } from "@heyo-sh/heyo-ui";
+
+const [date, setDate] = useState<Date | null>(null);
+
+<Calendar value={date} onSelect={setDate} />;
+```
+
+`Calendar` is controlled: it owns the month you are looking at, you own the
+selection.
+
+## Ranges
+
+`mode="range"` selects two dates and fills everything between them. The value
+is `{ from, to }`, with `to` staying `null` until the second click.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Calendar
+  mode="range"
+  months={2}
+  value={range}
+  onSelect={setRange}
+/>`}
+>
+  <HeyoUiState initial={{ from: null, to: null }}>
+    {(range, setRange) => (
+      <div className="overflow-x-auto rounded-lg bg-heyo-base p-2 ring-1 ring-heyo-line heyo-scrollbar">
+        <HeyoUiCalendar
+          mode="range"
+          months={2}
+          value={range}
+          onSelect={setRange}
+        />
+      </div>
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+## Bounds and blackouts
+
+`min` and `max` set the window; `disabledDate` adds any rule on top of it —
+weekends, holidays, days already booked.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Calendar
+  value={date}
+  onSelect={setDate}
+  min={new Date()}
+  disabledDate={(day) => day.getDay() === 0 || day.getDay() === 6}
+/>`}
+>
+  <HeyoUiState initial={null}>
+    {(date, setDate) => (
+      <div className="rounded-lg bg-heyo-base p-2 ring-1 ring-heyo-line">
+        <HeyoUiCalendar
+          value={date}
+          onSelect={setDate}
+          disabledDate={(day) => day.getDay() === 0 || day.getDay() === 6}
+        />
+      </div>
+    )}
+  </HeyoUiState>
+</CodeSnippet>
+
+## Locale and week start
+
+`locale` drives the month and weekday names through `Intl`; `weekStartsOn` is
+`1` (Monday) by default, because most of the world starts there.
+
+```tsx
+<Calendar locale="pl-PL" weekStartsOn={1} value={date} onSelect={setDate} />
+```
+
+<Callout type="note" title="A field, not a grid?">
+  [`DatePicker`](/components/date-picker) is this calendar inside a popover,
+  with a control that reads the date back.
+</Callout>
+
+## Helpers
+
+Both are exported because a calendar's caller always ends up needing them.
+
+```tsx
+import { isSameDay, startOfDay } from "@heyo-sh/heyo-ui";
+
+startOfDay(new Date()); // local midnight
+isSameDay(a, b); // same calendar day, ignoring time
+```
+
+## Properties
+
+<Properties>
+  <Property name="mode" type='"single" | "range"'>
+    It defaults to `single`.
+  </Property>
+  <Property name="value" type="Date | null | DateRange">
+    The selection. `{ from, to }` in range mode.
+  </Property>
+  <Property name="onSelect" type="(value) => void">
+    Fires with the new selection. Selecting the same day again clears it.
+  </Property>
+  <Property name="months" type="1 | 2">
+    How many months side by side. It defaults to `1`.
+  </Property>
+  <Property name="defaultMonth" type="Date">
+    The month shown on first render. It defaults to the selection, or today.
+  </Property>
+  <Property name="min / max" type="Date">
+    Nothing before `min` or after `max` is selectable.
+  </Property>
+  <Property name="disabledDate" type="(date: Date) => boolean">
+    An extra rule on top of `min` and `max`.
+  </Property>
+  <Property name="weekStartsOn" type="0 | 1">
+    `0` is Sunday, `1` is Monday. It defaults to `1`.
+  </Property>
+  <Property name="locale" type="string">
+    Passed to `Intl.DateTimeFormat` for month and weekday names.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the grid's container.
+  </Property>
+</Properties>
+
+### DateRange
+
+<Properties>
+  <Property name="from" type="Date | null">
+    The first date in the range.
+  </Property>
+  <Property name="to" type="Date | null">
+    The last date. It stays `null` while the range is half-made.
+  </Property>
+</Properties>

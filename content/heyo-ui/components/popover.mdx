@@ -1,0 +1,162 @@
+---
+title: Popover
+description: Rich content anchored to a trigger — with its own layout, unlike a tooltip or a menu.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Popover>
+  <Popover.Trigger render={<Button icon={IconFilter}>Filters</Button>} />
+  <Popover.Content title="Filters" description="Applied to the current view.">
+    <div className="flex flex-col gap-2">
+      <Checkbox defaultChecked label="Errors only" />
+      <Checkbox label="Include previews" />
+    </div>
+  </Popover.Content>
+</Popover>`}
+>
+  <HeyoUiPopover>
+    <HeyoUiPopover.Trigger
+      render={<HeyoUiButton icon={<IconFilter />}>Filters</HeyoUiButton>}
+    />
+    <HeyoUiPopover.Content
+      title="Filters"
+      description="Applied to the current view."
+    >
+      <div className="flex flex-col gap-2">
+        <HeyoUiCheckbox defaultChecked label="Errors only" />
+        <HeyoUiCheckbox label="Include previews" />
+      </div>
+    </HeyoUiPopover.Content>
+  </HeyoUiPopover>
+</CodeSnippet>
+
+# Popover
+
+Three components float above the page, and they do different jobs:
+
+- [`Tooltip`](/components/tooltip) for a **label** — a few words, no
+  interaction.
+- [`Dropdown`](/components/dropdown) for a **list of actions**.
+- `Popover` for anything with its **own layout**: filters, a form, a preview, a
+  short explanation with a link in it.
+
+## Usage
+
+```tsx
+import { Button, Popover } from "@heyo-sh/heyo-ui";
+
+<Popover>
+  <Popover.Trigger render={<Button>Filters</Button>} />
+  <Popover.Content title="Filters">…</Popover.Content>
+</Popover>;
+```
+
+## Header and close
+
+Passing `title` (and optionally `description`) renders the heading block and a
+close button for you. Without them the popup is a bare surface and you own
+every pixel of it.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Popover>
+  <Popover.Trigger render={<Button variant="ghost" shape="square" icon={IconInfoCircle} aria-label="About" />} />
+  <Popover.Content>
+    <p className="text-sm text-heyo-subtle">
+      Requests are counted per region, including cache hits.
+    </p>
+  </Popover.Content>
+</Popover>`}
+>
+  <HeyoUiPopover>
+    <HeyoUiPopover.Trigger
+      render={
+        <HeyoUiButton
+          variant="ghost"
+          shape="square"
+          icon={<IconInfoCircle />}
+          aria-label="About"
+        />
+      }
+    />
+    <HeyoUiPopover.Content>
+      <p className="m-0 text-sm text-heyo-subtle">
+        Requests are counted per region, including cache hits.
+      </p>
+    </HeyoUiPopover.Content>
+  </HeyoUiPopover>
+</CodeSnippet>
+
+## Placement
+
+`side` and `align` set the preferred position; it flips and shifts on its own
+when the space is not there.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Popover.Content side="right" align="start" sideOffset={8}>…</Popover.Content>`}
+>
+  <HeyoUiPopover>
+    <HeyoUiPopover.Trigger render={<HeyoUiButton>Right</HeyoUiButton>} />
+    <HeyoUiPopover.Content side="right" align="start" sideOffset={8}>
+      <p className="m-0 text-sm text-heyo-subtle">Anchored to the right.</p>
+    </HeyoUiPopover.Content>
+  </HeyoUiPopover>
+  <HeyoUiPopover>
+    <HeyoUiPopover.Trigger render={<HeyoUiButton>Top</HeyoUiButton>} />
+    <HeyoUiPopover.Content side="top">
+      <p className="m-0 text-sm text-heyo-subtle">Anchored above.</p>
+    </HeyoUiPopover.Content>
+  </HeyoUiPopover>
+</CodeSnippet>
+
+## Properties
+
+### Popover
+
+Base UI's root: `open`, `defaultOpen`, `onOpenChange`, plus the usual
+interaction props.
+
+### Popover.Content
+
+<Properties>
+  <Property name="title" type="ReactNode">
+    A heading above the content. Its presence also adds the close button.
+  </Property>
+  <Property name="description" type="ReactNode">
+    A muted line under the title.
+  </Property>
+  <Property name="showClose" type="boolean">
+    Forces the close button on or off.
+  </Property>
+  <Property name="side" type='"top" | "right" | "bottom" | "left"'>
+    Preferred placement.
+  </Property>
+  <Property name="align" type='"start" | "center" | "end"'>
+    Alignment against the trigger.
+  </Property>
+  <Property name="sideOffset" type="number">
+    Gap between trigger and popup, in pixels.
+  </Property>
+  <Property name="positioner" type="Popover.Positioner.Props">
+    Escape hatch for anything else the positioner supports.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the popup — a different width, more padding.
+  </Property>
+</Properties>
+
+### The rest
+
+<Properties>
+  <Property name="Popover.Trigger" type="render">
+    Anything that opens it.
+  </Property>
+  <Property name="Popover.Close" type="render">
+    Closes it from inside the content.
+  </Property>
+  <Property name="Popover.Title / Description" type="—">
+    The raw parts, when you would rather build the header yourself.
+  </Property>
+</Properties>

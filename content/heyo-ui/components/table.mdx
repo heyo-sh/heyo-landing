@@ -1,0 +1,288 @@
+---
+title: Table
+description: Rows separated by a hairline, a header that is not a toolbar, and a hover state you can find at any width.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Table interactive>
+  <Table.Head>
+    <Table.Row>
+      <Table.Header>Worker</Table.Header>
+      <Table.Header>Region</Table.Header>
+      <Table.Header align="end" numeric>Requests</Table.Header>
+    </Table.Row>
+  </Table.Head>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell primary>acme-api</Table.Cell>
+      <Table.Cell>fra1</Table.Cell>
+      <Table.Cell numeric>142,318</Table.Cell>
+    </Table.Row>
+    <Table.Row>
+      <Table.Cell primary>acme-web</Table.Cell>
+      <Table.Cell>waw1</Table.Cell>
+      <Table.Cell numeric>8,904</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table>`}
+>
+  <div className="w-full rounded-lg bg-heyo-base ring-1 ring-heyo-line">
+    <HeyoUiTable interactive>
+      <HeyoUiTable.Head>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Header>Worker</HeyoUiTable.Header>
+          <HeyoUiTable.Header>Region</HeyoUiTable.Header>
+          <HeyoUiTable.Header align="end">Requests</HeyoUiTable.Header>
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Head>
+      <HeyoUiTable.Body>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Cell primary>acme-api</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell>fra1</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell numeric>142,318</HeyoUiTable.Cell>
+        </HeyoUiTable.Row>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Cell primary>acme-web</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell>waw1</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell numeric>8,904</HeyoUiTable.Cell>
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Body>
+    </HeyoUiTable>
+  </div>
+</CodeSnippet>
+
+# Table
+
+Three decisions do most of the work in this component.
+
+1. **Rows are separated by a hairline, not by a fill.** Zebra striping is
+   opt-in and deliberately weak, because on a dense table it fights every other
+   tint the system uses for meaning.
+2. **The header is not a toolbar.** It sits on the page background with
+   uppercase micro-type, so the eye reads it as a label row and then stops
+   coming back to it.
+3. **The hover state is a full-bleed tint plus a left marker.** On a table
+   1200px wide a tint alone is invisible under the cursor at the far right; the
+   marker tells you which row you are actually on.
+
+## Usage
+
+```tsx
+import { Table } from "@heyo-sh/heyo-ui";
+
+<Table>
+  <Table.Head>
+    <Table.Row>
+      <Table.Header>Worker</Table.Header>
+    </Table.Row>
+  </Table.Head>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell primary>acme-api</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table>;
+```
+
+<Callout type="tip" title="Want search, sorting and selection?">
+  [`DataTable`](/components/data-table) is this component with all of it wired
+  up. Compose `Table` by hand when the list is simple, or when the behaviour is
+  yours.
+</Callout>
+
+## Cells that carry meaning
+
+`primary` marks the row's headline — the id, the name, the thing you scan for.
+It gets full contrast and medium weight so everything else can stay quiet.
+`numeric` switches to tabular figures and right alignment, which is what makes
+a column of numbers comparable at a glance.
+
+## Sorting
+
+`onSort` turns a header into a button; `sort` says which way it is pointing.
+`false` means "sortable, but not currently sorted".
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Table.Header sort="desc" onSort={() => toggle("requests")} align="end">
+  Requests
+</Table.Header>`}
+>
+  <div className="w-full rounded-lg bg-heyo-base ring-1 ring-heyo-line">
+    <HeyoUiTable>
+      <HeyoUiTable.Head>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Header sort={false} onSort={() => {}}>
+            Worker
+          </HeyoUiTable.Header>
+          <HeyoUiTable.Header align="end" sort="desc" onSort={() => {}}>
+            Requests
+          </HeyoUiTable.Header>
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Head>
+      <HeyoUiTable.Body>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Cell primary>acme-api</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell numeric>142,318</HeyoUiTable.Cell>
+        </HeyoUiTable.Row>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.Cell primary>acme-web</HeyoUiTable.Cell>
+          <HeyoUiTable.Cell numeric>8,904</HeyoUiTable.Cell>
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Body>
+    </HeyoUiTable>
+  </div>
+</CodeSnippet>
+
+## Selection and actions
+
+`Table.SelectHeader` and `Table.SelectCell` are the narrow first column for
+checkboxes; [`useSelection`](/utilities) computes the header's indeterminate
+state. `Table.ActionCell` is the trailing column: it fades its contents in on
+hover, so fifty rows are not fifty buttons competing with the data — but keeps
+them visible whenever the keyboard is inside the cell.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Table.Row selected>
+  <Table.SelectCell>
+    <Checkbox checked aria-label="Select acme-api" />
+  </Table.SelectCell>
+  <Table.Cell primary>acme-api</Table.Cell>
+  <Table.ActionCell>
+    <Button variant="ghost" size="sm" shape="square" icon={IconPencil} aria-label="Edit" />
+  </Table.ActionCell>
+</Table.Row>`}
+>
+  <div className="w-full rounded-lg bg-heyo-base ring-1 ring-heyo-line">
+    <HeyoUiTable interactive>
+      <HeyoUiTable.Head>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.SelectHeader>
+            <HeyoUiCheckbox indeterminate aria-label="Select all" />
+          </HeyoUiTable.SelectHeader>
+          <HeyoUiTable.Header>Worker</HeyoUiTable.Header>
+          <HeyoUiTable.Header />
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Head>
+      <HeyoUiTable.Body>
+        <HeyoUiTable.Row selected>
+          <HeyoUiTable.SelectCell>
+            <HeyoUiCheckbox defaultChecked aria-label="Select acme-api" />
+          </HeyoUiTable.SelectCell>
+          <HeyoUiTable.Cell primary>acme-api</HeyoUiTable.Cell>
+          <HeyoUiTable.ActionCell>
+            <HeyoUiButton
+              variant="ghost"
+              size="sm"
+              shape="square"
+              icon={<IconPencil />}
+              aria-label="Edit"
+            />
+          </HeyoUiTable.ActionCell>
+        </HeyoUiTable.Row>
+        <HeyoUiTable.Row>
+          <HeyoUiTable.SelectCell>
+            <HeyoUiCheckbox aria-label="Select acme-web" />
+          </HeyoUiTable.SelectCell>
+          <HeyoUiTable.Cell primary>acme-web</HeyoUiTable.Cell>
+          <HeyoUiTable.ActionCell>
+            <HeyoUiButton
+              variant="ghost"
+              size="sm"
+              shape="square"
+              icon={<IconPencil />}
+              aria-label="Edit"
+            />
+          </HeyoUiTable.ActionCell>
+        </HeyoUiTable.Row>
+      </HeyoUiTable.Body>
+    </HeyoUiTable>
+  </div>
+</CodeSnippet>
+
+## Sticky header
+
+`stickyHeader` pins the header while the body scrolls. It needs a bounded
+`maxHeight` — there is nothing to scroll inside otherwise.
+
+```tsx
+<Table stickyHeader maxHeight="24rem" striped>
+  …
+</Table>
+```
+
+## Properties
+
+### Table
+
+<Properties>
+  <Property name="striped" type="boolean">
+    Tints every other row. Helps when scanning wide, numeric tables.
+  </Property>
+  <Property name="interactive" type="boolean">
+    Highlights rows on hover. Only useful when rows are clickable.
+  </Property>
+  <Property name="stickyHeader" type="boolean">
+    Pins the header. Needs a bounded `maxHeight`.
+  </Property>
+  <Property name="maxHeight" type="string">
+    Caps the scroll container, for example `"24rem"`.
+  </Property>
+  <Property name="wrapperClassName" type="string">
+    Class for the scroll container around the `<table>`.
+  </Property>
+</Properties>
+
+### Table.Row
+
+<Properties>
+  <Property name="selected" type="boolean">
+    Tints the row and exposes `data-selected`, so the whole row reflects its
+    checkbox instead of leaving a lone tick to carry the state.
+  </Property>
+</Properties>
+
+### Table.Header
+
+<Properties>
+  <Property name="align" type='"start" | "center" | "end"'>
+    Logical alignment. It shadows the deprecated HTML `align` attribute on
+    purpose.
+  </Property>
+  <Property name="onSort" type="() => void">
+    Makes the header a sort button.
+  </Property>
+  <Property name="sort" type='"asc" | "desc" | false'>
+    The current sort for this column. `false` means sortable but not sorted.
+  </Property>
+</Properties>
+
+### Table.Cell
+
+<Properties>
+  <Property name="align" type='"start" | "center" | "end"'>
+    Logical alignment.
+  </Property>
+  <Property name="numeric" type="boolean">
+    Tabular figures, right-aligned — for anything counted or measured.
+  </Property>
+  <Property name="primary" type="boolean">
+    The row's headline. Full contrast, medium weight.
+  </Property>
+</Properties>
+
+### The rest
+
+<Properties>
+  <Property name="Table.Head / Body / Caption" type="—">
+    The semantic sections: `<thead>`, `<tbody>`, `<caption>`.
+  </Property>
+  <Property name="Table.SelectHeader / SelectCell" type="—">
+    The narrow first column that holds a checkbox.
+  </Property>
+  <Property name="Table.ActionCell" type="—">
+    The trailing column for row actions, revealed on hover or keyboard focus.
+  </Property>
+</Properties>

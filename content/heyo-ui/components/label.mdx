@@ -1,0 +1,92 @@
+---
+title: Label
+description: A form label with an optional marker and a right-aligned slot.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Label htmlFor="token">API token</Label>
+<Input id="token" placeholder="heyo_live_…" />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-1.5">
+    <HeyoUiLabel htmlFor="token">API token</HeyoUiLabel>
+    <HeyoUiInput id="token" placeholder="heyo_live_…" />
+  </div>
+</CodeSnippet>
+
+# Label
+
+`Label` renders a `<label>` at 13px medium — the weight the system uses to name
+a surface or a group. Inside a [`Field`](/components/field) it wires `htmlFor`
+automatically; standalone you pass `htmlFor` yourself.
+
+You rarely render it directly. `Input`, `Textarea`, `NumberField` and
+`OtpField` take a `label` prop and build the whole field, including this.
+
+## Usage
+
+```tsx
+import { Label } from "@heyo-sh/heyo-ui";
+
+<Label htmlFor="token">API token</Label>;
+```
+
+## Optional and aside
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Label htmlFor="notes" optional>Notes</Label>
+
+<Label htmlFor="key" aside={<span className="text-heyo-subtle">32 characters</span>}>
+  Signing key
+</Label>`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-1.5">
+    <HeyoUiLabel htmlFor="notes" optional>
+      Notes
+    </HeyoUiLabel>
+    <HeyoUiInput id="notes" placeholder="Anything worth remembering" />
+  </div>
+  <div className="flex w-full max-w-sm flex-col gap-1.5">
+    <HeyoUiLabel
+      htmlFor="key"
+      aside={<span className="text-heyo-subtle">32 characters</span>}
+    >
+      Signing key
+    </HeyoUiLabel>
+    <HeyoUiInput id="key" placeholder="whsec_…" />
+  </div>
+</CodeSnippet>
+
+`optional` is the inverse of marking everything required with an asterisk: in a
+form where most fields are required, the exceptions are the information worth
+carrying.
+
+## Labelling something that is not a field
+
+`render` swaps the element while keeping the typography — useful for a group
+heading that labels several controls at once.
+
+```tsx
+<Label render={<legend />}>Permissions</Label>
+```
+
+## Properties
+
+<Properties>
+  <Property name="htmlFor" type="string">
+    The id of the control this labels. Set automatically inside a `Field`.
+  </Property>
+  <Property name="optional" type="boolean">
+    Appends a muted "Optional" marker.
+  </Property>
+  <Property name="aside" type="ReactNode">
+    A right-aligned slot for a hint, a counter, or a link.
+  </Property>
+  <Property name="render" type="RenderProp">
+    Renders a different element with the same styling.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The label text.
+  </Property>
+</Properties>

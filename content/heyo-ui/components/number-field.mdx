@@ -1,0 +1,171 @@
+---
+title: Number Field
+description: A numeric input with a stepper, locale formatting, and an optional scrub handle.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<NumberField
+  label="Rate limit"
+  defaultValue={100}
+  min={1}
+  max={1000}
+  step={10}
+  suffix="req/s"
+/>`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiNumberField
+      label="Rate limit"
+      defaultValue={100}
+      min={1}
+      max={1000}
+      step={10}
+      suffix="req/s"
+    />
+  </div>
+</CodeSnippet>
+
+# Number Field
+
+Use `NumberField` wherever an `<input type="number">` would go and you care
+about the result. It formats with `Intl.NumberFormat`, clamps to `min` and
+`max`, steps with ↑ and ↓ (×10 with Shift, ÷10 with Alt), and never lets a
+stray scroll silently change the value unless you ask for `allowWheelScrub`.
+
+## Usage
+
+```tsx
+import { NumberField } from "@heyo-sh/heyo-ui";
+
+<NumberField label="Memory" defaultValue={128} min={64} max={1024} step={64} />;
+```
+
+## Units
+
+`suffix` is a flush addon on the right edge — the unit belongs to the control,
+not to the label, so it stays visible while the value changes.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-3"
+  code={`<NumberField label="Memory" defaultValue={128} step={64} suffix="MB" />
+<NumberField label="Timeout" defaultValue={30} suffix="s" size="sm" />`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiNumberField
+      label="Memory"
+      defaultValue={128}
+      step={64}
+      suffix="MB"
+    />
+  </div>
+  <div className="w-full max-w-xs">
+    <HeyoUiNumberField label="Timeout" defaultValue={30} suffix="s" size="sm" />
+  </div>
+</CodeSnippet>
+
+## Scrubbing
+
+`scrubbable` adds a grip on the left edge that you drag sideways to sweep the
+value. It is the only comfortable way to dial a number in while watching
+something else update, and it costs one 20px handle.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<NumberField label="Opacity" scrubbable defaultValue={80} min={0} max={100} suffix="%" />`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiNumberField
+      label="Opacity"
+      scrubbable
+      defaultValue={80}
+      min={0}
+      max={100}
+      suffix="%"
+    />
+  </div>
+</CodeSnippet>
+
+## Formatting
+
+`format` takes `Intl.NumberFormatOptions`, so currency, percentages and
+grouping are configuration rather than code.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<NumberField
+  label="Budget"
+  defaultValue={2500}
+  step={100}
+  format={{ style: "currency", currency: "EUR", maximumFractionDigits: 0 }}
+/>`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiNumberField
+      label="Budget"
+      defaultValue={2500}
+      step={100}
+      format={{
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+      }}
+    />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="A range, not a number?">
+  When the exact figure matters less than where it sits between two bounds, use
+  [`Slider`](/components/slider). When it is a measurement you are reporting
+  rather than collecting, use [`Meter`](/components/meter).
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="value / defaultValue" type="number | null">
+    Controlled and uncontrolled value.
+  </Property>
+  <Property name="onValueChange" type="(value: number | null) => void">
+    Fires on every committed change.
+  </Property>
+  <Property name="min / max" type="number">
+    Bounds. The value is clamped to them.
+  </Property>
+  <Property name="step" type='number | "any"'>
+    The increment for the stepper and the arrow keys.
+  </Property>
+  <Property name="largeStep / smallStep" type="number">
+    The Shift and Alt increments. They default to ten times and a tenth of
+    `step`.
+  </Property>
+  <Property name="format" type="Intl.NumberFormatOptions">
+    Currency, percent, grouping, fraction digits.
+  </Property>
+  <Property name="locale" type="Intl.LocalesArgument">
+    The locale used for formatting and parsing.
+  </Property>
+  <Property name="allowWheelScrub" type="boolean">
+    Lets the mouse wheel change the value while the field is focused. It
+    defaults to `false`, on purpose.
+  </Property>
+  <Property name="scrubbable" type="boolean">
+    Adds the drag handle on the left edge. It defaults to `false`.
+  </Property>
+  <Property name="suffix" type="ReactNode">
+    A flush addon on the right edge — `req/s`, `GB`, `%`.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Control height. It defaults to `base`.
+  </Property>
+  <Property
+    name="label / description / error / optional / labelAside"
+    type="FieldOwnProps"
+  >
+    The same field layout every heyo-ui control composes. See
+    [`Field`](/components/field).
+  </Property>
+  <Property name="disabled / readOnly / required / name" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>

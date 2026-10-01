@@ -1,0 +1,131 @@
+---
+title: Breadcrumb
+description: Where you are, and the way back — collapsing the middle when the trail gets long.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Breadcrumb
+  items={[
+    { label: "Projects", href: "/projects", icon: IconCube },
+    { label: "acme", href: "/projects/acme" },
+    { label: "acme-api" },
+  ]}
+/>`}
+>
+  <HeyoUiBreadcrumb
+    items={[
+      { label: "Projects", href: "#", icon: <IconCube /> },
+      { label: "acme", href: "#" },
+      { label: "acme-api" },
+    ]}
+  />
+</CodeSnippet>
+
+# Breadcrumb
+
+`Breadcrumb` renders a trail of links with the last entry as the current page —
+not a link, and carrying `aria-current="page"`.
+
+## Usage
+
+```tsx
+import { Breadcrumb } from "@heyo-sh/heyo-ui";
+
+<Breadcrumb
+  items={[{ label: "Workers", href: "/workers" }, { label: "acme-api" }]}
+/>;
+```
+
+## Collapsing a long trail
+
+`maxItems` keeps the first and last entries and folds everything between them
+into an ellipsis. A breadcrumb that wraps onto a second line has stopped being
+a breadcrumb.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Breadcrumb
+  maxItems={3}
+  items={[
+    { label: "Organisation", href: "/" },
+    { label: "Projects", href: "/projects" },
+    { label: "acme", href: "/projects/acme" },
+    { label: "Workers", href: "/projects/acme/workers" },
+    { label: "acme-api" },
+  ]}
+/>`}
+>
+  <HeyoUiBreadcrumb
+    maxItems={3}
+    items={[
+      { label: "Organisation", href: "#" },
+      { label: "Projects", href: "#" },
+      { label: "acme", href: "#" },
+      { label: "Workers", href: "#" },
+      { label: "acme-api" },
+    ]}
+  />
+</CodeSnippet>
+
+## Router links
+
+`render` swaps the `<a>` for whatever your router uses, per crumb.
+
+```tsx
+<Breadcrumb
+  items={[
+    { label: "Workers", render: <Link to="/workers" /> },
+    { label: "acme-api" },
+  ]}
+/>
+```
+
+## A different separator
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Breadcrumb
+  separator="/"
+  items={[{ label: "heyo-sh", href: "/" }, { label: "heyo-ui" }]}
+/>`}
+>
+  <HeyoUiBreadcrumb
+    separator="/"
+    items={[{ label: "heyo-sh", href: "#" }, { label: "heyo-ui" }]}
+  />
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="items" required type="Crumb[]">
+    The trail. The last entry is rendered as the current page.
+  </Property>
+  <Property name="maxItems" type="number">
+    Collapses the middle into an ellipsis past this many entries.
+  </Property>
+  <Property name="separator" type="ReactNode">
+    What sits between crumbs. It defaults to a chevron.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the `<nav>`.
+  </Property>
+</Properties>
+
+### Crumb
+
+<Properties>
+  <Property name="label" required type="ReactNode">
+    The crumb's text.
+  </Property>
+  <Property name="href" type="string">
+    Makes the crumb a link. Omit it for the current page.
+  </Property>
+  <Property name="icon" type="IconLike">
+    A leading glyph — usually only on the first crumb.
+  </Property>
+  <Property name="render" type="RenderProp">
+    Swaps the `<a>` for a router link: `render={<Link to="/x" />}`.
+  </Property>
+</Properties>

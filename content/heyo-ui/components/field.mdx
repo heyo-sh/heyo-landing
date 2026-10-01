@@ -1,0 +1,171 @@
+---
+title: Field
+description: The layout and accessibility shell every form control in heyo-ui composes.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Field
+  label="Project name"
+  description="Lowercase letters, numbers and dashes."
+>
+  <Input placeholder="my-worker" />
+</Field>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiField
+      label="Project name"
+      description="Lowercase letters, numbers and dashes."
+    >
+      <HeyoUiInput placeholder="my-worker" />
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+# Field
+
+`Field` is the label, the description, the error and the wiring between them.
+Every input-like component in heyo-ui composes it, which is why a label looks
+and behaves identically whether it sits above an `Input`, a `Select` or a
+`NumberField`.
+
+Most of the time you never render it: `Input`, `Textarea`, `NumberField` and
+`OtpField` take `label`, `description` and `error` directly and build the field
+for you. Reach for `Field` when the control inside is your own, or when it is
+one heyo-ui does not wrap — a `Select`, a `Slider`, a group of checkboxes.
+
+## Usage
+
+```tsx
+import { Field, Select } from "@heyo-sh/heyo-ui";
+
+<Field label="Region" description="Where the worker runs.">
+  <Select>…</Select>
+</Field>;
+```
+
+## Errors
+
+`error` takes a ready-made message, or a rule tied to the browser's own
+`ValidityState`. A truthy error also flips the control into its invalid state,
+and the description steps aside while the message is up — two lines of
+competing text under one input is one too many.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Field label="Email" error="Enter a valid email address.">
+  <Input defaultValue="not-an-email" />
+</Field>
+
+<Field
+  label="Password"
+  description="At least 8 characters."
+  error={{ message: "At least 8 characters", match: "tooShort" }}
+>
+  <Input type="password" minLength={8} />
+</Field>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiField label="Email" error="Enter a valid email address.">
+      <HeyoUiInput defaultValue="not-an-email" />
+    </HeyoUiField>
+  </div>
+  <div className="w-full max-w-sm">
+    <HeyoUiField label="Password" description="At least 8 characters.">
+      <HeyoUiInput type="password" minLength={8} />
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+## Optional, not required
+
+`optional` adds a muted marker to the label — the inverse of shouting with an
+asterisk. In a form where most fields are required, marking the two that are
+not is quieter and more useful than marking the eight that are.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Field label="Description" optional>
+  <Input placeholder="What does this worker do?" />
+</Field>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiField label="Description" optional>
+      <HeyoUiInput placeholder="What does this worker do?" />
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+## The label row
+
+`labelAside` fills the right end of the label row — a character counter, a
+"Forgot password?" link, a hint about the format.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Field label="Password" labelAside={<a href="/reset">Forgot password?</a>}>
+  <Input type="password" />
+</Field>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiField
+      label="Password"
+      labelAside={
+        <a className="text-heyo-link" href="#reset">
+          Forgot password?
+        </a>
+      }
+    >
+      <HeyoUiInput type="password" />
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="label" type="ReactNode">
+    Renders a `<label>` above the control and wires `htmlFor` and `id` for you.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text below the control. Hidden once an error takes over.
+  </Property>
+  <Property name="error" type="FieldError">
+    A message, or `{ message, match }` where `match` is `true` or a key of
+    `ValidityState` such as `"tooShort"` or `"valueMissing"`. Truthy values
+    also flip the control into its invalid state.
+  </Property>
+  <Property name="optional" type="boolean">
+    Adds a muted "Optional" marker next to the label.
+  </Property>
+  <Property name="labelAside" type="ReactNode">
+    A right-aligned slot on the label row.
+  </Property>
+  <Property name="invalid" type="boolean">
+    Forces the invalid state without a message.
+  </Property>
+  <Property name="name" type="string">
+    Passed through to Base UI's field, which uses it for form validation.
+  </Property>
+  <Property name="className" type="string">
+    Applied to the wrapper, not to the control.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The control.
+  </Property>
+</Properties>
+
+### FieldDescription and FieldErrorMessage
+
+The two message slots, exported for bespoke layouts — a description beside the
+control rather than under it, say.
+
+```tsx
+import { FieldDescription, FieldErrorMessage } from "@heyo-sh/heyo-ui";
+```
+
+### FieldPrimitive
+
+The raw Base UI primitives (`FieldPrimitive.Root`, `.Label`, `.Control`,
+`.Description`, `.Error`), re-exported as an escape hatch for a layout the
+shell cannot express.

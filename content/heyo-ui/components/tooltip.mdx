@@ -1,0 +1,146 @@
+---
+title: Tooltip
+description: A hover and focus hint that opens immediately, with no provider required.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Tooltip content="Redeploy">
+  <Button shape="square" icon={IconRefresh} aria-label="Redeploy" />
+</Tooltip>
+
+<Tooltip content="Open in a new tab" side="right">
+  <Button shape="square" icon={IconExternalLink} aria-label="Open" />
+</Tooltip>`}
+>
+  <HeyoUiTooltip content="Redeploy">
+    <HeyoUiButton
+      shape="square"
+      icon={<IconRefresh />}
+      aria-label="Redeploy"
+    />
+  </HeyoUiTooltip>
+  <HeyoUiTooltip content="Open in a new tab" side="right">
+    <HeyoUiButton
+      shape="square"
+      icon={<IconExternalLink />}
+      aria-label="Open"
+    />
+  </HeyoUiTooltip>
+</CodeSnippet>
+
+# Tooltip
+
+`Tooltip` opens **immediately**. A delay is a hedge against tooltips that
+should not exist: if the hint is worth showing, it is worth showing when the
+pointer arrives, and if it is not, remove it.
+
+No provider is required. Add `Tooltip.Provider` only when you want a shared
+delay across a whole region.
+
+## Usage
+
+```tsx
+import { Button, Tooltip } from "@heyo-sh/heyo-ui";
+
+<Tooltip content="Redeploy">
+  <Button shape="square" icon={IconRefresh} aria-label="Redeploy" />
+</Tooltip>;
+```
+
+The child becomes the trigger — it needs to accept a ref and spread props,
+which every heyo-ui component does.
+
+<Callout type="warning" title="A tooltip is not a label">
+  It appears on hover and focus, which means it never appears on a touch screen.
+  Give an icon-only control an `aria-label` as well; the tooltip is the
+  convenience, not the name.
+</Callout>
+
+## Placement
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Tooltip content="Top" side="top"><Button>Top</Button></Tooltip>
+<Tooltip content="Right" side="right"><Button>Right</Button></Tooltip>
+<Tooltip content="Bottom" side="bottom"><Button>Bottom</Button></Tooltip>
+<Tooltip content="Left" side="left"><Button>Left</Button></Tooltip>`}
+>
+  <HeyoUiTooltip content="Top" side="top">
+    <HeyoUiButton>Top</HeyoUiButton>
+  </HeyoUiTooltip>
+  <HeyoUiTooltip content="Right" side="right">
+    <HeyoUiButton>Right</HeyoUiButton>
+  </HeyoUiTooltip>
+  <HeyoUiTooltip content="Bottom" side="bottom">
+    <HeyoUiButton>Bottom</HeyoUiButton>
+  </HeyoUiTooltip>
+  <HeyoUiTooltip content="Left" side="left">
+    <HeyoUiButton>Left</HeyoUiButton>
+  </HeyoUiTooltip>
+</CodeSnippet>
+
+## Arrow and delay
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Tooltip arrow content="With an arrow">
+  <Button>Arrow</Button>
+</Tooltip>
+
+<Tooltip delay={400} content="Opens after 400ms">
+  <Button>Delayed</Button>
+</Tooltip>`}
+>
+  <HeyoUiTooltip arrow content="With an arrow">
+    <HeyoUiButton>Arrow</HeyoUiButton>
+  </HeyoUiTooltip>
+  <HeyoUiTooltip delay={400} content="Opens after 400ms">
+    <HeyoUiButton>Delayed</HeyoUiButton>
+  </HeyoUiTooltip>
+</CodeSnippet>
+
+A shared delay for a whole toolbar:
+
+```tsx
+<Tooltip.Provider delay={300} closeDelay={100}>
+  {toolbar}
+</Tooltip.Provider>
+```
+
+## Properties
+
+<Properties>
+  <Property name="content" required type="ReactNode">
+    The hint. Keep it to one line where you can.
+  </Property>
+  <Property name="children" required type="ReactNode">
+    The trigger. It must accept a ref and spread props.
+  </Property>
+  <Property name="side" type='"top" | "right" | "bottom" | "left"'>
+    Preferred placement. It defaults to `top`.
+  </Property>
+  <Property name="align" type='"start" | "center" | "end"'>
+    Alignment against the trigger.
+  </Property>
+  <Property name="sideOffset / alignOffset" type="number">
+    Offsets in pixels.
+  </Property>
+  <Property name="delay / closeDelay" type="number">
+    Open and close delays in milliseconds. Instant by default.
+  </Property>
+  <Property name="arrow" type="boolean">
+    A little pointer aimed at the trigger.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the popup.
+  </Property>
+</Properties>
+
+### Tooltip.Provider
+
+<Properties>
+  <Property name="delay / closeDelay" type="number">
+    Shared defaults for every tooltip beneath it.
+  </Property>
+</Properties>

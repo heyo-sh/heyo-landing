@@ -1,0 +1,124 @@
+---
+title: Avatar
+description: A person or a project, with initials when the image is missing — and one radius, always.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap items-end"
+  code={`<Avatar name="Ada Lovelace" src="/ada.jpg" />
+<Avatar name="Ada Lovelace" />
+<Avatar name="acme-api" size="lg" />`}
+>
+  <HeyoUiAvatar name="Ada Lovelace" />
+  <HeyoUiAvatar name="Linus Torvalds" size="lg" />
+  <HeyoUiAvatar name="acme-api" size="xl" />
+</CodeSnippet>
+
+# Avatar
+
+`Avatar` shows an image and falls back to initials derived from `name` — while
+the image loads and if it never arrives. There is one radius in the system, so
+an avatar is never a different shape from the card it sits in.
+
+## Usage
+
+```tsx
+import { Avatar } from "@heyo-sh/heyo-ui";
+
+<Avatar name="Ada Lovelace" src={user.avatarUrl} />;
+```
+
+## Sizes
+
+20, 24, 32, 40 and 48px — the same rhythm the controls are on, so an avatar
+lines up with a button beside it.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap items-end"
+  code={`<Avatar size="xs" name="Ada Lovelace" />
+<Avatar size="sm" name="Ada Lovelace" />
+<Avatar size="base" name="Ada Lovelace" />
+<Avatar size="lg" name="Ada Lovelace" />
+<Avatar size="xl" name="Ada Lovelace" />`}
+>
+  <HeyoUiAvatar size="xs" name="Ada Lovelace" />
+  <HeyoUiAvatar size="sm" name="Ada Lovelace" />
+  <HeyoUiAvatar size="base" name="Ada Lovelace" />
+  <HeyoUiAvatar size="lg" name="Ada Lovelace" />
+  <HeyoUiAvatar size="xl" name="Ada Lovelace" />
+</CodeSnippet>
+
+## Custom fallback
+
+`fallback` replaces the initials — an icon for a service account, a glyph for a
+project.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap"
+  code={`<Avatar name="acme-api" fallback={<IconCube className="size-4" />} />
+<Avatar fallback="?" />`}
+>
+  <HeyoUiAvatar name="acme-api" fallback={<IconCube className="size-4" />} />
+  <HeyoUiAvatar fallback="?" />
+</CodeSnippet>
+
+## Groups
+
+`Avatar.Group` overlaps a stack and collapses everything past `max` into a
+`+N` chip — the "who is on this project" row.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-6 flex-wrap"
+  code={`<Avatar.Group max={3}>
+  <Avatar name="Ada Lovelace" />
+  <Avatar name="Linus Torvalds" />
+  <Avatar name="Grace Hopper" />
+  <Avatar name="Alan Turing" />
+  <Avatar name="Barbara Liskov" />
+</Avatar.Group>`}
+>
+  <HeyoUiAvatarGroup max={3}>
+    <HeyoUiAvatar name="Ada Lovelace" />
+    <HeyoUiAvatar name="Linus Torvalds" />
+    <HeyoUiAvatar name="Grace Hopper" />
+    <HeyoUiAvatar name="Alan Turing" />
+    <HeyoUiAvatar name="Barbara Liskov" />
+  </HeyoUiAvatarGroup>
+</CodeSnippet>
+
+## Properties
+
+### Avatar
+
+<Properties>
+  <Property name="name" type="string">
+    Used to derive the initials when no explicit `fallback` is given.
+  </Property>
+  <Property name="src" type="string">
+    The image URL.
+  </Property>
+  <Property name="alt" type="string">
+    Alternative text for the image.
+  </Property>
+  <Property name="fallback" type="ReactNode">
+    Shown while the image loads and if it fails. It defaults to the initials of
+    `name`.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg" | "xl"'>
+    20, 24, 32, 40 or 48px. It defaults to `base`.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the root — a ring, a different radius.
+  </Property>
+</Properties>
+
+### Avatar.Group
+
+<Properties>
+  <Property name="max" type="number">
+    Beyond this many, the rest collapse into a `+N` chip.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The avatars, newest first.
+  </Property>
+</Properties>

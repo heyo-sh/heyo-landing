@@ -1,0 +1,124 @@
+---
+title: Textarea
+description: The multi-line sibling of Input — same chrome, same field wiring, plus auto-resize.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Textarea
+  label="Release notes"
+  placeholder="What changed?"
+  description="Markdown is supported."
+  rows={4}
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiTextarea
+      label="Release notes"
+      placeholder="What changed?"
+      description="Markdown is supported."
+      rows={4}
+    />
+  </div>
+</CodeSnippet>
+
+# Textarea
+
+`Textarea` is [`Input`](/components/input) with more than one line. The ring,
+the inset fill, the focus treatment, the sizes and the whole field layout are
+identical — the only additions are `rows` and `autoResize`.
+
+## Usage
+
+```tsx
+import { Textarea } from "@heyo-sh/heyo-ui";
+
+<Textarea label="Release notes" rows={4} />;
+```
+
+## Auto-resize
+
+`autoResize` grows the control with its content instead of scrolling it. Use it
+where the text is the point — a commit message, a comment, a prompt — and leave
+it off where the field sits in a dense form that should not reflow as you type.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Textarea
+  autoResize
+  label="Commit message"
+  defaultValue={"fix(worker): drop the retry loop\\n\\nIt masked a 500 from the origin."}
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiTextarea
+      autoResize
+      label="Commit message"
+      defaultValue={
+        "fix(worker): drop the retry loop\n\nIt masked a 500 from the origin."
+      }
+    />
+  </div>
+</CodeSnippet>
+
+## Errors and counters
+
+The label row's right end is free — a character counter belongs there, not
+under the control where it would compete with the description.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Textarea
+  label="Summary"
+  labelAside={<span className="text-heyo-subtle">0 / 280</span>}
+  error="A summary is required."
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiTextarea
+      label="Summary"
+      labelAside={<span className="text-heyo-subtle">0 / 280</span>}
+      error="A summary is required."
+    />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="autoResize" type="boolean">
+    Grows with the content instead of scrolling. It defaults to `false`.
+  </Property>
+  <Property name="rows" type="number">
+    The initial height, in lines.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Padding and type size, matching the control heights. It defaults to `base`.
+  </Property>
+  <Property name="label" type="ReactNode">
+    Renders the full field layout — label, description, error and wiring.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the control.
+  </Property>
+  <Property name="error" type="FieldError">
+    A message, or `{ message, match }` tied to the browser's `ValidityState`.
+  </Property>
+  <Property name="optional" type="boolean">
+    Adds the muted "Optional" marker to the label.
+  </Property>
+  <Property name="labelAside" type="ReactNode">
+    A right-aligned slot on the label row — a counter, a hint.
+  </Property>
+  <Property name="fieldClassName" type="string">
+    Class for the outer field wrapper.
+  </Property>
+  <Property name="className" type="string">
+    Class for the control itself.
+  </Property>
+  <Property name="ref" type="Ref<HTMLTextAreaElement>">
+    Forwarded to the `<textarea>`.
+  </Property>
+</Properties>
+
+Every other `<textarea>` attribute is passed straight through.

@@ -1,0 +1,229 @@
+---
+title: Command
+description: The ⌘K palette — one overlay that searches everything, with a global shortcut it binds itself.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Command
+  trigger={<Button icon={IconSearch} iconEnd={<Command.Shortcut keys="mod+k" />}>Search</Button>}
+  items={[
+    { value: "deploy", label: "Deploy acme-api", description: "Production", icon: IconRocket, group: "Actions" },
+    { value: "logs", label: "View logs", icon: IconList, group: "Actions" },
+    { value: "settings", label: "Project settings", icon: IconGear, group: "Navigate" },
+  ]}
+  onSelect={(item) => run(item.value)}
+/>`}
+>
+  <HeyoUiCommand
+    shortcut={false}
+    trigger={
+      <HeyoUiButton
+        icon={<IconSearch />}
+        iconEnd={<HeyoUiCommandShortcut keys="mod+k" />}
+      >
+        Search
+      </HeyoUiButton>
+    }
+    items={[
+      {
+        value: "deploy",
+        label: "Deploy acme-api",
+        description: "Production",
+        icon: <IconRocket />,
+        group: "Actions",
+      },
+      {
+        value: "logs",
+        label: "View logs",
+        icon: <IconList />,
+        group: "Actions",
+      },
+      {
+        value: "settings",
+        label: "Project settings",
+        icon: <IconGear />,
+        group: "Navigate",
+      },
+      {
+        value: "members",
+        label: "Invite a teammate",
+        icon: <IconUserPlus />,
+        group: "Navigate",
+      },
+    ]}
+  />
+</CodeSnippet>
+
+# Command
+
+The command palette: the overlay that lands near the top of the screen and
+searches everything at once.
+
+It is deliberately **not a dialog you happen to put an input in**. It sits high
+rather than centred, so results grow downward into space you were already
+looking at; it opens on a global shortcut; and Escape is the only button it
+needs.
+
+## Usage
+
+```tsx
+import { Command } from "@heyo-sh/heyo-ui";
+
+<Command items={commands} onSelect={(item) => run(item.value)} />;
+```
+
+Mount it once near the root. It binds <code>⌘K</code> / <code>Ctrl K</code>
+itself — there is no provider, and no key handler for you to write.
+
+## Items
+
+Every row is data. `label` and `description` are both matched against the
+query, `keywords` adds terms that match without being shown, and `group` sorts
+rows under a heading in first-seen order.
+
+```tsx
+const items: CommandItem[] = [
+  {
+    value: "deploy",
+    label: "Deploy acme-api",
+    description: "Production · fra1",
+    icon: IconRocket,
+    shortcut: (
+      <Kbd.Group>
+        <Kbd>⌘</Kbd>
+        <Kbd>D</Kbd>
+      </Kbd.Group>
+    ),
+    keywords: ["ship", "release"],
+    group: "Actions",
+    onSelect: () => deploy(),
+  },
+];
+```
+
+An item's own `onSelect` runs first, then the palette's `onSelect` — one for
+the row, one for the "whatever was chosen" path.
+
+## Server-side search
+
+Pass `onQueryChange` and the palette stops filtering: `items` is rendered
+exactly as given, so you can debounce, hit an API, and rank the results
+yourself. `loading` swaps the leading icon for a spinner while they are in
+flight.
+
+```tsx
+<Command
+  items={results}
+  loading={isPending}
+  onQueryChange={(query) => startTransition(() => search(query))}
+/>
+```
+
+## The trigger
+
+`trigger` renders anything that opens the palette — usually a button in the
+header. `Command.Shortcut` spells a shortcut for the current platform, so the
+same markup shows <code>⌘K</code> on macOS and <code>Ctrl K</code> everywhere
+else.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Command.Shortcut keys="mod+k" />
+<Command.Shortcut keys="mod+shift+p" />`}
+>
+  <HeyoUiCommandShortcut keys="mod+k" />
+  <HeyoUiCommandShortcut keys="mod+shift+p" />
+</CodeSnippet>
+
+<Callout type="note" title="Inline search is a Combobox">
+  `Command` is a global overlay. For a field with a dropdown of matches inside a
+  form, reach for [`Combobox`](/components/combobox).
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="items" required type="CommandItem[]">
+    Everything the palette can find.
+  </Property>
+  <Property name="shortcut" type="string | false">
+    The global shortcut that opens it. `"mod+k"` is ⌘K on macOS and Ctrl K
+    elsewhere. It defaults to `"mod+k"`; pass `false` to bind it yourself.
+  </Property>
+  <Property name="trigger" type="ReactNode">
+    Anything that opens the palette — a header button, a menu row.
+  </Property>
+  <Property name="open / defaultOpen / onOpenChange" type="boolean, fn">
+    Controlled and uncontrolled open state.
+  </Property>
+  <Property name="onSelect" type="(item: CommandItem) => void">
+    Fires for every chosen row, after the item's own `onSelect`.
+  </Property>
+  <Property name="onQueryChange" type="(query: string) => void">
+    Takes over filtering. When set, `items` is rendered exactly as given.
+  </Property>
+  <Property name="query" type="string">
+    The controlled query. Only needed alongside `onQueryChange`.
+  </Property>
+  <Property name="loading" type="boolean">
+    Swaps the leading icon for a spinner while results are in flight.
+  </Property>
+  <Property name="placeholder" type="string">
+    Placeholder for the search field.
+  </Property>
+  <Property name="emptyMessage" type="ReactNode">
+    Shown when nothing matches.
+  </Property>
+  <Property name="footer" type="ReactNode | false">
+    Replaces the default ↑↓ / ↵ / esc legend. Pass `false` to drop the bar.
+  </Property>
+</Properties>
+
+### CommandItem
+
+<Properties>
+  <Property name="value" required type="string">
+    A stable id, handed back to `onSelect`.
+  </Property>
+  <Property name="label" required type="string">
+    The row's headline. Matched against the query.
+  </Property>
+  <Property name="description" type="ReactNode">
+    A second line — a path, an id, what the action does. Also matched.
+  </Property>
+  <Property name="icon" type="IconLike">
+    The leading glyph.
+  </Property>
+  <Property name="shortcut" type="ReactNode">
+    A right-aligned hint, usually a `Kbd.Group`.
+  </Property>
+  <Property name="group" type="string">
+    The section heading this row lives under.
+  </Property>
+  <Property name="keywords" type="string[]">
+    Extra terms to match on without showing them.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the row and ignores interaction.
+  </Property>
+  <Property name="onSelect" type="() => void">
+    Runs when the row is chosen, before the palette closes.
+  </Property>
+</Properties>
+
+### Command.Shortcut
+
+<Properties>
+  <Property name="keys" required type="string">
+    A shortcut such as `"mod+k"`, rendered as `Kbd` keys for this platform.
+  </Property>
+</Properties>
+
+### formatShortcut
+
+```tsx
+import { formatShortcut } from "@heyo-sh/heyo-ui";
+
+formatShortcut("mod+k"); // ["⌘", "K"] on macOS, ["Ctrl", "K"] elsewhere
+```

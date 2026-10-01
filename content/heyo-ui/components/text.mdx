@@ -1,0 +1,199 @@
+---
+title: Text
+description: The typographic workhorse — every size and tone in the system, one prop each. Plus Heading and Code.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Text weight="medium" tone="strong">Production</Text>
+<Text>acme-api · fra1 · 128 MB</Text>
+<Text tone="subtle">Last deployed 4 minutes ago</Text>`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-1">
+    <HeyoUiText weight="medium" tone="strong">
+      Production
+    </HeyoUiText>
+    <HeyoUiText>acme-api · fra1 · 128 MB</HeyoUiText>
+    <HeyoUiText tone="subtle">Last deployed 4 minutes ago</HeyoUiText>
+  </div>
+</CodeSnippet>
+
+# Text
+
+Almost everything in an application is 14px. Hierarchy is carried by **weight
+and colour**, not by size — which is why `Text` has a `tone` and a `weight`
+prop, and why its `size` prop is the one you reach for least.
+
+- **Medium** names a surface or a group: field labels, section labels, card
+  titles, table headers.
+- **Normal** is everything living inside one: button labels, navigation items,
+  table cells, body copy.
+- `text-heyo-default` is the thing being acted on. `text-heyo-subtle` is
+  context.
+
+## Usage
+
+```tsx
+import { Text } from "@heyo-sh/heyo-ui";
+
+<Text tone="subtle">Last deployed 4 minutes ago</Text>;
+```
+
+## Tones
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-1"
+  code={`<Text tone="strong">strong</Text>
+<Text tone="default">default</Text>
+<Text tone="subtle">subtle</Text>
+<Text tone="inactive">inactive</Text>
+<Text tone="success">success</Text>
+<Text tone="warning">warning</Text>
+<Text tone="danger">danger</Text>`}
+>
+  <HeyoUiText tone="strong">strong</HeyoUiText>
+  <HeyoUiText tone="default">default</HeyoUiText>
+  <HeyoUiText tone="subtle">subtle</HeyoUiText>
+  <HeyoUiText tone="inactive">inactive</HeyoUiText>
+  <HeyoUiText tone="success">success</HeyoUiText>
+  <HeyoUiText tone="warning">warning</HeyoUiText>
+  <HeyoUiText tone="danger">danger</HeyoUiText>
+</CodeSnippet>
+
+## Sizes
+
+12, 13, 14, 16, 18, 22 and 28px. The jump from `base` to `lg` is already a
+statement; `2xl` and `3xl` are for a page title or a number, not for a
+paragraph.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-1"
+  code={`<Text size="xs">xs — 12px</Text>
+<Text size="sm">sm — 13px</Text>
+<Text size="base">base — 14px</Text>
+<Text size="lg">lg — 16px</Text>
+<Text size="xl">xl — 18px</Text>
+<Text size="2xl">2xl — 22px</Text>
+<Text size="3xl">3xl — 28px</Text>`}
+>
+  <HeyoUiText size="xs">xs — 12px</HeyoUiText>
+  <HeyoUiText size="sm">sm — 13px</HeyoUiText>
+  <HeyoUiText size="base">base — 14px</HeyoUiText>
+  <HeyoUiText size="lg">lg — 16px</HeyoUiText>
+  <HeyoUiText size="xl">xl — 18px</HeyoUiText>
+  <HeyoUiText size="2xl">2xl — 22px</HeyoUiText>
+  <HeyoUiText size="3xl">3xl — 28px</HeyoUiText>
+</CodeSnippet>
+
+## Mono and truncate
+
+`mono` switches to the monospace stack — identifiers, hashes, regions.
+`truncate` clips to one line with an ellipsis, and sets the `min-width: 0` that
+makes truncation work inside a flex row.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-1"
+  code={`<Text mono tone="subtle">dpl_8f21c3d9</Text>
+<Text truncate>A single line that is far too long to fit in the space it has been given</Text>`}
+>
+  <HeyoUiText mono tone="subtle">
+    dpl_8f21c3d9
+  </HeyoUiText>
+  <div className="w-full max-w-xs">
+    <HeyoUiText truncate>
+      A single line that is far too long to fit in the space it has been given
+    </HeyoUiText>
+  </div>
+</CodeSnippet>
+
+## Heading
+
+`Heading` renders `h1` to `h6` with the right size for the level. `as` on
+`Text` does the same job when you need a different element without a heading's
+semantics.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-2"
+  code={`<Heading level={1}>Project settings</Heading>
+<Heading level={2}>Environment variables</Heading>
+<Heading level={3}>Production</Heading>`}
+>
+  <HeyoUiHeading level={1}>Project settings</HeyoUiHeading>
+  <HeyoUiHeading level={2}>Environment variables</HeyoUiHeading>
+  <HeyoUiHeading level={3}>Production</HeyoUiHeading>
+</CodeSnippet>
+
+## Code
+
+Inline code on the recessed surface. It pairs with [`Kbd`](/components/kbd) for
+shortcut documentation and with [`CodeBlock`](/components/code-block) for
+anything longer than a phrase.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Text>
+  Run <Code>bun add @heyo-sh/heyo-ui</Code> to install.
+</Text>`}
+>
+  <HeyoUiText>
+    Run <HeyoUiCode>bun add @heyo-sh/heyo-ui</HeyoUiCode> to install.
+  </HeyoUiText>
+</CodeSnippet>
+
+## Properties
+
+### Text
+
+<Properties>
+  <Property
+    name="size"
+    type='"xs" | "sm" | "base" | "lg" | "xl" | "2xl" | "3xl"'
+  >
+    It defaults to `base` (14px).
+  </Property>
+  <Property
+    name="tone"
+    type='"default" | "strong" | "subtle" | "inactive" | "inverse" | "brand" | "success" | "warning" | "danger"'
+  >
+    It defaults to `default`.
+  </Property>
+  <Property name="weight" type='"normal" | "medium" | "semibold"'>
+    It defaults to `normal`.
+  </Property>
+  <Property name="mono" type="boolean">
+    Switches to the monospace stack.
+  </Property>
+  <Property name="truncate" type="boolean">
+    One line with an ellipsis, including the `min-width: 0` it needs.
+  </Property>
+  <Property name="as" type="ElementType">
+    Render a different element: `as="span"`, `as="label"`.
+  </Property>
+</Properties>
+
+### Heading
+
+<Properties>
+  <Property name="level" type="1 | 2 | 3 | 4 | 5 | 6">
+    The heading level and its size. It defaults to `2`.
+  </Property>
+</Properties>
+
+### Code
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    Inline code, on the recessed surface.
+  </Property>
+</Properties>
+
+### textVariants
+
+The `cva` definition, for anything that needs the same type without the
+component.
+
+```tsx
+import { textVariants } from "@heyo-sh/heyo-ui";
+
+<time className={textVariants({ size: "sm", tone: "subtle" })}>4m ago</time>;
+```

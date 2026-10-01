@@ -1,0 +1,138 @@
+---
+title: Radio
+description: One choice from a short, visible list — vertical by default, horizontal when the options are two words long.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<RadioGroup defaultValue="prod">
+  <Radio value="prod" label="Production" description="Serves live traffic." />
+  <Radio value="preview" label="Preview" description="One per pull request." />
+  <Radio value="dev" label="Development" description="Local only." />
+</RadioGroup>`}
+>
+  <div className="w-fit">
+    <HeyoUiRadioGroup defaultValue="prod">
+      <HeyoUiRadio
+        value="prod"
+        label="Production"
+        description="Serves live traffic."
+      />
+      <HeyoUiRadio
+        value="preview"
+        label="Preview"
+        description="One per pull request."
+      />
+      <HeyoUiRadio value="dev" label="Development" description="Local only." />
+    </HeyoUiRadioGroup>
+  </div>
+</CodeSnippet>
+
+# Radio
+
+`Radio` is for a choice the reader should see all of. Three or four options
+with a sentence of explanation each is exactly its job — beyond that, use a
+[`Select`](/components/select) and give the list back its scroll.
+
+Like [`Checkbox`](/components/checkbox), passing `label` renders the whole
+clickable row; without it you get the dot alone.
+
+## Usage
+
+```tsx
+import { Radio, RadioGroup } from "@heyo-sh/heyo-ui";
+
+<RadioGroup defaultValue="prod" onValueChange={setEnvironment}>
+  <Radio value="prod" label="Production" />
+  <Radio value="preview" label="Preview" />
+</RadioGroup>;
+```
+
+## Horizontal
+
+Switch the axis when the labels are short enough to scan in a row — a unit, a
+density, a yes/no.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<RadioGroup orientation="horizontal" defaultValue="monthly">
+  <Radio value="monthly" label="Monthly" />
+  <Radio value="yearly" label="Yearly" />
+</RadioGroup>`}
+>
+  <HeyoUiRadioGroup orientation="horizontal" defaultValue="monthly">
+    <HeyoUiRadio value="monthly" label="Monthly" />
+    <HeyoUiRadio value="yearly" label="Yearly" />
+  </HeyoUiRadioGroup>
+</CodeSnippet>
+
+## In a field
+
+A radio group has no single control to label, so the group heading comes from
+[`Field`](/components/field).
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Field label="Billing period" description="Change it at any time.">
+  <RadioGroup defaultValue="yearly">
+    <Radio value="monthly" label="Monthly" />
+    <Radio value="yearly" label="Yearly" description="Two months free." />
+  </RadioGroup>
+</Field>`}
+>
+  <div className="w-fit">
+    <HeyoUiField label="Billing period" description="Change it at any time.">
+      <HeyoUiRadioGroup defaultValue="yearly">
+        <HeyoUiRadio value="monthly" label="Monthly" />
+        <HeyoUiRadio
+          value="yearly"
+          label="Yearly"
+          description="Two months free."
+        />
+      </HeyoUiRadioGroup>
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+### RadioGroup
+
+<Properties>
+  <Property name="value / defaultValue" type="string">
+    Controlled and uncontrolled selection.
+  </Property>
+  <Property name="onValueChange" type="(value: string) => void">
+    Fires when the selection changes.
+  </Property>
+  <Property name="orientation" type='"vertical" | "horizontal"'>
+    The layout axis. It defaults to `vertical`.
+  </Property>
+  <Property name="disabled / required / name" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>
+
+### Radio
+
+<Properties>
+  <Property name="value" required type="string">
+    The value this option contributes to the group.
+  </Property>
+  <Property name="label" type="ReactNode">
+    An inline label. Its presence turns the component into the whole clickable
+    row.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the label.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims this option and ignores interaction.
+  </Property>
+  <Property name="wrapperClassName" type="string">
+    Class for the outer `<label>`.
+  </Property>
+  <Property name="className" type="string">
+    Class for the dot itself.
+  </Property>
+</Properties>

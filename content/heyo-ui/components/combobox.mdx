@@ -1,0 +1,203 @@
+---
+title: Combobox
+description: A Select you can type into — single or multiple, with chips that keep their place.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Combobox
+  placeholder="Pick a region"
+  options={[
+    { value: "fra", label: "Frankfurt", description: "eu-central", group: "Europe" },
+    { value: "waw", label: "Warsaw", description: "eu-central", group: "Europe" },
+    { value: "iad", label: "Ashburn", description: "us-east", group: "North America" },
+  ]}
+/>`}
+>
+  <div className="w-64">
+    <HeyoUiCombobox
+      placeholder="Pick a region"
+      options={[
+        {
+          value: "fra",
+          label: "Frankfurt",
+          description: "eu-central",
+          group: "Europe",
+        },
+        {
+          value: "waw",
+          label: "Warsaw",
+          description: "eu-central",
+          group: "Europe",
+        },
+        {
+          value: "iad",
+          label: "Ashburn",
+          description: "us-east",
+          group: "North America",
+        },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+# Combobox
+
+`Combobox` is a [`Select`](/components/select) you can type into: an input that
+filters as you type, with a chevron for browsing the whole list when you would
+rather look than search.
+
+Reach for it the moment a list is long enough that scanning beats scrolling —
+countries, regions, repositories, people.
+
+## Usage
+
+```tsx
+import { Combobox } from "@heyo-sh/heyo-ui";
+
+<Combobox options={regions} placeholder="Pick a region" />;
+```
+
+## Multiple
+
+With `multiple`, the chosen values become removable chips **inside** the
+control and the input keeps its place at the end of them. It is the only layout
+that survives ten selections without turning into a second row of chrome.
+`maxChips` collapses the rest into a `+N`.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Combobox
+  multiple
+  maxChips={2}
+  defaultValue={["fra", "waw"]}
+  placeholder="Pick regions"
+  options={regions}
+/>`}
+>
+  <div className="w-64">
+    <HeyoUiCombobox
+      multiple
+      maxChips={2}
+      defaultValue={["fra", "waw", "iad"]}
+      placeholder="Pick regions"
+      options={[
+        { value: "fra", label: "Frankfurt" },
+        { value: "waw", label: "Warsaw" },
+        { value: "iad", label: "Ashburn" },
+        { value: "sin", label: "Singapore" },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+## Groups, icons and descriptions
+
+An option carries everything a row needs: a leading glyph, a second line, and
+the heading it belongs under. Rows sharing a `group` are collected in
+first-seen order — no nesting, no sorting on your side.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Combobox
+  placeholder="Assign to"
+  options={[
+    { value: "ada", label: "Ada Lovelace", description: "ada@heyo.sh", icon: IconUser, group: "Maintainers" },
+    { value: "lin", label: "Linus", description: "linus@heyo.sh", icon: IconUser, group: "Contributors" },
+  ]}
+/>`}
+>
+  <div className="w-64">
+    <HeyoUiCombobox
+      placeholder="Assign to"
+      options={[
+        {
+          value: "ada",
+          label: "Ada Lovelace",
+          description: "ada@heyo.sh",
+          icon: <IconUser />,
+          group: "Maintainers",
+        },
+        {
+          value: "lin",
+          label: "Linus",
+          description: "linus@heyo.sh",
+          icon: <IconUser />,
+          group: "Contributors",
+        },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+## Empty state
+
+`emptyMessage` is what the reader sees when the filter matches nothing. Make it
+say what to do next — "No region matches" is better than "No results".
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Combobox
+  placeholder="Pick a region"
+  emptyMessage="No region matches that name."
+  options={regions}
+/>`}
+>
+  <div className="w-64">
+    <HeyoUiCombobox
+      placeholder="Pick a region"
+      emptyMessage="No region matches that name."
+      options={[{ value: "fra", label: "Frankfurt" }]}
+    />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Which one?">
+  [`Select`](/components/select) for a short, known list. `Combobox` when it
+  needs filtering. [`Command`](/components/command) when the answer could be
+  anything in the application.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="options" required type="ComboboxOption[]">
+    The full list. Each option takes `value`, `label`, and optionally
+    `description`, `icon`, `group` and `disabled`.
+  </Property>
+  <Property name="value / defaultValue" type="string | null | string[]">
+    Controlled and uncontrolled selection. With `multiple`, both are arrays.
+  </Property>
+  <Property name="onValueChange" type="(value) => void">
+    Fires with the new selection — a string or `null`, or an array with
+    `multiple`.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Turns the control into chips plus an input.
+  </Property>
+  <Property name="maxChips" type="number">
+    Beyond this many chips, the rest collapse into `+N`. `multiple` only.
+  </Property>
+  <Property name="clearable" type="boolean">
+    Shows a clear control on a single-value combobox. It defaults to `true`.
+  </Property>
+  <Property name="placeholder" type="string">
+    Placeholder for the input.
+  </Property>
+  <Property name="emptyMessage" type="ReactNode">
+    Shown when the filter matches nothing.
+  </Property>
+  <Property name="maxHeight" type="string">
+    Cap on the list height. It defaults to `"18rem"`.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Control height. It defaults to `base`.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the control and ignores interaction.
+  </Property>
+  <Property name="name / id / aria-label" type="string">
+    Form and accessibility wiring. Give it an `aria-label` when there is no
+    visible label.
+  </Property>
+</Properties>

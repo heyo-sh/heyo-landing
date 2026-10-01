@@ -5,7 +5,7 @@ export default heyoDocs({
   title: "Heyo Code Audit",
   description: "Verified AI code reviews for GitHub pull requests.",
   content: "content/heyo-code-audit",
-  theme: "grain",
+  theme: "heyo",
   navigation: [
     { label: "Readme", href: "https://heyo.sh" },
     {

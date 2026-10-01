@@ -1,0 +1,130 @@
+---
+title: Utilities
+description: The helpers heyo-ui exports alongside its components — cn, renderIcon, useSelection, useMediaQuery and the control primitives.
+---
+
+# Utilities
+
+Besides components, heyo-ui exports the handful of helpers the components use
+on themselves. They exist so an application can build a one-off control that
+still looks like it belongs — not because the library needs a kitchen sink.
+
+## cn
+
+The class merger every component forwards `className` through: `clsx` for
+conditionals, `tailwind-merge` for conflicts. Nothing to copy into your
+repository.
+
+```tsx
+import { cn } from "@heyo-sh/heyo-ui";
+
+<div className={cn("px-3 py-2", active && "bg-heyo-tint", className)} />;
+```
+
+Because conflicts resolve last-wins, overriding a component is just a class:
+
+```tsx
+<Button className="rounded-full px-6">Pill</Button>
+```
+
+## renderIcon
+
+Accepts the same three shapes every `icon` prop in the library accepts — a
+component, an element, or any node — and applies a class to the first two.
+
+```tsx
+import { renderIcon, type IconLike } from "@heyo-sh/heyo-ui";
+
+{
+  renderIcon(icon, "size-4 text-heyo-subtle");
+}
+```
+
+The first argument is `IconLike` — a `ReactNode`, or a component taking
+`className` and `aria-hidden`. The second is a class, merged into a component
+or element icon and ignored for a plain node.
+
+## useSelection
+
+Row selection for a table — the reason `Checkbox` has an `indeterminate` state
+at all. `ids` is the **current page** of rows, so `toggleAll` only ever touches
+what the reader can actually see.
+
+```tsx
+import { useSelection, Checkbox, Table } from "@heyo-sh/heyo-ui";
+
+const rows = useSelection(deployments.map((deployment) => deployment.sha));
+
+<Table.SelectHeader>
+  <Checkbox
+    aria-label="Select all"
+    checked={rows.allSelected}
+    indeterminate={rows.someSelected}
+    onCheckedChange={(next) => rows.toggleAll(next)}
+  />
+</Table.SelectHeader>;
+```
+
+It returns:
+
+| Member              | What it is                                                |
+| ------------------- | --------------------------------------------------------- |
+| `selected: Id[]`    | The selected ids, in no particular order                  |
+| `isSelected(id)`    | Membership test for a single row                          |
+| `toggle(id, next?)` | Flips a row, or sets it explicitly when `next` is given   |
+| `toggleAll(next?)`  | Selects or clears every id passed in. Omit `next` to flip |
+| `clear()`           | Empties the selection                                     |
+| `allSelected`       | Every row is selected — the header checkbox is `checked`  |
+| `someSelected`      | Some but not all — the header checkbox is `indeterminate` |
+| `count`             | How many rows are selected                                |
+
+<Callout type="note" title="DataTable already does this">
+  [`DataTable`](/components/data-table) wires selection, the bulk bar and the
+  header checkbox for you. Reach for `useSelection` when you are composing a
+  [`Table`](/components/table) by hand.
+</Callout>
+
+## useMediaQuery
+
+A subscription to a media query, SSR-safe and shared between the components
+that need one (`Sidebar` turns into a drawer with it).
+
+```tsx
+import { useMediaQuery } from "@heyo-sh/heyo-ui";
+
+const isCompact = useMediaQuery("(max-width: 768px)");
+```
+
+## Control primitives
+
+The chrome every form control is assembled from. Use them to build a control
+heyo-ui does not ship — a colour picker, a tag input — that still matches the
+rest of the system down to the focus ring.
+
+| Export                                         | What it is                                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `controlBase`                                  | Chrome plus the typing focus ring. The default for `Input` and `Textarea`                                     |
+| `controlTriggerBase`                           | Chrome plus the pressing focus ring (`:focus-visible`), for triggers that keep focus after their popup closes |
+| `controlChrome`                                | Fill, ring, inset shadow, disabled and invalid states — without any focus treatment                           |
+| `controlFocusRing` / `controlFocusVisibleRing` | The two focus treatments on their own                                                                         |
+| `controlSizeVariants`                          | Height, radius, padding and gap for `xs` (20px), `sm` (26px), `base` (32px) and `lg` (40px)                   |
+| `controlIconSize`                              | The icon size that keeps an adornment optically balanced at each height                                       |
+| `ControlSize`                                  | The shared size union, exported as a type                                                                     |
+
+## Popup primitives
+
+The shared chrome behind every floating surface — `Select`, `Dropdown`,
+`Popover`, `Tooltip`, `Combobox`. One definition is what keeps them visually
+identical.
+
+| Export         | What it is                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| `popupSurface` | Radius, surface, ring, shadow and the anchor-width custom property                                            |
+| `popupMotion`  | The enter and exit transition: a 4px rise and a hair of scale. Nothing bouncy, and it respects reduced motion |
+| `popupItem`    | A row inside a floating menu, including its highlighted and disabled states                                   |
+
+```tsx
+import { cn, popupMotion, popupSurface } from "@heyo-sh/heyo-ui";
+
+<Menu.Popup className={cn(popupSurface, popupMotion, "p-1")}>…</Menu.Popup>;
+```

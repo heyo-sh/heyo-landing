@@ -1,0 +1,139 @@
+---
+title: Empty
+description: The nothing-here state — left-aligned with a rule down its side, not a centred icon in a circle.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Empty
+  icon={IconCube}
+  title="No workers yet"
+  description="Deploy one and it will show up here with its logs and metrics."
+  action={<Button variant="primary" icon={IconPlus}>Create worker</Button>}
+  hint="Or run heyo deploy from your terminal."
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiEmpty
+      icon={<IconCube />}
+      title="No workers yet"
+      description="Deploy one and it will show up here with its logs and metrics."
+      action={
+        <HeyoUiButton variant="primary" icon={<IconPlus />}>
+          Create worker
+        </HeyoUiButton>
+      }
+      hint="Or run heyo deploy from your terminal."
+    />
+  </div>
+</CodeSnippet>
+
+# Empty
+
+Deliberately **not** a centred icon-in-a-circle over centred text. That layout
+reads as an _error_ — it is the same composition as a 404 — and it puts the
+least useful element, a generic icon, at the optical centre.
+
+Here the icon is a small mark on the same baseline as the title, the copy is
+left-aligned like every other paragraph in the product, and a rule runs down
+the side so the block sits in the layout instead of floating in a hole.
+
+## Usage
+
+```tsx
+import { Empty } from "@heyo-sh/heyo-ui";
+
+<Empty
+  icon={IconInbox}
+  title="No notifications"
+  description="You are all caught up."
+/>;
+```
+
+## Centred, when centring is right
+
+`align="center"` exists for the one case that earns it: an entire empty page,
+with nothing else on screen to align to.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Empty
+  align="center"
+  bordered
+  icon={IconMoodEmpty}
+  title="Nothing to see here"
+  description="This project has no deployments."
+  action={<Button variant="outline">Read the guide</Button>}
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiEmpty
+      align="center"
+      bordered
+      icon={<IconMoodEmpty />}
+      title="Nothing to see here"
+      description="This project has no deployments."
+      action={<HeyoUiButton variant="outline">Read the guide</HeyoUiButton>}
+    />
+  </div>
+</CodeSnippet>
+
+## Bordered
+
+`bordered` draws a well around the block — for an empty pane or a drop target,
+where the boundary is part of the message.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Empty
+  bordered
+  icon={IconInbox}
+  title="No incidents"
+  description="Nothing has paged anyone in 42 days."
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiEmpty
+      bordered
+      icon={<IconInbox />}
+      title="No incidents"
+      description="Nothing has paged anyone in 42 days."
+    />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Empty, or filtered-empty?">
+  "Nothing here yet" and "your search matched nothing" are different problems
+  and deserve different words. [`DataTable`](/components/data-table) takes both
+  as `empty` and `emptyFiltered`.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="title" required type="ReactNode">
+    What is missing.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Why, or what to do about it.
+  </Property>
+  <Property name="icon" type="IconLike">
+    A small mark on the title's baseline.
+  </Property>
+  <Property name="action" type="ReactNode">
+    Usually a single `Button`, sometimes a primary plus a ghost.
+  </Property>
+  <Property name="hint" type="ReactNode">
+    A muted footnote under the action — a doc link, a shortcut, a limit.
+  </Property>
+  <Property name="align" type='"stack" | "center"'>
+    `stack` is the default: a left-aligned block with a rule down its side.
+    `center` is for a whole empty page or pane.
+  </Property>
+  <Property name="bordered" type="boolean">
+    Draws a well around the block.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Extra content under the description, before the action.
+  </Property>
+</Properties>

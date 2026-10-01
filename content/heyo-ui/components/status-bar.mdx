@@ -1,0 +1,158 @@
+---
+title: Status Bar
+description: The uptime bar — one thin column per slice of time, coloured by what happened.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<StatusBar
+  label="acme-api"
+  value="99.98% uptime"
+  legend={["90 days ago", "Today"]}
+  ticks={history}
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiStatusBar
+      label="acme-api"
+      value="99.98% uptime"
+      legend={["90 days ago", "Today"]}
+      ticks={Array.from({ length: 90 }, (_, index) => ({
+        status:
+          index === 61
+            ? "down"
+            : index === 62 || index === 77
+              ? "degraded"
+              : index === 40
+                ? "maintenance"
+                : "operational",
+        label: `Day ${index + 1}`,
+      }))}
+    />
+  </div>
+</CodeSnippet>
+
+# Status Bar
+
+`StatusBar` is the uptime strip from a status page: one column per slice of
+time, oldest on the left, coloured by what happened.
+
+The columns **flex** rather than sitting at a fixed width, so ninety days fit a
+sidebar and a phone without a horizontal scrollbar or a media query. The gaps
+stay 2px, which is what keeps it readable as ninety things rather than one
+smear.
+
+## Usage
+
+```tsx
+import { StatusBar } from "@heyo-sh/heyo-ui";
+
+<StatusBar ticks={history} label="acme-api" value="99.98%" />;
+```
+
+## Levels
+
+<Properties>
+  <Property name="operational" type="StatusLevel">
+    Everything worked.
+  </Property>
+  <Property name="degraded" type="StatusLevel">
+    Slow, retried, partially failing.
+  </Property>
+  <Property name="partial" type="StatusLevel">
+    Some components down, others fine.
+  </Property>
+  <Property name="down" type="StatusLevel">
+    Not serving.
+  </Property>
+  <Property name="maintenance" type="StatusLevel">
+    Planned, and therefore not a failure.
+  </Property>
+  <Property name="unknown" type="StatusLevel">
+    No data for that slice — not the same as "fine".
+  </Property>
+</Properties>
+
+## Sizes
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<StatusBar size="sm" ticks={ticks} />
+<StatusBar size="base" ticks={ticks} />
+<StatusBar size="lg" ticks={ticks} />`}
+>
+  <div className="flex w-full max-w-md flex-col gap-4">
+    <HeyoUiStatusBar
+      size="sm"
+      ticks={Array.from({ length: 45 }, (_, index) => ({
+        status: index === 30 ? "degraded" : "operational",
+      }))}
+    />
+    <HeyoUiStatusBar
+      size="base"
+      ticks={Array.from({ length: 45 }, (_, index) => ({
+        status: index === 30 ? "degraded" : "operational",
+      }))}
+    />
+    <HeyoUiStatusBar
+      size="lg"
+      ticks={Array.from({ length: 45 }, (_, index) => ({
+        status: index === 30 ? "down" : "operational",
+      }))}
+    />
+  </div>
+</CodeSnippet>
+
+## The live dot
+
+`StatusBar.Dot` is the current state, on its own. `pulse` adds a slow halo —
+only ever for _now_, never for history: a pulsing dot in a list of past events
+suggests something is still happening.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-6 flex-wrap"
+  code={`<StatusBar.Dot pulse status="operational" label="All systems operational" />
+<StatusBar.Dot status="degraded" label="Degraded" />
+<StatusBar.Dot status="down" label="Down" />`}
+>
+  <HeyoUiStatusDot pulse status="operational" label="All systems operational" />
+  <HeyoUiStatusDot status="degraded" label="Degraded" />
+  <HeyoUiStatusDot status="down" label="Down" />
+</CodeSnippet>
+
+## Properties
+
+### StatusBar
+
+<Properties>
+  <Property name="ticks" required type="StatusTick[]">
+    Oldest first, newest last — the same direction as the time axis. Each tick
+    is `{ status, label? }`, where `label` becomes the native tooltip.
+  </Property>
+  <Property name="label" type="ReactNode">
+    The row above the bar.
+  </Property>
+  <Property name="value" type="ReactNode">
+    Right of the label — usually an uptime percentage.
+  </Property>
+  <Property name="legend" type="[ReactNode, ReactNode]">
+    Captions under the two ends, for example "90 days ago" and "Today".
+  </Property>
+  <Property name="size" type='"sm" | "base" | "lg"'>
+    Column height. It defaults to `base`.
+  </Property>
+</Properties>
+
+### StatusBar.Dot
+
+<Properties>
+  <Property name="status" required type="StatusLevel">
+    What it is reporting.
+  </Property>
+  <Property name="pulse" type="boolean">
+    Adds a slow halo. Only for the current state.
+  </Property>
+  <Property name="label" type="ReactNode">
+    What the dot means, rendered beside it.
+  </Property>
+</Properties>

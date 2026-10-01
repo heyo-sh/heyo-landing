@@ -1,0 +1,118 @@
+---
+title: Icons
+description: heyo-ui ships no icon dependency. Every icon prop takes a component, an element, or any node.
+---
+
+# Icons
+
+heyo-ui has **no icon dependency**. An icon set is a taste decision with a
+measurable bundle cost, and a component library that picks one for you is a
+component library you fight the first time your product standardises on
+something else.
+
+## What an `icon` prop accepts
+
+Three shapes, interchangeable everywhere:
+
+| Shape       | Example                  | When                                                                    |
+| ----------- | ------------------------ | ----------------------------------------------------------------------- |
+| A component | `icon={IconPlus}`        | The common case. The control sizes and colours it                       |
+| An element  | `icon={<IconPlus />}`    | When you need props of your own — a stroke width, a `className`         |
+| Any node    | `icon={<span>🙂</span>}` | An emoji, an image, a `<span>`. Nothing about the prop is icon-specific |
+
+```tsx
+import { IconHome } from "@tabler/icons-react";
+
+<Sidebar.MenuButton icon={IconHome}>Home</Sidebar.MenuButton>
+<Button icon={<IconHome strokeWidth={1.5} />}>Home</Button>
+```
+
+## The internal glyphs
+
+The two dozen glyphs the components need for themselves — chevrons, check
+marks, the spinner, the clear button — are inlined verbatim from
+[Tabler Icons](https://tabler.io/icons): a 24×24 grid, 2px stroke, round caps
+and joins. They sit flush with `@tabler/icons-react` if you use it for the
+rest of your interface, and they cost nothing if you do not.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Select defaultValue="fra">
+  <Select.Trigger placeholder="Pick a region" />
+  <Select.Content items={[
+    { value: "fra", label: "Frankfurt" },
+    { value: "waw", label: "Warsaw" },
+  ]} />
+</Select>`}
+>
+  <HeyoUiSelect defaultValue="fra">
+    <HeyoUiSelect.Trigger placeholder="Pick a region" />
+    <HeyoUiSelect.Content
+      items={[
+        { value: "fra", label: "Frankfurt" },
+        { value: "waw", label: "Warsaw" },
+      ]}
+    />
+  </HeyoUiSelect>
+</CodeSnippet>
+
+The chevron above is one of them. You never pass it, and you cannot remove it —
+it is part of what makes the control a select.
+
+## Where icons are accepted
+
+Everything that renders a row takes an icon:
+
+`Button` · `Badge` · `Input` · `Textarea` · `Toggle` · `Tabs` · `Dropdown` ·
+`Command` · `Tree` · `Timeline` · `Stat` · `Empty` · `CodeBlock` ·
+`FileUpload` · `Sidebar.MenuButton` · `Sidebar.MenuSubButton` ·
+`Accordion.Trigger` · `Breadcrumb` crumbs · `Combobox` options
+
+## Sizing
+
+Do not size an icon yourself. The control decides: a `sm` button gets a 14px
+glyph, a `base` button 16px, a sidebar row 16px, a badge 12px. Passing a sized
+icon in defeats the alignment the control is maintaining between its label, its
+glyph and its neighbours.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap items-end"
+  code={`<Button size="xs" icon={IconPlus}>Extra small</Button>
+<Button size="sm" icon={IconPlus}>Small</Button>
+<Button size="base" icon={IconPlus}>Base</Button>
+<Button size="lg" icon={IconPlus}>Large</Button>`}
+>
+  <HeyoUiButton size="xs" icon={<IconPlus />}>
+    Extra small
+  </HeyoUiButton>
+  <HeyoUiButton size="sm" icon={<IconPlus />}>
+    Small
+  </HeyoUiButton>
+  <HeyoUiButton size="base" icon={<IconPlus />}>
+    Base
+  </HeyoUiButton>
+  <HeyoUiButton size="lg" icon={<IconPlus />}>
+    Large
+  </HeyoUiButton>
+</CodeSnippet>
+
+## Rendering an icon yourself
+
+`renderIcon` is the helper the components use internally. Reach for it when you
+build a component of your own that should accept the same prop shape.
+
+```tsx
+import { renderIcon, type IconLike } from "@heyo-sh/heyo-ui";
+
+function Row({ icon, children }: { icon?: IconLike; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      {renderIcon(icon, "size-4 text-heyo-subtle")}
+      {children}
+    </div>
+  );
+}
+```
+
+It takes the icon and a class: the class is applied to a component or element
+icon, and ignored for a plain node.

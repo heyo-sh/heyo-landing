@@ -5,7 +5,7 @@ export default heyoDocs({
   title: "Heyo Docs example",
   description: "The thin React Router shell around the Heyo Docs runtime.",
   content: "content/heyo-docs",
-  theme: "grain",
+  theme: "heyo",
   navigation: [
     { label: "Readme", href: "https://heyo.sh" },
     { label: "GitHub", href: "https://github.com/heyo-sh/heyo-docs" },
@@ -73,7 +73,7 @@ export default heyoDocs({
         {
           section: "Themes",
           icon: "sun",
-          pages: ["themes/grain", "themes/shade", "themes/moss"],
+          pages: ["themes/grain", "themes/shade", "themes/moss", "themes/heyo"],
         },
         {
           section: "Manage Website",

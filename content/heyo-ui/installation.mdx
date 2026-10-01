@@ -1,0 +1,117 @@
+---
+title: Installation
+description: Install heyo-ui, import one line of CSS, and render the first component.
+---
+
+# Installation
+
+heyo-ui is published as a compiled package. There is no CLI, no generator and
+no code to copy into your repository — you install it like any other
+dependency and import from it.
+
+## Install the package
+
+<CodeBlockGroup>
+  <CodeBlock language="bash" title="bun">
+    {`bun add @heyo-sh/heyo-ui`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install @heyo-sh/heyo-ui`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add @heyo-sh/heyo-ui`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn add @heyo-sh/heyo-ui`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+### Requirements
+
+| Requirement      | Version                                                        |
+| ---------------- | -------------------------------------------------------------- |
+| **React**        | `^19.0.0` — peer dependency, `ref`-as-prop throughout          |
+| **Tailwind CSS** | `^4.1.0` — peer dependency, tokens declared with `@theme`      |
+| **Bundler**      | Anything with `exports` support: Vite, Next.js, Rspack, Parcel |
+
+Base UI, `clsx`, `class-variance-authority` and `tailwind-merge` are bundled as
+regular dependencies. You never install or configure them.
+
+## Import the stylesheet
+
+One line in your CSS, and the setup is finished.
+
+<CodeBlock language="css" title="app.css">
+  {`@import "@heyo-sh/heyo-ui";`}
+</CodeBlock>
+
+That import pulls in Tailwind for you. If your application already imports
+Tailwind itself, take the tokens only:
+
+<CodeBlock language="css" title="app.css">
+  {`@import "tailwindcss";
+@import "@heyo-sh/heyo-ui/theme.css";`}
+</CodeBlock>
+
+<Callout type="note" title="Why no @source directive?">
+  Tailwind skips `node_modules` when it auto-detects content, so without a
+  source registration every heyo-ui class would be tree-shaken out of your
+  build. Both entry points bake that directive into the shipped stylesheet, so
+  your setup stays a single `@import` line.
+</Callout>
+
+## Render something
+
+```tsx
+import { Button } from "@heyo-sh/heyo-ui";
+
+export function Toolbar() {
+  return <Button variant="primary">Deploy</Button>;
+}
+```
+
+Every module ships with a `"use client"` banner, so components drop into the
+Next.js App Router and React Server Components without a wrapper.
+
+## Importing
+
+The barrel is the simplest option and tree-shakes correctly in any modern
+bundler. Per-component entry points exist when you would rather be explicit.
+
+<CodeBlockGroup>
+  <CodeBlock language="tsx" title="Barrel">
+    {`import { Button, Input, Sidebar } from "@heyo-sh/heyo-ui";`}
+  </CodeBlock>
+  <CodeBlock language="tsx" title="Granular">
+    {`import { Button } from "@heyo-sh/heyo-ui/components/button";`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+## Enable dark mode
+
+Set `data-mode` on any ancestor — usually `<html>`. Omit it and the components
+follow the operating system.
+
+<CodeBlock language="html" title="index.html">
+  {`<html data-mode="dark"></html>`}
+</CodeBlock>
+
+```tsx
+document.documentElement.setAttribute("data-mode", "dark");
+```
+
+That is the entire theming API. [Theming](/theming) covers the tokens behind
+it.
+
+## Framework notes
+
+| Framework            | What to do                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Next.js (App Router) | Import the stylesheet from `app/globals.css`. Components carry `"use client"`, so a server component renders them. |
+| Vite / React Router  | Import the stylesheet once from the entry module. Nothing else is needed.                                          |
+| Astro                | Render heyo-ui inside a React island; interactive components need a client directive.                              |
+
+<Callout type="tip" title="Next step">
+  Pick a component from the sidebar, or read [Design rules](/design-rules) for
+  the ten rules every component in the library follows.
+</Callout>

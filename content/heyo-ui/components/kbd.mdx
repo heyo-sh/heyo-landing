@@ -1,0 +1,131 @@
+---
+title: Kbd
+description: A keyboard key — the one place heyo-ui leans on monospace type.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap items-center"
+  code={`<Kbd>⌘</Kbd>
+<Kbd.Group>
+  <Kbd>⌘</Kbd>
+  <Kbd>K</Kbd>
+</Kbd.Group>
+<Kbd.Group separator="then">
+  <Kbd>G</Kbd>
+  <Kbd>D</Kbd>
+</Kbd.Group>`}
+>
+  <HeyoUiKbd>⌘</HeyoUiKbd>
+  <HeyoUiKbdGroup>
+    <HeyoUiKbd>⌘</HeyoUiKbd>
+    <HeyoUiKbd>K</HeyoUiKbd>
+  </HeyoUiKbdGroup>
+  <HeyoUiKbdGroup separator="then">
+    <HeyoUiKbd>G</HeyoUiKbd>
+    <HeyoUiKbd>D</HeyoUiKbd>
+  </HeyoUiKbdGroup>
+</CodeSnippet>
+
+# Kbd
+
+`Kbd` renders a `<kbd>` as a keycap: monospaced and hairlined. It is the single
+place where heyo-ui leans on mono type, because keycaps read better that way.
+
+## Usage
+
+```tsx
+import { Kbd } from "@heyo-sh/heyo-ui";
+
+<Kbd.Group>
+  <Kbd>⌘</Kbd>
+  <Kbd>K</Kbd>
+</Kbd.Group>;
+```
+
+## In a menu
+
+The usual home for a shortcut hint is the right end of a row — a
+[`Dropdown.Item`](/components/dropdown) or a
+[`Command`](/components/command) result.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dropdown>
+  <Dropdown.Trigger render={<Button>File</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item shortcut={<Kbd.Group><Kbd>⌘</Kbd><Kbd>S</Kbd></Kbd.Group>}>Save</Dropdown.Item>
+    <Dropdown.Item shortcut={<Kbd>R</Kbd>}>Rename</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown>`}
+>
+  <HeyoUiDropdown>
+    <HeyoUiDropdown.Trigger render={<HeyoUiButton>File</HeyoUiButton>} />
+    <HeyoUiDropdown.Content>
+      <HeyoUiDropdown.Item
+        shortcut={
+          <HeyoUiKbdGroup>
+            <HeyoUiKbd>⌘</HeyoUiKbd>
+            <HeyoUiKbd>S</HeyoUiKbd>
+          </HeyoUiKbdGroup>
+        }
+      >
+        Save
+      </HeyoUiDropdown.Item>
+      <HeyoUiDropdown.Item shortcut={<HeyoUiKbd>R</HeyoUiKbd>}>
+        Rename
+      </HeyoUiDropdown.Item>
+    </HeyoUiDropdown.Content>
+  </HeyoUiDropdown>
+</CodeSnippet>
+
+<Callout type="tip" title="Platform-aware shortcuts">
+  [`Command.Shortcut`](/components/command) spells `"mod+k"` as ⌘K on macOS and
+  Ctrl K everywhere else, using these same keycaps. Prefer it over hard-coding a
+  ⌘.
+</Callout>
+
+## Separators
+
+`separator` is empty by default, which gives the tight `⌘K` form. Pass a
+character or a word for a sequence.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap items-center"
+  code={`<Kbd.Group separator="+"><Kbd>Ctrl</Kbd><Kbd>⇧</Kbd><Kbd>P</Kbd></Kbd.Group>
+<Kbd.Group separator="then"><Kbd>G</Kbd><Kbd>I</Kbd></Kbd.Group>`}
+>
+  <HeyoUiKbdGroup separator="+">
+    <HeyoUiKbd>Ctrl</HeyoUiKbd>
+    <HeyoUiKbd>⇧</HeyoUiKbd>
+    <HeyoUiKbd>P</HeyoUiKbd>
+  </HeyoUiKbdGroup>
+  <HeyoUiKbdGroup separator="then">
+    <HeyoUiKbd>G</HeyoUiKbd>
+    <HeyoUiKbd>I</HeyoUiKbd>
+  </HeyoUiKbdGroup>
+</CodeSnippet>
+
+## Properties
+
+### Kbd
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    The key. One glyph or one short word.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the `<kbd>`.
+  </Property>
+</Properties>
+
+### Kbd.Group
+
+<Properties>
+  <Property name="separator" type="string">
+    The character rendered between keys. It defaults to `""`, which gives the
+    tight `⌘K` form.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The keys.
+  </Property>
+</Properties>

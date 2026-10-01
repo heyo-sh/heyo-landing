@@ -18,5 +18,6 @@ export default [
   route("heyo-docs-internal/ai-chat", "routes/ai-chat.ts"),
   route("heyo-docs/*", "routes/docs.tsx"),
   route("heyo-code-audit/*", "routes/docs-code-audit.tsx"),
+  route("heyo-ui/*", "routes/docs-ui.tsx"),
   route("*", "routes/page.tsx"),
 ] satisfies RouteConfig;

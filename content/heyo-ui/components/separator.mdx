@@ -1,0 +1,99 @@
+---
+title: Separator
+description: A hairline rule, horizontal or vertical, with an optional caption.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Separator />
+<Separator label="or" />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-4">
+    <HeyoUiSeparator />
+    <HeyoUiSeparator label="or" />
+  </div>
+</CodeSnippet>
+
+# Separator
+
+`Separator` draws the hairline the rest of the system separates things with —
+the same `heyo-hairline` token a card header, a table row and the sidebar use.
+It is one pixel, translucent, and correct on every surface.
+
+## Usage
+
+```tsx
+import { Separator } from "@heyo-sh/heyo-ui";
+
+<Separator />;
+```
+
+## Vertical
+
+A vertical separator needs a parent with a height — it stretches to fill one.
+The usual case is a toolbar.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<div className="flex h-8 items-center gap-3">
+  <Button variant="ghost" size="sm">Logs</Button>
+  <Separator orientation="vertical" />
+  <Button variant="ghost" size="sm">Metrics</Button>
+  <Separator orientation="vertical" />
+  <Button variant="ghost" size="sm">Settings</Button>
+</div>`}
+>
+  <div className="flex h-8 items-center gap-3">
+    <HeyoUiButton variant="ghost" size="sm">
+      Logs
+    </HeyoUiButton>
+    <HeyoUiSeparator orientation="vertical" />
+    <HeyoUiButton variant="ghost" size="sm">
+      Metrics
+    </HeyoUiButton>
+    <HeyoUiSeparator orientation="vertical" />
+    <HeyoUiButton variant="ghost" size="sm">
+      Settings
+    </HeyoUiButton>
+  </div>
+</CodeSnippet>
+
+## With a label
+
+`label` splits the rule and centres a caption between the halves. It only
+applies to a horizontal separator — a captioned vertical rule has nowhere to
+put the text without rotating it.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Button shape="block">Continue with GitHub</Button>
+<Separator label="or" />
+<Input aria-label="Email" placeholder="you@example.com" />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-3">
+    <HeyoUiButton shape="block">Continue with GitHub</HeyoUiButton>
+    <HeyoUiSeparator label="or" />
+    <HeyoUiInput aria-label="Email" placeholder="you@example.com" />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Not every division needs one">
+  Most surfaces in heyo-ui already draw their own seams — `Card` between its
+  parts, `Table` between rows, `Select.Group` between sections. Reach for
+  `Separator` when you are composing a layout yourself.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="orientation" type='"horizontal" | "vertical"'>
+    The axis the rule runs along. It defaults to `horizontal`. A vertical rule
+    fills the height of its parent, so give the parent one.
+  </Property>
+  <Property name="label" type="ReactNode">
+    A centred caption with the rule split around it. Horizontal only.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the rule — a different colour, a margin, a dashed edge.
+  </Property>
+</Properties>

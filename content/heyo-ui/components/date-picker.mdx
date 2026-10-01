@@ -1,0 +1,166 @@
+---
+title: Date Picker
+description: A date field that opens a calendar instead of parsing text — plus a range picker with presets.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap"
+  code={`<DatePicker placeholder="Pick a date" onValueChange={setDate} />`}
+>
+  <div className="w-52">
+    <HeyoUiDatePicker placeholder="Pick a date" />
+  </div>
+</CodeSnippet>
+
+# Date Picker
+
+`DatePicker` is a control that reads the date back and a
+[`Calendar`](/components/calendar) in a popover.
+
+**There is no text parsing.** A field that accepts `3/4/25` has to decide
+whether that is March or April, and it will be wrong for half the world. If you
+need typed input, use three `NumberField`s or a native `<input type="date">`.
+
+## Usage
+
+```tsx
+import { DatePicker } from "@heyo-sh/heyo-ui";
+
+<DatePicker value={date} onValueChange={setDate} placeholder="Pick a date" />;
+```
+
+## Ranges
+
+`DatePicker.Range` selects two dates and closes itself once the range is
+complete. `presets` earn their keep here: nine times out of ten the answer is
+"last 7 days", and clicking twice in a grid to say so is a small tax on every
+visit.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<DatePicker.Range
+  placeholder="Pick a range"
+  presets={[
+    { label: "Last 7 days", range: () => ({ from: daysAgo(7), to: new Date() }) },
+    { label: "Last 30 days", range: () => ({ from: daysAgo(30), to: new Date() }) },
+  ]}
+  onValueChange={setRange}
+/>`}
+>
+  <div className="w-64">
+    <HeyoUiDatePicker.Range
+      placeholder="Pick a range"
+      presets={[
+        {
+          label: "Last 7 days",
+          range: () => ({
+            from: new Date(Date.now() - 6 * 86400000),
+            to: new Date(),
+          }),
+        },
+        {
+          label: "Last 30 days",
+          range: () => ({
+            from: new Date(Date.now() - 29 * 86400000),
+            to: new Date(),
+          }),
+        },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+## In a field
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Field label="Starts on" description="Local time.">
+  <DatePicker placeholder="Pick a date" />
+</Field>`}
+>
+  <div className="w-56">
+    <HeyoUiField label="Starts on" description="Local time.">
+      <HeyoUiDatePicker placeholder="Pick a date" />
+    </HeyoUiField>
+  </div>
+</CodeSnippet>
+
+## Bounds
+
+`min`, `max` and `disabledDate` are passed straight to the calendar, so the
+popup cannot offer a date the field would reject.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-3 flex-wrap"
+  code={`<DatePicker
+  size="sm"
+  placeholder="Pick a weekday"
+  disabledDate={(day) => day.getDay() === 0 || day.getDay() === 6}
+/>`}
+>
+  <div className="w-52">
+    <HeyoUiDatePicker
+      size="sm"
+      placeholder="Pick a weekday"
+      disabledDate={(day) => day.getDay() === 0 || day.getDay() === 6}
+    />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+### DatePicker
+
+<Properties>
+  <Property name="value / defaultValue" type="Date | null">
+    Controlled and uncontrolled selection.
+  </Property>
+  <Property name="onValueChange" type="(date: Date | null) => void">
+    Fires when a day is chosen or cleared.
+  </Property>
+  <Property name="placeholder" type="string">
+    Shown while nothing is selected.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Control height. It defaults to `base`.
+  </Property>
+  <Property name="min / max" type="Date">
+    Bounds, passed to the calendar.
+  </Property>
+  <Property name="disabledDate" type="(date: Date) => boolean">
+    An extra rule on top of the bounds.
+  </Property>
+  <Property name="locale" type="string">
+    Used for the calendar's names and for formatting the value.
+  </Property>
+  <Property name="weekStartsOn" type="0 | 1">
+    `0` is Sunday, `1` is Monday. It defaults to `1`.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the control and ignores interaction.
+  </Property>
+  <Property name="id / aria-label" type="string">
+    Accessibility wiring when there is no visible label.
+  </Property>
+</Properties>
+
+### DatePicker.Range
+
+Everything above, with a range-shaped value, plus:
+
+<Properties>
+  <Property name="value / defaultValue" type="DateRange">
+    `{ from, to }`, both `Date | null`.
+  </Property>
+  <Property name="onValueChange" type="(range: DateRange) => void">
+    Fires on each end of the range.
+  </Property>
+  <Property name="presets" type="{ label, range }[]">
+    Shortcut rows down the left side. `range` is a function returning a
+    `DateRange`, so "last 7 days" is computed when it is clicked, not when the
+    page rendered.
+  </Property>
+  <Property name="twoMonths" type="boolean">
+    Shows two months side by side. It defaults to `true`.
+  </Property>
+</Properties>

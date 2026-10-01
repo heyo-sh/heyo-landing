@@ -1,0 +1,162 @@
+---
+title: Toast
+description: Mount a Toaster once; everything else is a plain function call from anywhere.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`toast("Settings saved");
+
+toast.success("Deployed", { description: "acme-api is live" });
+
+toast.error("Deploy failed", {
+description: "Build step exited with code 1.",
+timeout: 0,
+});
+
+await toast.promise(deploy(), {
+loading: "Deploying…",
+success: "Deployed",
+error: "Deploy failed",
+});`}
+
+>
+
+  <HeyoUiToastDemo />
+</CodeSnippet>
+
+# Toast
+
+Mount `<Toaster />` once, near the root. Everything after that is a plain
+function call from anywhere in the application — no hook, no context, no
+provider in your component tree, and nothing to thread through props.
+
+## Usage
+
+```tsx
+import { Toaster, toast } from "@heyo-sh/heyo-ui";
+
+// once, near the root
+<Toaster />;
+
+// anywhere
+toast.success("Deployed", { description: "acme-api is live" });
+```
+
+## Tones
+
+```tsx
+toast("Settings saved");
+toast.success("Deployed");
+toast.error("Deploy failed");
+toast.warning("Quota almost reached");
+toast.info("A new version is available");
+```
+
+`timeout: 0` keeps a toast up until it is closed — the right choice for an
+error the reader has to act on, and the wrong one for everything else.
+
+## Promises
+
+`toast.promise` takes one toast through all three states and resolves to the
+promise's own value, so it drops into an existing call without restructuring
+it.
+
+```tsx
+await toast.promise(deploy(), {
+  loading: "Deploying…",
+  success: "Deployed",
+  error: "Deploy failed",
+});
+```
+
+## Updating and closing
+
+Every call returns an id.
+
+```tsx
+const id = toast("Uploading…", { timeout: 0 });
+
+toast.update(id, { title: "Uploaded", description: "3 files" });
+toast.close(id);
+toast.close(); // everything
+```
+
+## Placement
+
+The `Toaster` owns the corner, the stack limit and the default timeout.
+Bottom-right is the default because it is the furthest corner from where the
+work is happening.
+
+```tsx
+<Toaster position="bottom-right" limit={3} timeout={5000} />
+```
+
+<Callout type="note" title="A toast is not an error page">
+  Anything the reader must answer belongs in a [`Dialog`](/components/dialog);
+  anything they must keep reading belongs on the page. A toast is for something
+  that already happened.
+</Callout>
+
+## Properties
+
+### toast(title, options)
+
+<Properties>
+  <Property name="title" required type="ReactNode">
+    The headline. Keep it to one line.
+  </Property>
+  <Property name="description" type="ReactNode">
+    A second line — what exactly happened, or what to do next.
+  </Property>
+  <Property name="timeout" type="number">
+    Milliseconds before auto-dismiss. `0` keeps it until closed.
+  </Property>
+  <Property name="actionProps" type="Record<string, unknown>">
+    Props for the action slot, passed through to Base UI.
+  </Property>
+</Properties>
+
+### The toast namespace
+
+<Properties>
+  <Property
+    name="toast.success / error / warning / info"
+    type="(title, options) => string"
+  >
+    The toned variants. Each returns the new toast's id.
+  </Property>
+  <Property
+    name="toast.promise"
+    type="(promise, { loading, success, error }) => Promise"
+  >
+    Drives one toast through pending, fulfilled and rejected, and resolves to
+    the promise's value.
+  </Property>
+  <Property name="toast.update" type="(id, updates) => void">
+    Changes a toast in place. `updates` may be a function of the previous toast.
+  </Property>
+  <Property name="toast.close" type="(id?) => void">
+    Closes one toast, or all of them.
+  </Property>
+  <Property name="toast.manager" type="ToastManager">
+    The raw Base UI manager, for anything the shorthands do not cover.
+  </Property>
+</Properties>
+
+### Toaster
+
+<Properties>
+  <Property
+    name="position"
+    type='"bottom-right" | "bottom-left" | "top-right" | "top-left"'
+  >
+    The corner the stack lives in. It defaults to `bottom-right`.
+  </Property>
+  <Property name="limit" type="number">
+    How many stay visible before the oldest is dropped.
+  </Property>
+  <Property name="timeout" type="number">
+    The default auto-dismiss, in milliseconds.
+  </Property>
+</Properties>
