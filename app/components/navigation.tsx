@@ -41,12 +41,14 @@ const rail =
 
 export function Brand() {
   return (
-    <a aria-label="Heyo" className="flex min-w-0 items-center gap-2" href="/">
-      <img
-        alt=""
-        className="max-h-6 w-auto max-w-36 dark:invert"
-        src="/logo.svg"
-      />
+    <a aria-label="Heyo" className="flex items-center gap-2" href="/">
+      {/*
+        A fixed height rather than the theme's `max-h-6`: the mark is drawn at
+        100% × 100% with only a viewBox, so it has no intrinsic size to cap —
+        and as a flex item with nothing to measure it collapses to nothing.
+        24px is what `max-h-6` resolves to there, so the two still line up.
+      */}
+      <img alt="" className="h-6 w-auto shrink-0 dark:invert" src="/logo.svg" />
     </a>
   );
 }

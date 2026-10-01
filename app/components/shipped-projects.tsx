@@ -8,7 +8,7 @@ type Project = {
   description: string;
   href: string;
   cta: string;
-  illustration: "docs" | "audit";
+  illustration: "docs" | "audit" | "ui";
 };
 
 const projects: Project[] = [
@@ -27,6 +27,14 @@ const projects: Project[] = [
     href: "https://github.com/heyo-sh/heyo-code-audit",
     cta: "View on GitHub",
     illustration: "audit",
+  },
+  {
+    title: "heyo ui",
+    description:
+      "Flat, dense React components for the interfaces developers live in — Base UI behaviour, semantic tokens, and no dark: variants.",
+    href: "https://heyo.sh/heyo-ui/introduction",
+    cta: "Browse components",
+    illustration: "ui",
   },
 ];
 
@@ -273,8 +281,168 @@ function AuditIllustration() {
   );
 }
 
+/**
+ * The library demonstrating itself: a segmented control whose pill slides, a
+ * switch that flips, a slider that fills. Three controls moving on one clock,
+ * because a component library is only ever as good as its states.
+ */
+function UiIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-full max-h-full max-w-full"
+      fill="none"
+      shapeRendering="geometricPrecision"
+      viewBox="0 0 280 190"
+    >
+      <rect fill="var(--background)" height="140" width="200" x="40" y="25" />
+      <rect
+        fill="currentColor"
+        height="12"
+        opacity="0.18"
+        width="12"
+        x="52"
+        y="39"
+      />
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.7"
+        width="46"
+        x="72"
+        y="42"
+      />
+      <rect
+        fill="currentColor"
+        height="1"
+        opacity="0.16"
+        width="176"
+        x="52"
+        y="60"
+      />
+
+      <rect
+        fill="var(--input)"
+        fillOpacity="0.45"
+        height="16"
+        rx="2"
+        width="100"
+        x="52"
+        y="72"
+      />
+      <rect
+        className="shipped-ui-tab"
+        fill="currentColor"
+        height="12"
+        opacity="0.16"
+        rx="1"
+        width="30"
+        x="54"
+        y="74"
+      />
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.45"
+        width="16"
+        x="61"
+        y="79"
+      />
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.45"
+        width="16"
+        x="93"
+        y="79"
+      />
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.45"
+        width="16"
+        x="125"
+        y="79"
+      />
+
+      <rect
+        className="shipped-ui-switch-track"
+        fill="currentColor"
+        height="12"
+        opacity="0.18"
+        rx="6"
+        width="22"
+        x="52"
+        y="104"
+      />
+      <circle
+        className="shipped-ui-switch-knob"
+        cx="58"
+        cy="110"
+        fill="var(--background)"
+        r="4"
+      />
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.28"
+        width="52"
+        x="82"
+        y="109"
+      />
+
+      <rect
+        fill="currentColor"
+        height="2"
+        opacity="0.16"
+        width="104"
+        x="52"
+        y="131"
+      />
+      <rect
+        className="shipped-ui-slider-fill"
+        fill="currentColor"
+        height="2"
+        opacity="0.62"
+        width="104"
+        x="52"
+        y="131"
+      />
+      <circle
+        className="shipped-ui-slider-thumb"
+        cx="56"
+        cy="132"
+        fill="currentColor"
+        opacity="0.82"
+        r="4"
+      />
+
+      <rect
+        fill="currentColor"
+        height="14"
+        opacity="0.72"
+        rx="2"
+        width="46"
+        x="52"
+        y="146"
+      />
+      <rect
+        fill="currentColor"
+        height="14"
+        opacity="0.14"
+        rx="2"
+        width="38"
+        x="104"
+        y="146"
+      />
+    </svg>
+  );
+}
+
 function ProjectIllustration({ illustration }: Pick<Project, "illustration">) {
-  return illustration === "docs" ? <DocsIllustration /> : <AuditIllustration />;
+  if (illustration === "docs") return <DocsIllustration />;
+  if (illustration === "audit") return <AuditIllustration />;
+  return <UiIllustration />;
 }
 
 function ShippedProject({

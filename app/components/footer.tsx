@@ -16,6 +16,7 @@ const footerGroups = [
     links: [
       ["heyo-docs", "/heyo-docs/introduction"],
       ["heyo-code-audit", "/heyo-code-audit/introduction"],
+      ["heyo-ui", "/heyo-ui/introduction"],
     ],
   },
   {
@@ -35,10 +36,7 @@ export function Footer() {
     <footer className="px-6 pt-16 pb-8 sm:px-10 lg:px-16">
       <div className="grid grid-cols-4 gap-x-8 gap-y-10">
         {footerGroups.map((group) => (
-          <section
-            className="col-span-1 mt-2.5"
-            key={group.heading}
-          >
+          <section className="col-span-1 mt-2.5" key={group.heading}>
             <h2 className="px-3 text-xs text-primary">{group.heading}</h2>
             <ul className="mt-1">
               {group.links.map(([label, href]) => (

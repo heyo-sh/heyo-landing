@@ -241,11 +241,89 @@ html::-webkit-scrollbar {
   }
 }
 
+@keyframes shipped-ui-tab {
+  0%,
+  16% {
+    transform: translateX(0);
+  }
+  30%,
+  50% {
+    transform: translateX(32px);
+  }
+  64%,
+  100% {
+    transform: translateX(64px);
+  }
+}
+
+@keyframes shipped-ui-switch-knob {
+  0%,
+  22% {
+    transform: translateX(0);
+  }
+  36%,
+  78% {
+    transform: translateX(10px);
+  }
+  90%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes shipped-ui-switch-track {
+  0%,
+  22%,
+  90%,
+  100% {
+    opacity: 0.18;
+  }
+  36%,
+  78% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes shipped-ui-slider-thumb {
+  0%,
+  12% {
+    transform: translateX(0);
+  }
+  44%,
+  60% {
+    transform: translateX(60px);
+  }
+  84%,
+  100% {
+    transform: translateX(96px);
+  }
+}
+
+@keyframes shipped-ui-slider-fill {
+  0%,
+  12% {
+    transform: scaleX(0.04);
+  }
+  44%,
+  60% {
+    transform: scaleX(0.62);
+  }
+  84%,
+  100% {
+    transform: scaleX(0.96);
+  }
+}
+
 .shipped-docs-cursor,
 .shipped-docs-progress,
 .shipped-cursor-ripple,
 .shipped-audit-carousel,
-.shipped-audit-dot {
+.shipped-audit-dot,
+.shipped-ui-tab,
+.shipped-ui-switch-knob,
+.shipped-ui-switch-track,
+.shipped-ui-slider-fill,
+.shipped-ui-slider-thumb {
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -254,7 +332,8 @@ html::-webkit-scrollbar {
   opacity: 0;
 }
 
-.shipped-docs-progress {
+.shipped-docs-progress,
+.shipped-ui-slider-fill {
   transform-origin: left;
 }
 
@@ -286,6 +365,27 @@ html::-webkit-scrollbar {
   animation: shipped-audit-dot-third 5.6s linear infinite;
 }
 
+.shipped-project[data-active="true"] .shipped-ui-tab {
+  animation: shipped-ui-tab 5.2s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+}
+
+.shipped-project[data-active="true"] .shipped-ui-switch-knob {
+  animation: shipped-ui-switch-knob 5.2s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+}
+
+.shipped-project[data-active="true"] .shipped-ui-switch-track {
+  animation: shipped-ui-switch-track 5.2s linear infinite;
+}
+
+.shipped-project[data-active="true"] .shipped-ui-slider-thumb {
+  animation: shipped-ui-slider-thumb 5.2s cubic-bezier(0.33, 1, 0.68, 1)
+    infinite;
+}
+
+.shipped-project[data-active="true"] .shipped-ui-slider-fill {
+  animation: shipped-ui-slider-fill 5.2s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+}
+
 @media (hover: none) {
   .shipped-project .shipped-docs-cursor {
     animation: shipped-docs-cursor 5s cubic-bezier(0.33, 1, 0.68, 1) infinite;
@@ -314,6 +414,29 @@ html::-webkit-scrollbar {
 
   .shipped-project .shipped-audit-dot-third {
     animation: shipped-audit-dot-third 5.6s linear infinite;
+  }
+
+  .shipped-project .shipped-ui-tab {
+    animation: shipped-ui-tab 5.2s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+  }
+
+  .shipped-project .shipped-ui-switch-knob {
+    animation: shipped-ui-switch-knob 5.2s cubic-bezier(0.33, 1, 0.68, 1)
+      infinite;
+  }
+
+  .shipped-project .shipped-ui-switch-track {
+    animation: shipped-ui-switch-track 5.2s linear infinite;
+  }
+
+  .shipped-project .shipped-ui-slider-thumb {
+    animation: shipped-ui-slider-thumb 5.2s cubic-bezier(0.33, 1, 0.68, 1)
+      infinite;
+  }
+
+  .shipped-project .shipped-ui-slider-fill {
+    animation: shipped-ui-slider-fill 5.2s cubic-bezier(0.33, 1, 0.68, 1)
+      infinite;
   }
 }
 
