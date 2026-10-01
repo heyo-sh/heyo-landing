@@ -1,0 +1,160 @@
+---
+title: Scroll Area
+description: A scroll container with a real scrollbar instead of the browser's, and an edge fade that says there is more.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<ScrollArea maxHeight="12rem" viewportClassName="p-3">
+  <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+    {deployments.map((deployment) => (
+      <li key={deployment.sha} className="text-heyo-subtle">{deployment.sha}</li>
+    ))}
+  </ul>
+</ScrollArea>`}
+>
+  <HeyoUiScrollArea
+    className="w-full max-w-sm rounded-lg bg-heyo-base ring-1 ring-heyo-line"
+    maxHeight="12rem"
+    viewportClassName="p-3"
+  >
+    <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+      {Array.from({ length: 18 }, (_, index) => (
+        <li key={index} className="text-heyo-subtle">
+          deploy-{(1024 - index).toString(16)} · {index + 1}m ago
+        </li>
+      ))}
+    </ul>
+  </HeyoUiScrollArea>
+</CodeSnippet>
+
+# Scroll Area
+
+`ScrollArea` replaces the browser's scrollbar with real elements: a 6px overlay
+thumb that appears while you hover or scroll and fades out afterwards, the same
+on every operating system. A dense pane does not carry a permanent grey gutter,
+and the layout does not shift when content starts overflowing.
+
+## Usage
+
+```tsx
+import { ScrollArea } from "@heyo-sh/heyo-ui";
+
+<ScrollArea maxHeight="18rem" viewportClassName="p-3">
+  {rows}
+</ScrollArea>;
+```
+
+Something has to bound the height or there is nothing to scroll: set
+`maxHeight`, or put a height on `viewportClassName`.
+
+<Callout type="warning" title="Padding goes on the viewport">
+  Put padding on `viewportClassName`, not on the root. Padding on the root sits
+  outside the scrolling box, which leaves the thumb floating away from the edge
+  and clips the first row.
+</Callout>
+
+## The edge fade
+
+Content fades out where it runs past an edge, so a cut-off list reads as _more
+below_ rather than as the end of the list. The fade only exists on edges that
+actually have more content behind them, and it follows whichever axes
+`orientation` enables. Turn it off with `fade={false}`.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4"
+  code={`<ScrollArea maxHeight="8rem" fade={false} viewportClassName="p-3">…</ScrollArea>`}
+>
+  <HeyoUiScrollArea
+    className="w-full max-w-sm rounded-lg bg-heyo-base ring-1 ring-heyo-line"
+    maxHeight="8rem"
+    fade={false}
+    viewportClassName="p-3"
+  >
+    <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+      {Array.from({ length: 12 }, (_, index) => (
+        <li key={index} className="text-heyo-subtle">
+          No fade — row {index + 1}
+        </li>
+      ))}
+    </ul>
+  </HeyoUiScrollArea>
+</CodeSnippet>
+
+## Both axes
+
+`orientation="both"` draws a scrollbar on each axis and masks both edges at
+once. Wide tables and log output are the usual cases.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<ScrollArea orientation="both" maxHeight="9rem" viewportClassName="p-3">
+  <pre className="m-0 text-sm">{log}</pre>
+</ScrollArea>`}
+>
+  <HeyoUiScrollArea
+    className="w-full max-w-sm rounded-lg bg-heyo-base ring-1 ring-heyo-line"
+    orientation="both"
+    maxHeight="9rem"
+    viewportClassName="p-3"
+  >
+    <pre className="m-0 text-sm text-heyo-subtle">
+      {`[12:04:11] build  ▸ bundling worker for production (esbuild 0.25)
+[12:04:14] build  ▸ 412 modules, 184 kB gzip
+[12:04:14] deploy ▸ uploading to fra1, waw1, iad1
+[12:04:19] deploy ▸ acme-api is live at https://acme-api.heyo.sh
+[12:04:19] deploy ▸ done in 8.2s`}
+    </pre>
+  </HeyoUiScrollArea>
+</CodeSnippet>
+
+## ScrollArea or `heyo-scrollbar`?
+
+They are not interchangeable.
+
+- **`ScrollArea`** is for designed surfaces — panes, cards, log views, popups —
+  where the scrollbar is part of the composition and the fade carries meaning.
+- **`heyo-scrollbar`**, a plain utility, restyles the _native_ scrollbar: thin,
+  translucent, no track, no buttons. No extra DOM, no JavaScript, and it
+  survives anything a scroll container cannot wrap — a `<table>` wrapper, a
+  dialog body, the sidebar.
+
+```tsx
+<div className="max-h-72 overflow-y-auto heyo-scrollbar">{rows}</div>
+```
+
+## Properties
+
+<Properties>
+  <Property name="orientation" type='"vertical" | "horizontal" | "both"'>
+    Which axes get a scrollbar. It defaults to `vertical`.
+  </Property>
+  <Property name="maxHeight" type="string">
+    Shorthand for a bounded viewport, for example `"18rem"`. Without it — or a
+    height on `viewportClassName` — nothing scrolls.
+  </Property>
+  <Property name="fade" type="boolean">
+    Fades content at an overflowing edge. It defaults to `true` and applies to
+    whichever axes `orientation` enables.
+  </Property>
+  <Property name="viewportClassName" type="string">
+    Class for the inner scrolling element. Padding belongs here.
+  </Property>
+  <Property name="className" type="string">
+    Class for the root — radius, ring, width.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The scrolling content.
+  </Property>
+</Properties>
+
+### ScrollArea.Scrollbar
+
+Rendered for you. Place it yourself only when you need a scrollbar somewhere
+unusual — outside the padded viewport, say.
+
+<Properties>
+  <Property name="orientation" type='"vertical" | "horizontal"'>
+    The axis this scrollbar controls.
+  </Property>
+</Properties>

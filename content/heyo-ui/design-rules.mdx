@@ -1,0 +1,140 @@
+---
+title: Design rules
+description: The ten rules every heyo-ui component follows, and the components that were deliberately left out.
+---
+
+# Design rules
+
+These are the rules every component in the library follows. They are also what
+a pull request is reviewed against.
+
+## The ten rules
+
+<Steps>
+
+<Step title="Semantic tokens only">
+  Never a raw Tailwind colour inside a component. `bg-heyo-base`, not `bg-white
+  dark:bg-neutral-900`.
+</Step>
+
+<Step title="No dark: variants">
+  Tokens resolve both modes with `light-dark()`; `data-mode` on any ancestor
+  switches them. A component never branches on colour mode.
+</Step>
+
+<Step title="Rings, not borders">
+  A border changes the box; a ring does not. Control edges are `ring-1`, and the
+  colours are translucent so one value is correct on every surface.
+</Step>
+
+<Step title="One focus ring">
+  The `heyo-focus` utility. Never hand-rolled, so every focusable element in the
+  system looks identical.
+</Step>
+
+<Step title="Dense first">
+  Default control height 32px, default body text 14px. Hierarchy comes from
+  weight and colour, not size: **medium** names a surface or a group, **normal**
+  lives inside one.
+</Step>
+
+<Step title="The sidebar is not a panel">
+  It shares the page background and a single hairline separates it. The same
+  rule applies to any pane chrome.
+</Step>
+
+<Step title="Every component forwards className">
+  Through `cn()` (clsx + tailwind-merge), and every component sets a stable
+  `data-slot`.
+</Step>
+
+<Step title="No icon dependency">
+  Icon props accept a component, an element, or a node. The internal glyphs are
+  Tabler paths inlined verbatim, so they sit flush with `@tabler/icons-react`.
+</Step>
+
+<Step title="Nothing locks the page unless it is a modal task">
+  `Dropdown` and `Select` default to `modal={false}` — unlike Base UI — because
+  a menu is a list of things you might not do, and freezing the page behind one
+  feels broken. Only `Dialog` and `Sheet` lock scroll, because only they demand
+  an answer.
+</Step>
+
+<Step title="One component per job">
+  One `Dialog` (not dialog + alert dialog + confirm dialog), one bar (`Meter`,
+  not meter + progress), one avatar radius. A second component that differs by a
+  prop is a prop.
+</Step>
+
+</Steps>
+
+## Deliberate non-features
+
+Several components are missing on purpose. Read this before proposing one —
+three of them were built first and then removed.
+
+- **No syntax grammars.** [`CodeBlock`](/components/code-block) highlights with
+  one regular expression per language, which covers the snippets that actually
+  appear in an interface — a config file, an import block, a curl command — for
+  about a kilobyte. Real grammars belong to Shiki: pass its markup as
+  `children` and the block renders it untouched.
+- **No context menu, bottom sheet or split pane.** A right-click menu can never
+  be the only route to an action, so it is always a second copy of a
+  [`Dropdown`](/components/dropdown); a drawer is a phone pattern; a resizable
+  pane belongs to the application's layout, not to its widget library.
+- **No date library.** [`Calendar`](/components/calendar) needs "add a day" and
+  locale names, and `Date` and `Intl.DateTimeFormat` do both correctly,
+  including across DST.
+- **No typed date input.** [`DatePicker`](/components/date-picker) opens a
+  calendar rather than parsing text, because `3/4/25` is March for half the
+  world and April for the other.
+- **No virtualised table.** [`DataTable`](/components/data-table) filters and
+  sorts on the client because the 95% case is a page of a few hundred rows you
+  already have. Every input is also controllable, so the same component works
+  against a server when it is not.
+- **No `Progress`.** A task with a percentage is still a measurement.
+  [`Meter`](/components/meter) is that measurement, and one bar that always
+  means the same thing beats two that look identical.
+- **No `AlertDialog` or `ConfirmDialog`.** `dismissible={false}` covers the
+  first, and a confirmation is a [`Dialog`](/components/dialog) with two
+  buttons in its footer.
+
+## Weight and hierarchy
+
+Almost everything in an application is 14px. Size is not the tool.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Text weight="medium" tone="strong">Production</Text>
+<Text>acme-api · fra1 · 128 MB</Text>
+<Text tone="subtle">Last deployed 4 minutes ago</Text>`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-1">
+    <HeyoUiText weight="medium" tone="strong">
+      Production
+    </HeyoUiText>
+    <HeyoUiText>acme-api · fra1 · 128 MB</HeyoUiText>
+    <HeyoUiText tone="subtle">Last deployed 4 minutes ago</HeyoUiText>
+  </div>
+</CodeSnippet>
+
+- **Medium** names a surface or a group: field labels, section labels, card
+  titles, table headers.
+- **Normal** is everything living inside one: button labels, navigation items,
+  table cells, body copy.
+- `text-heyo-default` is the thing being acted on. `text-heyo-subtle` is
+  context — hints, descriptions, idle navigation items, placeholders.
+
+## Scrolling
+
+Two tools, and they are not interchangeable.
+
+- [`ScrollArea`](/components/scroll-area) replaces the browser's scrollbar with
+  real elements: a 6px overlay thumb that appears while you hover or scroll and
+  fades out after, plus an optional mask that fades content at whichever edge
+  still has more behind it. Use it for designed surfaces — panes, cards, log
+  views.
+- `heyo-scrollbar`, a plain utility, restyles the _native_ scrollbar instead:
+  thin, translucent, no track, no buttons. No extra DOM, no JavaScript, and it
+  survives anything — a `<table>` wrapper, a dialog body, the sidebar. Every
+  scrollable surface inside the library uses it.

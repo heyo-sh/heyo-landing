@@ -1,0 +1,190 @@
+/*
+ * The application's single Tailwind entry.
+ *
+ * It replaces the `virtual:heyo-docs-theme.css` module so the one compiled
+ * stylesheet can hold both design systems: the Heyo Docs theme that paints the
+ * site, and the heyo-ui tokens the component documentation previews need. One
+ * entry means one `@layer theme`, one preflight, and no duplicated utilities.
+ *
+ * The `heyo` documentation theme is modelled on heyo-ui, so the two agree on
+ * the type scale, the shadows and the radii. Nothing has to be scoped: a
+ * preview and the page around it are measured with the same ruler.
+ */
+
+@import "@heyo-sh/heyo-docs/theme/heyo.css";
+@import "@heyo-sh/heyo-ui/theme.css";
+
+/*
+ * Tailwind skips `node_modules` when auto-detecting content and never looks at
+ * MDX on its own, so every directory that can contain a class name is listed
+ * here. (`@heyo-sh/heyo-ui` registers its own compiled components from inside
+ * its stylesheet.)
+ */
+@source "../app";
+@source "../content/heyo-docs";
+@source "../content/heyo-code-audit";
+@source "../content/heyo-ui";
+
+/*
+ * The one pair heyo-ui would otherwise take over: it ships font *preferences*,
+ * while the font of this site is configuration (`--heyo-docs-font-family` in
+ * `app.css`). Declared after both imports so the documentation theme wins.
+ */
+@theme inline {
+  --font-sans: var(--heyo-docs-font-family);
+  --font-mono: var(--heyo-docs-font-mono);
+}
+
+/*
+ * The documentation theme styles MDX prose with descendant selectors on its
+ * content container (`[&_p]:my-5`, `[&_ul]:pl-6`, `[&_h3]:text-lg`, …). A
+ * preview lives inside that container, so those rules reach into the rendered
+ * components — a field description picks up a 20px margin, a sidebar menu
+ * picks up list bullets, a card title picks up a heading's size.
+ *
+ * Specificity cannot be argued with here: the leaking rules are `.class el`
+ * (0,1,1) and a component's own utilities are `.class` (0,1,0), so the prose
+ * always wins. `.heyo-ui` marks a preview and puts the browser defaults back;
+ * the few places where heyo-ui sets the same property itself are restored
+ * underneath, keyed on the `data-slot` every component exposes.
+ *
+ * Nothing else about the preview is touched — the surrounding `CodeSnippet` is
+ * the documentation theme's component and keeps its own surface.
+ */
+.heyo-ui
+  :is(
+    p,
+    ul,
+    ol,
+    li,
+    blockquote,
+    figure,
+    pre,
+    hr,
+    table,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6
+  ) {
+  margin: 0;
+  scroll-margin-top: 0;
+}
+
+.heyo-ui :is(ul, ol) {
+  padding-left: 0;
+  list-style: none;
+}
+
+.heyo-ui li {
+  padding-left: 0;
+}
+
+.heyo-ui :is(h1, h2, h3, h4, h5, h6) {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+}
+
+.heyo-ui blockquote {
+  border: 0;
+  color: inherit;
+}
+
+.heyo-ui code:not(pre code) {
+  border-radius: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* A link inside a preview belongs to the component, not to the prose.
+   `Button` is excluded because the documentation theme already excludes it. */
+.heyo-ui a:not([data-slot="button"]) {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+/* …and the components that own one of those properties get it back. */
+.heyo-ui [data-slot="breadcrumb"] a {
+  color: var(--text-color-heyo-subtle);
+}
+
+.heyo-ui [data-slot="breadcrumb"] a:hover {
+  color: var(--text-color-heyo-default);
+}
+
+.heyo-ui [data-slot="sidebar-menu-sub"] {
+  padding-left: calc(var(--spacing) * 2.5);
+}
+
+.heyo-ui [data-slot="file-upload-item"] {
+  padding-inline: calc(var(--spacing) * 3);
+}
+
+.heyo-ui [data-slot="timeline-separator"] {
+  margin-inline: calc(var(--spacing) * -2);
+  margin-bottom: calc(var(--spacing) * 3);
+  padding-inline: calc(var(--spacing) * 2);
+}
+
+.heyo-ui [data-slot="card-title"] {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 500;
+}
+
+.heyo-ui [data-slot="heading"] {
+  font-weight: 500;
+}
+
+.heyo-ui h1[data-slot="heading"],
+.heyo-ui h2[data-slot="heading"] {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.heyo-ui h1[data-slot="heading"] {
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl--line-height);
+}
+
+.heyo-ui h2[data-slot="heading"] {
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+}
+
+.heyo-ui h3[data-slot="heading"] {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+}
+
+.heyo-ui h4[data-slot="heading"] {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.heyo-ui h5[data-slot="heading"] {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+}
+
+.heyo-ui h6[data-slot="heading"] {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.heyo-ui [data-slot="code"] {
+  border-radius: var(--radius-sm);
+  background-color: var(--color-heyo-recessed);
+  padding: 0.125rem 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}

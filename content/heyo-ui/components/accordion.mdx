@@ -1,0 +1,234 @@
+---
+title: Accordion
+description: Stacked, collapsible sections — from data in one line, or composed when a row needs its own markup.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Accordion
+  items={[
+    { title: "Limits", children: "100 requests per second, bursting to 300." },
+    { title: "Regions", children: "Frankfurt, Warsaw and Ashburn." },
+    { title: "Retention", children: "Logs are kept for 7 days." },
+  ]}
+/>`}
+>
+  <HeyoUiAccordion
+    className="w-full"
+    items={[
+      {
+        title: "Limits",
+        children: "100 requests per second, bursting to 300.",
+      },
+      { title: "Regions", children: "Frankfurt, Warsaw and Ashburn." },
+      { title: "Retention", children: "Logs are kept for 7 days." },
+    ]}
+  />
+</CodeSnippet>
+
+# Accordion
+
+`Accordion` stacks sections that open one at a time. It is bounded by a
+hairline top and bottom and separated by one between rows — no cards, no gaps,
+no second background. A list of collapsible sections is a list, and a list
+reads best as one block.
+
+Only one section is open at a time by default; pass `multiple` when the
+sections are independent rather than alternatives.
+
+## Usage
+
+```tsx
+import { Accordion } from "@heyo-sh/heyo-ui";
+
+<Accordion items={[{ title: "Limits", children: "100 req/s" }]} />;
+```
+
+## Compose it
+
+Use the subcomponents when a row needs an icon, custom markup, or anything
+richer than a title and a body.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Accordion multiple defaultValue={["build"]}>
+  <Accordion.Item value="build">
+    <Accordion.Trigger icon={IconRocket}>Build</Accordion.Trigger>
+    <Accordion.Content>
+      <code>bun run build</code> — 14s, cached.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="deploy">
+    <Accordion.Trigger icon={IconWorld}>Deploy</Accordion.Trigger>
+    <Accordion.Content>Rolled out to 3 regions.</Accordion.Content>
+  </Accordion.Item>
+</Accordion>`}
+>
+  <HeyoUiAccordion className="w-full" multiple defaultValue={["build"]}>
+    <HeyoUiAccordion.Item value="build">
+      <HeyoUiAccordion.Trigger icon={<IconRocket />}>
+        Build
+      </HeyoUiAccordion.Trigger>
+      <HeyoUiAccordion.Content>
+        <HeyoUiCode>bun run build</HeyoUiCode> — 14s, cached.
+      </HeyoUiAccordion.Content>
+    </HeyoUiAccordion.Item>
+    <HeyoUiAccordion.Item value="deploy">
+      <HeyoUiAccordion.Trigger icon={<IconWorld />}>
+        Deploy
+      </HeyoUiAccordion.Trigger>
+      <HeyoUiAccordion.Content>
+        Rolled out to 3 regions.
+      </HeyoUiAccordion.Content>
+    </HeyoUiAccordion.Item>
+  </HeyoUiAccordion>
+</CodeSnippet>
+
+The `items` shorthand and composition are interchangeable — `items` simply
+builds the same subcomponents for you.
+
+## Collapsible
+
+One section instead of several. `Accordion` manages a group; `Collapsible`
+manages a single disclosure and has no chrome of its own, so it fits inside
+whatever you are already building.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Collapsible defaultOpen>
+  <Collapsible.Trigger render={<Button variant="outline" size="sm">Environment variables</Button>} />
+  <Collapsible.Content>
+    <pre className="mt-2 text-sm text-heyo-subtle">DATABASE_URL=…</pre>
+  </Collapsible.Content>
+</Collapsible>`}
+>
+  <HeyoUiCollapsible defaultOpen>
+    <HeyoUiCollapsible.Trigger
+      render={
+        <HeyoUiButton variant="outline" size="sm">
+          Environment variables
+        </HeyoUiButton>
+      }
+    />
+    <HeyoUiCollapsible.Content>
+      <pre className="mt-2 text-sm text-heyo-subtle">DATABASE_URL=…</pre>
+    </HeyoUiCollapsible.Content>
+  </HeyoUiCollapsible>
+</CodeSnippet>
+
+<Callout type="note" title="Sidebar sections">
+  The sidebar has its own collapsible wired to the rail animation —
+  [`Sidebar.Collapsible`](/components/sidebar). Use that one inside a menu.
+</Callout>
+
+## Hiding the chevron
+
+Set `chevron={false}` when the row already carries its own affordance — a
+switch, a badge, a count.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Accordion>
+  <Accordion.Item value="webhooks">
+    <Accordion.Trigger chevron={false}>
+      Webhooks
+      <Badge variant="count">3</Badge>
+    </Accordion.Trigger>
+    <Accordion.Content>Three endpoints are listening.</Accordion.Content>
+  </Accordion.Item>
+</Accordion>`}
+>
+  <HeyoUiAccordion className="w-full">
+    <HeyoUiAccordion.Item value="webhooks">
+      <HeyoUiAccordion.Trigger chevron={false}>
+        Webhooks
+        <HeyoUiBadge variant="count">3</HeyoUiBadge>
+      </HeyoUiAccordion.Trigger>
+      <HeyoUiAccordion.Content>
+        Three endpoints are listening.
+      </HeyoUiAccordion.Content>
+    </HeyoUiAccordion.Item>
+  </HeyoUiAccordion>
+</CodeSnippet>
+
+## Properties
+
+### Accordion
+
+<Properties>
+  <Property name="items" type="AccordionItemData[]">
+    Shorthand that builds every item, trigger and panel from data. Each entry
+    takes `title`, `children`, and optionally `value`, `icon` and `disabled`.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Allows several sections to be open at once. It defaults to `false`.
+  </Property>
+  <Property name="defaultValue" type="Value[]">
+    The sections open on first render, by `value`.
+  </Property>
+  <Property name="value" type="Value[]">
+    The controlled open sections. Pair it with `onValueChange`.
+  </Property>
+  <Property name="onValueChange" type="(value: Value[]) => void">
+    Fires whenever a section opens or closes.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Ignores interaction on every row.
+  </Property>
+  <Property name="keepMounted" type="boolean">
+    Keeps closed panels in the DOM. It defaults to `false`.
+  </Property>
+  <Property name="hiddenUntilFound" type="boolean">
+    Lets the browser's in-page search find and expand a closed panel.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the outer list.
+  </Property>
+</Properties>
+
+### Accordion.Trigger
+
+<Properties>
+  <Property name="icon" type="IconLike">
+    A leading glyph: a component, an element, or any node.
+  </Property>
+  <Property name="chevron" type="boolean">
+    Draws the rotating chevron. It defaults to `true`.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The row's content. Anything after the label is pushed to the right edge.
+  </Property>
+</Properties>
+
+### Accordion.Item and Accordion.Content
+
+<Properties>
+  <Property name="value" type="Value">
+    The item's identity, used by `value` and `defaultValue`. It falls back to
+    the index.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Locks a single row.
+  </Property>
+  <Property name="children" type="ReactNode">
+    `Accordion.Content` renders the panel body and animates its own height.
+  </Property>
+</Properties>
+
+### Collapsible
+
+<Properties>
+  <Property name="defaultOpen" type="boolean">
+    Open on first render.
+  </Property>
+  <Property name="open" type="boolean">
+    The controlled state. Pair it with `onOpenChange`.
+  </Property>
+  <Property name="onOpenChange" type="(open: boolean) => void">
+    Fires when the section opens or closes.
+  </Property>
+  <Property name="render" type="RenderProp">
+    On `Collapsible.Trigger`, swaps the button for anything else — usually a
+    `Button`.
+  </Property>
+</Properties>

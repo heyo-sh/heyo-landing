@@ -1,0 +1,81 @@
+---
+title: Spinner
+description: An indeterminate loading indicator, stepped rather than smooth.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap items-center"
+  code={`<Spinner size="xs" />
+<Spinner size="sm" />
+<Spinner size="base" />
+<Spinner size="lg" />
+<Spinner size="xl" />`}
+>
+  <HeyoUiSpinner size="xs" />
+  <HeyoUiSpinner size="sm" />
+  <HeyoUiSpinner size="base" />
+  <HeyoUiSpinner size="lg" />
+  <HeyoUiSpinner size="xl" />
+</CodeSnippet>
+
+# Spinner
+
+The glyph is eight discrete spokes, so it **ticks** from one to the next rather
+than rotating smoothly — a smooth rotation smears them into a grey ring. It is
+the same motion the rest of the system uses for "working on it", at every size.
+
+## Usage
+
+```tsx
+import { Spinner } from "@heyo-sh/heyo-ui";
+
+<Spinner size="sm" label="Loading deployments" />;
+```
+
+## In context
+
+Most of the time you do not render a spinner directly: `Button` has `loading`,
+`Command` has `loading`, and `DataTable` draws skeleton rows. Use it on its own
+when something is loading that is not a control.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap items-center"
+  code={`<Button loading>Deploying</Button>
+
+<div className="flex items-center gap-2 text-sm text-heyo-subtle">
+  <Spinner size="sm" />
+  Checking the build…
+</div>`}
+>
+  <HeyoUiButton loading>Deploying</HeyoUiButton>
+  <div className="flex items-center gap-2 text-sm text-heyo-subtle">
+    <HeyoUiSpinner size="sm" />
+    Checking the build…
+  </div>
+</CodeSnippet>
+
+## Accessibility
+
+`label` is rendered visually hidden and announced to screen readers. Give it
+one whenever the spinner is the only indication that something is happening —
+"Loading" on its own is better than silence, and "Loading deployments" is
+better than that.
+
+<Callout type="note" title="Known duration?">
+  If you can say how far along it is, say it: [`Meter`](/components/meter) is
+  the bar, and it never leaves the reader guessing.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg" | "xl"'>
+    12, 14, 16, 20 or 24px. It defaults to `base`.
+  </Property>
+  <Property name="label" type="string">
+    Visually hidden text announced to screen readers.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the glyph — usually to change its colour.
+  </Property>
+</Properties>

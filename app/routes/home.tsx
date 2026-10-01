@@ -476,23 +476,23 @@ function SocialLinks() {
     <div className="flex items-center">
       <a
         aria-label="GitHub"
-        className="inline-flex size-7 items-center justify-center rounded-md text-foreground/60 transition-colors hover:text-foreground"
+        className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors duration-100 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ring"
         href="https://github.com/heyo-sh"
         rel="noreferrer"
         target="_blank"
       >
-        <RiGithubLine aria-hidden="true" className="size-3.5" />
+        <RiGithubLine aria-hidden="true" className="size-4" />
       </a>
       <a
         aria-label="X (Twitter)"
-        className="inline-flex size-7 items-center justify-center rounded-md text-foreground/60 transition-colors hover:text-foreground"
+        className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors duration-100 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ring"
         href="https://x.com/Heyodotsh"
         rel="noreferrer"
         target="_blank"
       >
         <svg
           aria-hidden="true"
-          className="size-2.5"
+          className="size-3"
           fill="none"
           viewBox="0 0 1200 1227"
         >
@@ -541,29 +541,34 @@ export default function HomeRoute() {
 
   return (
     <main className="min-h-svh bg-background text-foreground lg:flex">
-      <aside className="sticky top-0 hidden h-svh w-52 shrink-0 flex-col bg-background lg:flex">
-        <div className="flex h-14 shrink-0 items-center px-4">
+      {/*
+        The documentation shell's measurements, minus its hairlines: a 48px
+        brand row above a 15rem navigation column, so the mark and the first
+        row sit exactly where they do on every /heyo-* page.
+      */}
+      <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col bg-background lg:flex xl:w-64">
+        <div className="flex h-12 shrink-0 items-center px-3 sm:px-4">
           <Brand />
         </div>
         <Navigation />
-        <div className="mt-auto flex h-12 items-center justify-between px-4">
+        <div className="mt-auto flex h-11 shrink-0 items-center justify-between px-2">
           <SocialLinks />
           <button
             aria-label={isDark ? "Use light theme" : "Use dark theme"}
-            className="inline-flex size-8 items-center justify-center rounded-md text-foreground/60 transition-colors hover:text-foreground"
+            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-100 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ring"
             onClick={toggleTheme}
             type="button"
           >
             {isDark ? (
-              <RiSunLine aria-hidden="true" className="size-3" />
+              <RiSunLine aria-hidden="true" className="size-4" />
             ) : (
-              <RiMoonLine aria-hidden="true" className="size-3" />
+              <RiMoonLine aria-hidden="true" className="size-4" />
             )}
           </button>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between bg-background px-5 lg:hidden">
+      <header className="sticky top-0 z-10 flex h-12 items-center justify-between bg-background px-3 sm:px-4 lg:hidden">
         <Brand />
         <Button
           aria-expanded={menuOpen}
@@ -581,9 +586,9 @@ export default function HomeRoute() {
       </header>
 
       {menuOpen ? (
-        <div className="fixed inset-x-0 top-16 bottom-0 z-20 flex flex-col bg-background p-5 lg:hidden">
+        <div className="fixed inset-x-0 top-12 bottom-0 z-20 flex flex-col bg-background px-1 py-2 lg:hidden">
           <Navigation onNavigate={() => setMenuOpen(false)} />
-          <div className="mt-auto">
+          <div className="mt-auto px-2">
             <SocialLinks />
           </div>
         </div>
@@ -592,11 +597,11 @@ export default function HomeRoute() {
       <div className="min-w-0 flex-1">
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-x-0 top-16 z-0 h-18 bg-linear-to-b from-background to-background/0 lg:top-0 lg:left-52 lg:z-30"
+          className="pointer-events-none fixed inset-x-0 top-12 z-0 h-18 bg-linear-to-b from-background to-background/0 lg:top-0 lg:left-60 lg:z-30 xl:left-64"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-18 bg-linear-to-t from-background to-background/0 lg:left-52 lg:z-30"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-18 bg-linear-to-t from-background to-background/0 lg:left-60 lg:z-30 xl:left-64"
         />
 
         <section

@@ -1,0 +1,221 @@
+---
+title: Dialog
+description: One modal task — and one component, because an alert and a confirmation are a prop and two buttons.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dialog>
+  <Dialog.Trigger render={<Button>Invite a teammate</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Invite a teammate</Dialog.Title>
+      <Dialog.Description>They will get access to every project.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Body>
+      <Input label="Email" placeholder="you@example.com" />
+    </Dialog.Body>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Button variant="primary">Send invite</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>`}
+>
+  <HeyoUiDialog>
+    <HeyoUiDialog.Trigger
+      render={<HeyoUiButton>Invite a teammate</HeyoUiButton>}
+    />
+    <HeyoUiDialog.Content>
+      <HeyoUiDialog.Header>
+        <HeyoUiDialog.Title>Invite a teammate</HeyoUiDialog.Title>
+        <HeyoUiDialog.Description>
+          They will get access to every project.
+        </HeyoUiDialog.Description>
+      </HeyoUiDialog.Header>
+      <HeyoUiDialog.Body>
+        <HeyoUiInput label="Email" placeholder="you@example.com" />
+      </HeyoUiDialog.Body>
+      <HeyoUiDialog.Footer>
+        <HeyoUiDialog.Close
+          render={<HeyoUiButton variant="ghost">Cancel</HeyoUiButton>}
+        />
+        <HeyoUiButton variant="primary">Send invite</HeyoUiButton>
+      </HeyoUiDialog.Footer>
+    </HeyoUiDialog.Content>
+  </HeyoUiDialog>
+</CodeSnippet>
+
+# Dialog
+
+A dialog is a **modal task**: it locks the page because it demands an answer.
+That is also the only thing in heyo-ui that does, besides
+[`Sheet`](/components/sheet).
+
+There is one `Dialog`, not three. `dismissible={false}` covers what used to be
+`AlertDialog`, and a confirmation is a dialog with two buttons in its footer —
+there is nothing left for a `ConfirmDialog` to add.
+
+## Usage
+
+```tsx
+import { Button, Dialog } from "@heyo-sh/heyo-ui";
+
+<Dialog>
+  <Dialog.Trigger render={<Button>Invite</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Invite a teammate</Dialog.Title>
+    </Dialog.Header>
+    <Dialog.Body>…</Dialog.Body>
+  </Dialog.Content>
+</Dialog>;
+```
+
+## A confirmation
+
+Two buttons in the footer, the destructive one on the right. Nothing else is
+needed, and nothing else should be there.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dialog>
+  <Dialog.Trigger render={<Button variant="destructive-secondary">Delete</Button>} />
+  <Dialog.Content size="sm">
+    <Dialog.Header>
+      <Dialog.Title>Delete acme-api?</Dialog.Title>
+      <Dialog.Description>This cannot be undone.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Button variant="destructive">Delete forever</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>`}
+>
+  <HeyoUiDialog>
+    <HeyoUiDialog.Trigger
+      render={
+        <HeyoUiButton variant="destructive-secondary">Delete</HeyoUiButton>
+      }
+    />
+    <HeyoUiDialog.Content size="sm">
+      <HeyoUiDialog.Header>
+        <HeyoUiDialog.Title>Delete acme-api?</HeyoUiDialog.Title>
+        <HeyoUiDialog.Description>
+          This cannot be undone.
+        </HeyoUiDialog.Description>
+      </HeyoUiDialog.Header>
+      <HeyoUiDialog.Footer>
+        <HeyoUiDialog.Close
+          render={<HeyoUiButton variant="ghost">Cancel</HeyoUiButton>}
+        />
+        <HeyoUiButton variant="destructive">Delete forever</HeyoUiButton>
+      </HeyoUiDialog.Footer>
+    </HeyoUiDialog.Content>
+  </HeyoUiDialog>
+</CodeSnippet>
+
+## Undismissible
+
+`dismissible={false}` is the old "alert dialog": the backdrop and Escape stop
+closing it, so the reader has to answer. Use it only when dismissing would lose
+work or leave something half-done — everything else should be dismissible.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dialog dismissible={false}>
+  <Dialog.Trigger render={<Button>Finish setup</Button>} />
+  <Dialog.Content size="sm" hideClose>
+    <Dialog.Header>
+      <Dialog.Title>Pick a region</Dialog.Title>
+      <Dialog.Description>Your worker cannot deploy without one.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="primary">Use Frankfurt</Button>} />
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>`}
+>
+  <HeyoUiDialog dismissible={false}>
+    <HeyoUiDialog.Trigger render={<HeyoUiButton>Finish setup</HeyoUiButton>} />
+    <HeyoUiDialog.Content size="sm" hideClose>
+      <HeyoUiDialog.Header>
+        <HeyoUiDialog.Title>Pick a region</HeyoUiDialog.Title>
+        <HeyoUiDialog.Description>
+          Your worker cannot deploy without one.
+        </HeyoUiDialog.Description>
+      </HeyoUiDialog.Header>
+      <HeyoUiDialog.Footer>
+        <HeyoUiDialog.Close
+          render={<HeyoUiButton variant="primary">Use Frankfurt</HeyoUiButton>}
+        />
+      </HeyoUiDialog.Footer>
+    </HeyoUiDialog.Content>
+  </HeyoUiDialog>
+</CodeSnippet>
+
+## Sizes
+
+`sm`, `base`, `lg` and `xl`. The body scrolls on its own, so the header and
+footer stay put however long the content gets — and the corner close button
+sits above a scrolled body rather than under it.
+
+<Callout type="note" title="A side quest, not a task?">
+  Use a [`Sheet`](/components/sheet) when the content is a detail pane or a
+  filter panel — something you look at beside the page rather than instead of
+  it.
+</Callout>
+
+## Properties
+
+### Dialog
+
+<Properties>
+  <Property name="dismissible" type="boolean">
+    Whether clicking the backdrop or pressing Escape closes the dialog. It
+    defaults to `true`.
+  </Property>
+  <Property name="open / defaultOpen" type="boolean">
+    Controlled and uncontrolled state.
+  </Property>
+  <Property name="onOpenChange" type="(open: boolean) => void">
+    Fires on open and close.
+  </Property>
+</Properties>
+
+### Dialog.Content
+
+<Properties>
+  <Property name="size" type='"sm" | "base" | "lg" | "xl"'>
+    Maximum width. It defaults to `base`.
+  </Property>
+  <Property name="hideClose" type="boolean">
+    Hides the built-in corner close button. Only sensible when the footer has
+    one.
+  </Property>
+</Properties>
+
+### The parts
+
+<Properties>
+  <Property name="Dialog.Trigger" type="render">
+    Anything that opens the dialog.
+  </Property>
+  <Property name="Dialog.Header / Title / Description" type="—">
+    The heading block. `Title` and `Description` are wired to the dialog's
+    accessible name and description.
+  </Property>
+  <Property name="Dialog.Body" type="—">
+    The scrolling content column.
+  </Property>
+  <Property name="Dialog.Footer" type="—">
+    Right-aligned actions.
+  </Property>
+  <Property name="Dialog.Close" type="render">
+    Closes the dialog. Pass `render={<Button />}` for a footer button.
+  </Property>
+  <Property name="Dialog.CloseButton" type="—">
+    The corner dismiss, rendered for you unless `hideClose` is set.
+  </Property>
+</Properties>

@@ -1,0 +1,108 @@
+---
+title: Checkbox
+description: A checkbox that renders either the whole clickable row or just the box.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Checkbox
+  defaultChecked
+  label="Send deploy notifications"
+  description="One email per production deploy."
+/>`}
+>
+  <HeyoUiCheckbox
+    defaultChecked
+    label="Send deploy notifications"
+    description="One email per production deploy."
+  />
+</CodeSnippet>
+
+# Checkbox
+
+Pass `label` and `Checkbox` renders the whole clickable row — box, label,
+description, and the `<label>` wrapping that makes all of it a hit target.
+Without one it renders just the box, for a table's select column or a custom
+layout; give it an `aria-label` in that case.
+
+## Usage
+
+```tsx
+import { Checkbox } from "@heyo-sh/heyo-ui";
+
+<Checkbox label="Send deploy notifications" defaultChecked />;
+```
+
+## Indeterminate
+
+The third state exists for one reason: a header checkbox above rows where only
+some are selected. [`useSelection`](/utilities) computes it for you.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-3"
+  code={`<Checkbox indeterminate label="Select all" />
+<Checkbox defaultChecked label="acme-api" />
+<Checkbox label="acme-web" />`}
+>
+  <div className="flex flex-col gap-3">
+    <HeyoUiCheckbox indeterminate label="Select all" />
+    <div className="flex flex-col gap-3 pl-6">
+      <HeyoUiCheckbox defaultChecked label="acme-api" />
+      <HeyoUiCheckbox label="acme-web" />
+    </div>
+  </div>
+</CodeSnippet>
+
+## A bare box
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4"
+  code={`<Checkbox aria-label="Select row" />
+<Checkbox defaultChecked aria-label="Select row" />
+<Checkbox disabled aria-label="Select row" />
+<Checkbox disabled defaultChecked aria-label="Select row" />`}
+>
+  <HeyoUiCheckbox aria-label="Select row" />
+  <HeyoUiCheckbox defaultChecked aria-label="Select row" />
+  <HeyoUiCheckbox disabled aria-label="Select row" />
+  <HeyoUiCheckbox disabled defaultChecked aria-label="Select row" />
+</CodeSnippet>
+
+<Callout type="note" title="Checkbox or Switch?">
+  A checkbox is a value you are editing and will submit — it belongs in a form.
+  A [`Switch`](/components/switch) applies immediately, which is why it belongs
+  in settings.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="label" type="ReactNode">
+    An inline label next to the box. Its presence turns the component into the
+    whole clickable row.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the label.
+  </Property>
+  <Property name="checked / defaultChecked" type="boolean">
+    Controlled and uncontrolled state.
+  </Property>
+  <Property name="onCheckedChange" type="(checked: boolean) => void">
+    Fires when the box is toggled.
+  </Property>
+  <Property name="indeterminate" type="boolean">
+    The mixed state, for a header checkbox above a partial selection.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the row and ignores interaction.
+  </Property>
+  <Property name="wrapperClassName" type="string">
+    Class for the outer `<label>`, used when a label or description is given.
+  </Property>
+  <Property name="className" type="string">
+    Class for the box itself.
+  </Property>
+  <Property name="name / required / value" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>

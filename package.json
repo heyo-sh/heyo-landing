@@ -16,7 +16,8 @@
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@fontsource-variable/figtree": "^5.3.0",
-    "@heyo-sh/heyo-docs": "^3.2.0",
+    "@heyo-sh/heyo-docs": "^3.4.0",
+    "@heyo-sh/heyo-ui": "^0.2.0",
     "@react-router/node": "8.3.0",
     "@remixicon/react": "^4.9.0",
     "class-variance-authority": "^0.7.1",

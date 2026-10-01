@@ -1,0 +1,320 @@
+---
+title: Data Table
+description: Table with search, sorting, column visibility, selection, loading skeletons and two empty states.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui p-4 sm:p-4"
+  code={`<DataTable
+  title="Workers"
+  description="Everything deployed in this project."
+  searchable
+  selectable
+  rows={workers}
+  getRowId={(worker) => worker.id}
+  columns={[
+    { id: "name", header: "Worker", primary: true, sortBy: (w) => w.name, cell: (w) => w.name },
+    { id: "region", header: "Region", cell: (w) => w.region },
+    { id: "requests", header: "Requests", numeric: true, sortBy: (w) => w.requests, cell: (w) => w.requests.toLocaleString() },
+    { id: "status", header: "Status", cell: (w) => <Badge dot variant={w.tone}>{w.status}</Badge> },
+  ]}
+  bulkActions={(selected, clear) => (
+    <Button size="sm" variant="destructive-secondary" onClick={() => remove(selected, clear)}>
+      Delete {selected.length}
+    </Button>
+  )}
+/>`}
+>
+  <div className="w-full">
+    <HeyoUiDataTable
+      title="Workers"
+      description="Everything deployed in this project."
+      searchable
+      selectable
+      rows={[
+        {
+          id: "1",
+          name: "acme-api",
+          region: "fra1",
+          requests: 142318,
+          status: "Healthy",
+          tone: "success",
+        },
+        {
+          id: "2",
+          name: "acme-web",
+          region: "waw1",
+          requests: 8904,
+          status: "Healthy",
+          tone: "success",
+        },
+        {
+          id: "3",
+          name: "acme-cron",
+          region: "iad1",
+          requests: 212,
+          status: "Degraded",
+          tone: "warning",
+        },
+      ]}
+      getRowId={(worker) => worker.id}
+      columns={[
+        {
+          id: "name",
+          header: "Worker",
+          primary: true,
+          sortBy: (worker) => worker.name,
+          cell: (worker) => worker.name,
+        },
+        { id: "region", header: "Region", cell: (worker) => worker.region },
+        {
+          id: "requests",
+          header: "Requests",
+          numeric: true,
+          sortBy: (worker) => worker.requests,
+          cell: (worker) => worker.requests.toLocaleString("en-US"),
+        },
+        {
+          id: "status",
+          header: "Status",
+          cell: (worker) => (
+            <HeyoUiBadge dot variant={worker.tone}>
+              {worker.status}
+            </HeyoUiBadge>
+          ),
+        },
+      ]}
+      bulkActions={(selected, clear) => (
+        <HeyoUiButton size="sm" variant="destructive-secondary" onClick={clear}>
+          Delete {selected.length}
+        </HeyoUiButton>
+      )}
+    />
+  </div>
+</CodeSnippet>
+
+# Data Table
+
+`DataTable` is [`Table`](/components/table) with everything a real list needs
+bolted on: search, sorting, column visibility, selection with a bulk-action
+bar, loading skeletons and two different empty states.
+
+Two layout decisions are worth knowing about.
+
+- **The bulk bar replaces the toolbar in place.** It does not appear _above_
+  it: pushing the table down the moment you tick a checkbox moves the rows out
+  from under the cursor, which is how you end up selecting the wrong one.
+- **The whole thing is one card.** Toolbar, table and footer share a single
+  ring and one background, because they are one control — three stacked boxes
+  read as three unrelated widgets.
+
+Filtering and sorting are client-side by default: the 95% case is a page of a
+few hundred rows you already have, and a server round trip to filter those
+turns a snappy list into a spinner. Every input is also controllable, so the
+same component works against a server when the list outgrows the page.
+
+## Usage
+
+```tsx
+import { DataTable } from "@heyo-sh/heyo-ui";
+
+<DataTable
+  rows={workers}
+  getRowId={(worker) => worker.id}
+  columns={[
+    { id: "name", header: "Worker", primary: true, cell: (w) => w.name },
+    { id: "region", header: "Region", cell: (w) => w.region },
+  ]}
+/>;
+```
+
+## Columns
+
+A column is data plus a renderer. `cell` returns a node, so formatting lives in
+the column and not in the rows.
+
+```tsx
+const columns: DataTableColumn<Worker>[] = [
+  {
+    id: "name",
+    header: "Worker",
+    primary: true,
+    sortBy: (w) => w.name,
+    cell: (w) => w.name,
+  },
+  {
+    id: "requests",
+    header: "Requests",
+    numeric: true,
+    sortBy: (w) => w.requests,
+    cell: (w) => w.requests.toLocaleString(),
+  },
+  {
+    id: "actions",
+    header: "",
+    actions: true,
+    cell: (w) => <RowMenu worker={w} />,
+  },
+];
+```
+
+<Properties>
+  <Property name="primary" type="boolean">
+    The column you scan for. Full contrast, medium weight.
+  </Property>
+  <Property name="numeric" type="boolean">
+    Tabular figures, right-aligned.
+  </Property>
+  <Property name="sortBy" type="((row) => string | number) | true">
+    Makes the header a sort button. Return a comparable value, or sort the rows
+    yourself and pass `true` to get just the affordance.
+  </Property>
+  <Property name="actions" type="boolean">
+    Renders in the trailing actions column, revealed on hover.
+  </Property>
+  <Property name="fixed / hidden" type="boolean">
+    `fixed` keeps a column out of the visibility menu; `hidden` starts it hidden
+    but still listed.
+  </Property>
+</Properties>
+
+## Loading and empty
+
+Three states, and they are not the same thing. `loading` draws skeleton rows,
+`empty` is "there is nothing here yet", and `emptyFiltered` is "your query
+matched nothing" — a different problem that deserves different words.
+
+<CodeSnippet
+  previewClassName="heyo-ui p-4 sm:p-4 flex-col gap-4"
+  code={`<DataTable loading loadingRows={3} rows={[]} columns={columns} getRowId={byId} />
+
+<DataTable
+  rows={[]}
+  columns={columns}
+  getRowId={byId}
+  empty={<Empty title="No workers yet" description="Deploy one to see it here." />}
+/>`}
+>
+  <div className="w-full">
+    <HeyoUiDataTable
+      loading
+      loadingRows={3}
+      rows={[]}
+      getRowId={(row) => row.id}
+      columns={[
+        {
+          id: "name",
+          header: "Worker",
+          primary: true,
+          cell: (row) => row.name,
+        },
+        { id: "region", header: "Region", cell: (row) => row.region },
+      ]}
+    />
+  </div>
+  <div className="w-full">
+    <HeyoUiDataTable
+      rows={[]}
+      getRowId={(row) => row.id}
+      columns={[
+        {
+          id: "name",
+          header: "Worker",
+          primary: true,
+          cell: (row) => row.name,
+        },
+        { id: "region", header: "Region", cell: (row) => row.region },
+      ]}
+      empty={
+        <HeyoUiEmpty
+          icon={<IconCube />}
+          title="No workers yet"
+          description="Deploy one and it will show up here."
+        />
+      }
+    />
+  </div>
+</CodeSnippet>
+
+## Against a server
+
+Control the query and take over filtering. `toolbar` is the slot on the right
+of the search field — filters, a date range, a "New" button — and `footer` is
+the strip under the table, which is where
+[`Pagination`](/components/pagination) belongs.
+
+```tsx
+<DataTable
+  rows={page.rows}
+  columns={columns}
+  getRowId={(row) => row.id}
+  searchable
+  query={query}
+  onQueryChange={setQuery}
+  loading={isPending}
+  toolbar={<Button icon={IconPlus}>New worker</Button>}
+  footer={
+    <Pagination page={page.number} pageCount={page.count} onPageChange={goTo} />
+  }
+/>
+```
+
+## Properties
+
+<Properties>
+  <Property name="rows" required type="Row[]">
+    The data.
+  </Property>
+  <Property name="columns" required type="DataTableColumn<Row>[]">
+    The column definitions.
+  </Property>
+  <Property name="getRowId" required type="(row: Row) => string">
+    A stable id per row — selection and React keys both use it.
+  </Property>
+  <Property name="searchable" type="boolean">
+    Adds the search box. Matched against `searchFields`, or every cell.
+  </Property>
+  <Property
+    name="searchFields"
+    type="(row: Row) => (string | number | null | undefined)[]"
+  >
+    The values to match the query against. It defaults to `JSON.stringify(row)`.
+  </Property>
+  <Property name="query / onQueryChange" type="string, fn">
+    Controlled query — pair it with server-side filtering.
+  </Property>
+  <Property name="selectable" type="boolean">
+    Adds the checkbox column and the bulk bar.
+  </Property>
+  <Property
+    name="bulkActions"
+    type="(selected: string[], clear: () => void) => ReactNode"
+  >
+    Rendered in the bar that replaces the toolbar once something is selected.
+  </Property>
+  <Property name="columnToggle" type="boolean">
+    The column visibility menu. It defaults to `true` whenever any column is
+    toggleable.
+  </Property>
+  <Property name="toolbar" type="ReactNode">
+    The toolbar slot on the right.
+  </Property>
+  <Property name="title / description" type="ReactNode">
+    A heading above the toolbar.
+  </Property>
+  <Property name="loading / loadingRows" type="boolean, number">
+    Skeleton rows instead of data.
+  </Property>
+  <Property name="empty / emptyFiltered" type="ReactNode">
+    Shown when there are no rows at all, and when the query matched nothing.
+  </Property>
+  <Property name="onRowClick" type="(row: Row) => void">
+    Makes rows interactive.
+  </Property>
+  <Property name="striped / stickyHeader / maxHeight" type="—">
+    Passed through to [`Table`](/components/table).
+  </Property>
+  <Property name="footer" type="ReactNode">
+    The strip under the table — pagination, counts.
+  </Property>
+</Properties>

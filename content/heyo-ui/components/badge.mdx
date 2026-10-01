@@ -1,0 +1,146 @@
+---
+title: Badge
+description: A status chip — the one place in the system where hue carries meaning.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Badge dot variant="success">Healthy</Badge>
+<Badge dot variant="warning">Degraded</Badge>
+<Badge dot variant="danger">Down</Badge>
+<Badge variant="neutral">Draft</Badge>`}
+>
+  <HeyoUiBadge dot variant="success">
+    Healthy
+  </HeyoUiBadge>
+  <HeyoUiBadge dot variant="warning">
+    Degraded
+  </HeyoUiBadge>
+  <HeyoUiBadge dot variant="danger">
+    Down
+  </HeyoUiBadge>
+  <HeyoUiBadge variant="neutral">Draft</HeyoUiBadge>
+</CodeSnippet>
+
+# Badge
+
+Because nothing else in heyo-ui is coloured — the primary button is the inverse
+of the page, not blue — a coloured chip means exactly one thing: status. Spend
+that carefully.
+
+## Usage
+
+```tsx
+import { Badge } from "@heyo-sh/heyo-ui";
+
+<Badge dot variant="success">
+  Healthy
+</Badge>;
+```
+
+## Variants
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Badge variant="neutral">Neutral</Badge>
+<Badge variant="outline">Outline</Badge>
+<Badge variant="brand">Brand</Badge>
+<Badge variant="contrast">Contrast</Badge>
+<Badge variant="info">Info</Badge>
+<Badge variant="success">Success</Badge>
+<Badge variant="warning">Warning</Badge>
+<Badge variant="danger">Danger</Badge>
+<Badge variant="count">12</Badge>`}
+>
+  <HeyoUiBadge variant="neutral">Neutral</HeyoUiBadge>
+  <HeyoUiBadge variant="outline">Outline</HeyoUiBadge>
+  <HeyoUiBadge variant="brand">Brand</HeyoUiBadge>
+  <HeyoUiBadge variant="contrast">Contrast</HeyoUiBadge>
+  <HeyoUiBadge variant="info">Info</HeyoUiBadge>
+  <HeyoUiBadge variant="success">Success</HeyoUiBadge>
+  <HeyoUiBadge variant="warning">Warning</HeyoUiBadge>
+  <HeyoUiBadge variant="danger">Danger</HeyoUiBadge>
+  <HeyoUiBadge variant="count">12</HeyoUiBadge>
+</CodeSnippet>
+
+`count` is the chip a navigation row or a tab carries — it is what
+[`Sidebar.MenuBadge`](/components/sidebar) renders.
+
+## Dots and icons
+
+`dot` puts a coloured dot before the label. It is the quietest way to show
+status, and it keeps working for a reader who cannot separate the hues.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Badge dot variant="success">Operational</Badge>
+<Badge icon={IconShield} variant="info">Verified</Badge>
+<Badge icon={IconBolt} variant="warning" size="sm">Throttled</Badge>`}
+>
+  <HeyoUiBadge dot variant="success">
+    Operational
+  </HeyoUiBadge>
+  <HeyoUiBadge icon={<IconShield />} variant="info">
+    Verified
+  </HeyoUiBadge>
+  <HeyoUiBadge icon={<IconBolt />} variant="warning" size="sm">
+    Throttled
+  </HeyoUiBadge>
+</CodeSnippet>
+
+## Sizes
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap items-center"
+  code={`<Badge size="sm" variant="neutral">Small</Badge>
+<Badge size="base" variant="neutral">Base</Badge>`}
+>
+  <HeyoUiBadge size="sm" variant="neutral">
+    Small
+  </HeyoUiBadge>
+  <HeyoUiBadge size="base" variant="neutral">
+    Base
+  </HeyoUiBadge>
+</CodeSnippet>
+
+<Callout type="note" title="A badge is not a button">
+  If it can be clicked it is a [`Button`](/components/button) or a
+  [`Toggle`](/components/toggle). A badge reports; it does not act.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property
+    name="variant"
+    type='"neutral" | "outline" | "brand" | "contrast" | "info" | "success" | "warning" | "danger" | "count"'
+  >
+    The tone. It defaults to `neutral`.
+  </Property>
+  <Property name="size" type='"sm" | "base"'>
+    It defaults to `base`.
+  </Property>
+  <Property name="dot" type="boolean">
+    Draws a status dot before the label.
+  </Property>
+  <Property name="icon" type="IconLike">
+    A leading glyph — a component, an element, or any node.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The label.
+  </Property>
+  <Property name="className" type="string">
+    Merged through `tailwind-merge`.
+  </Property>
+</Properties>
+
+### badgeVariants
+
+The `cva` definition behind the component, for the rare case something else has
+to look exactly like a badge.
+
+```tsx
+import { badgeVariants } from "@heyo-sh/heyo-ui";
+
+<span className={badgeVariants({ variant: "success", dot: true })}>Live</span>;
+```

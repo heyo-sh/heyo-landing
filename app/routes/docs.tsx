@@ -10,7 +10,7 @@ import {
   openApiEndpointDetail,
 } from "@heyo-sh/heyo-docs/openapi";
 import { docsSeoMeta } from "@heyo-sh/heyo-docs/seo/react-router";
-import { grainTheme } from "@heyo-sh/heyo-docs/theme/grain";
+import { heyoTheme } from "@heyo-sh/heyo-docs/theme/heyo";
 import { useDocsTheme } from "@heyo-sh/heyo-docs/theme/provider";
 import type { OpenApiEndpoint } from "@heyo-sh/heyo-docs/types";
 import {
@@ -143,7 +143,7 @@ function DocsShell({
       openApiRequestUrl="/heyo-docs-internal/openapi-request"
       pages={pages}
       pathname={pathname}
-      theme={grainTheme}
+      theme={heyoTheme}
       isDark={mounted ? resolvedTheme === "dark" : undefined}
       onThemeToggle={mounted ? toggleTheme : undefined}
     />

@@ -1,0 +1,423 @@
+---
+title: Sidebar
+description: Composable application chrome — collapsible to a rail, keyboard-toggleable, an overlay drawer on a phone.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui p-0 sm:p-0"
+  code={`<Sidebar.Provider defaultOpen>
+  <Sidebar>
+    <Sidebar.Header>
+      <div className="flex items-center gap-2 px-1 py-0.5">
+        <div className="grid size-6 shrink-0 place-items-center rounded-md bg-heyo-contrast text-heyo-inverse">
+          <span className="font-mono text-[11px] font-semibold">h</span>
+        </div>
+        <Sidebar.Label className="text-sm font-medium text-heyo-strong">
+          heyo-ui
+        </Sidebar.Label>
+        <Sidebar.Trigger className="ml-auto" />
+      </div>
+      <Input
+        size="sm"
+        icon={IconSearch}
+        placeholder="Filter components…"
+        aria-label="Filter components"
+        className="group-data-[state=collapsed]/sidebar:hidden"
+      />
+    </Sidebar.Header>
+
+    <Sidebar.Content>
+      <Sidebar.Group>
+        <Sidebar.GroupLabel>Platform</Sidebar.GroupLabel>
+        <Sidebar.Menu>
+          <Sidebar.MenuButton icon={IconHome} active>Overview</Sidebar.MenuButton>
+
+          <Sidebar.MenuItem>
+            <Sidebar.Collapsible defaultOpen>
+              <Sidebar.CollapsibleTrigger
+                render={
+                  <Sidebar.MenuButton unwrapped icon={IconCube}>
+                    Compute
+                    <Sidebar.MenuBadge>2</Sidebar.MenuBadge>
+                    <Sidebar.MenuChevron />
+                  </Sidebar.MenuButton>
+                }
+              />
+              <Sidebar.CollapsibleContent>
+                <Sidebar.MenuSub>
+                  <Sidebar.MenuSubButton icon={IconBolt} render={<a href="#workers" />}>
+                    Workers
+                  </Sidebar.MenuSubButton>
+                  <Sidebar.MenuSubButton icon={IconBrowser} render={<a href="#pages" />}>
+                    Pages
+                  </Sidebar.MenuSubButton>
+                </Sidebar.MenuSub>
+              </Sidebar.CollapsibleContent>
+            </Sidebar.Collapsible>
+          </Sidebar.MenuItem>
+
+          <Sidebar.MenuButton icon={IconDatabase}>Storage</Sidebar.MenuButton>
+        </Sidebar.Menu>
+      </Sidebar.Group>
+    </Sidebar.Content>
+
+    <Sidebar.Footer>
+      <Sidebar.Menu>
+        <Sidebar.MenuButton icon={IconMoon}>Dark mode</Sidebar.MenuButton>
+      </Sidebar.Menu>
+    </Sidebar.Footer>
+    <Sidebar.Rail />
+
+  </Sidebar>
+
+  <Sidebar.Inset>
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-heyo-hairline px-5">
+      <Heading level={4}>Overview</Heading>
+      <Badge variant="outline" size="sm">production</Badge>
+    </header>
+    <div className="p-5">{children}</div>
+  </Sidebar.Inset>
+</Sidebar.Provider>`}
+>
+  <HeyoUiSidebar.Provider
+    className="h-96 min-h-0 overflow-hidden rounded-lg ring-1 ring-heyo-line"
+    defaultOpen
+    shortcut={false}
+    mobileBreakpoint="(max-width: 1px)"
+  >
+    <HeyoUiSidebar className="h-full">
+      <HeyoUiSidebar.Header>
+        <div className="flex items-center gap-2 px-1 py-0.5">
+          <div className="grid size-6 shrink-0 place-items-center rounded-md bg-heyo-contrast text-heyo-inverse">
+            <span className="font-mono text-[11px] font-semibold">h</span>
+          </div>
+          <HeyoUiSidebar.Label className="text-sm font-medium text-heyo-strong">
+            heyo-ui
+          </HeyoUiSidebar.Label>
+          <HeyoUiSidebar.Trigger className="ml-auto" />
+        </div>
+        <HeyoUiInput
+          size="sm"
+          icon={<IconSearch />}
+          placeholder="Filter components…"
+          aria-label="Filter components"
+          className="group-data-[state=collapsed]/sidebar:hidden"
+        />
+      </HeyoUiSidebar.Header>
+
+      <HeyoUiSidebar.Content>
+        <HeyoUiSidebar.Group>
+          <HeyoUiSidebar.GroupLabel>Platform</HeyoUiSidebar.GroupLabel>
+          <HeyoUiSidebar.Menu>
+            <HeyoUiSidebar.MenuButton icon={<IconHome />} active>
+              Overview
+            </HeyoUiSidebar.MenuButton>
+
+            <HeyoUiSidebar.MenuItem>
+              <HeyoUiSidebar.Collapsible defaultOpen>
+                <HeyoUiSidebar.CollapsibleTrigger
+                  render={
+                    <HeyoUiSidebar.MenuButton unwrapped icon={<IconCube />}>
+                      Compute
+                      <HeyoUiSidebar.MenuBadge>2</HeyoUiSidebar.MenuBadge>
+                      <HeyoUiSidebar.MenuChevron />
+                    </HeyoUiSidebar.MenuButton>
+                  }
+                />
+                <HeyoUiSidebar.CollapsibleContent>
+                  <HeyoUiSidebar.MenuSub>
+                    <HeyoUiSidebar.MenuSubButton icon={<IconBolt />}>
+                      Workers
+                    </HeyoUiSidebar.MenuSubButton>
+                    <HeyoUiSidebar.MenuSubButton icon={<IconBrowser />}>
+                      Pages
+                    </HeyoUiSidebar.MenuSubButton>
+                  </HeyoUiSidebar.MenuSub>
+                </HeyoUiSidebar.CollapsibleContent>
+              </HeyoUiSidebar.Collapsible>
+            </HeyoUiSidebar.MenuItem>
+
+            <HeyoUiSidebar.MenuButton icon={<IconDatabase />}>
+              Storage
+            </HeyoUiSidebar.MenuButton>
+          </HeyoUiSidebar.Menu>
+        </HeyoUiSidebar.Group>
+      </HeyoUiSidebar.Content>
+
+      <HeyoUiSidebar.Footer>
+        <HeyoUiSidebar.Menu>
+          <HeyoUiSidebar.MenuButton icon={<IconMoon />}>
+            Dark mode
+          </HeyoUiSidebar.MenuButton>
+        </HeyoUiSidebar.Menu>
+      </HeyoUiSidebar.Footer>
+      <HeyoUiSidebar.Rail />
+    </HeyoUiSidebar>
+
+    <HeyoUiSidebar.Inset className="min-h-0">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-heyo-hairline px-5">
+        <HeyoUiHeading level={4}>Overview</HeyoUiHeading>
+        <HeyoUiBadge variant="outline" size="sm">
+          production
+        </HeyoUiBadge>
+      </header>
+      <div className="p-5">
+        <HeyoUiText size="sm" tone="subtle">
+          Select the trigger — or the hairline seam between the panel and this
+          column — to collapse the sidebar into its rail.
+        </HeyoUiText>
+      </div>
+    </HeyoUiSidebar.Inset>
+
+  </HeyoUiSidebar.Provider>
+</CodeSnippet>
+
+# Sidebar
+
+`Sidebar` is the application chrome: a provider that owns the open state, a
+panel composed from menus and groups, and an inset that holds the page. It
+collapses to a rail of icons, toggles with `⌘B` / `Ctrl B`, and turns into an
+overlay drawer below `768px` on its own.
+
+It is deliberately **not a panel**. The sidebar shares the page background and
+a single hairline separates it — a sidebar lighter than the page reads as
+something floating on top of the application rather than part of it.
+
+## Usage
+
+```tsx
+import { Sidebar } from "@heyo-sh/heyo-ui";
+
+<Sidebar.Provider defaultOpen>
+  <Sidebar>
+    <Sidebar.Content>
+      <Sidebar.Menu>
+        <Sidebar.MenuButton icon={IconHome} active>
+          Home
+        </Sidebar.MenuButton>
+      </Sidebar.Menu>
+    </Sidebar.Content>
+  </Sidebar>
+
+  <Sidebar.Inset>{children}</Sidebar.Inset>
+</Sidebar.Provider>;
+```
+
+`Sidebar.Provider` wraps **both** the sidebar and the page, because the inset
+reacts to the same state.
+
+## Nested sections
+
+A branch is a `Sidebar.Collapsible` inside a `Sidebar.MenuItem`. `MenuButton`
+wraps itself in an `<li>` by default, so pass `unwrapped` when you supply the
+item yourself — as the trigger above does.
+
+<CodeSnippet
+  previewClassName="heyo-ui p-0 sm:p-0"
+  code={`<Sidebar.MenuItem>
+  <Sidebar.Collapsible defaultOpen>
+    <Sidebar.CollapsibleTrigger
+      render={
+        <Sidebar.MenuButton unwrapped icon={IconCube}>
+          Compute
+          <Sidebar.MenuChevron />
+        </Sidebar.MenuButton>
+      }
+    />
+    <Sidebar.CollapsibleContent>
+      <Sidebar.MenuSub>
+        <Sidebar.MenuSubButton active>Workers</Sidebar.MenuSubButton>
+        <Sidebar.MenuSubButton>Pages</Sidebar.MenuSubButton>
+      </Sidebar.MenuSub>
+    </Sidebar.CollapsibleContent>
+  </Sidebar.Collapsible>
+</Sidebar.MenuItem>`}
+>
+  <HeyoUiSidebar.Provider
+    className="h-72 min-h-0 overflow-hidden rounded-lg ring-1 ring-heyo-line"
+    defaultOpen
+    shortcut={false}
+    mobileBreakpoint="(max-width: 1px)"
+  >
+    <HeyoUiSidebar className="h-full" collapsible="none">
+      <HeyoUiSidebar.Content>
+        <HeyoUiSidebar.Group>
+          <HeyoUiSidebar.GroupLabel>Platform</HeyoUiSidebar.GroupLabel>
+          <HeyoUiSidebar.Menu>
+            <HeyoUiSidebar.MenuItem>
+              <HeyoUiSidebar.Collapsible defaultOpen>
+                <HeyoUiSidebar.CollapsibleTrigger
+                  render={
+                    <HeyoUiSidebar.MenuButton unwrapped icon={<IconCube />}>
+                      Compute
+                      <HeyoUiSidebar.MenuChevron />
+                    </HeyoUiSidebar.MenuButton>
+                  }
+                />
+                <HeyoUiSidebar.CollapsibleContent>
+                  <HeyoUiSidebar.MenuSub>
+                    <HeyoUiSidebar.MenuSubButton active>
+                      Workers
+                    </HeyoUiSidebar.MenuSubButton>
+                    <HeyoUiSidebar.MenuSubButton>
+                      Pages
+                    </HeyoUiSidebar.MenuSubButton>
+                  </HeyoUiSidebar.MenuSub>
+                </HeyoUiSidebar.CollapsibleContent>
+              </HeyoUiSidebar.Collapsible>
+            </HeyoUiSidebar.MenuItem>
+            <HeyoUiSidebar.MenuButton icon={<IconDatabase />}>
+              Storage
+            </HeyoUiSidebar.MenuButton>
+          </HeyoUiSidebar.Menu>
+        </HeyoUiSidebar.Group>
+      </HeyoUiSidebar.Content>
+    </HeyoUiSidebar>
+    <HeyoUiSidebar.Inset className="min-h-0 p-5">
+      <HeyoUiText size="sm" tone="subtle">
+        Workers
+      </HeyoUiText>
+    </HeyoUiSidebar.Inset>
+  </HeyoUiSidebar.Provider>
+</CodeSnippet>
+
+## Router links
+
+Every menu button takes `render`, so a navigation entry becomes whatever your
+router uses while keeping the row's styling, active state and icon slot.
+
+```tsx
+<Sidebar.MenuButton icon={IconHome} render={<NavLink to="/" />}>
+  Home
+</Sidebar.MenuButton>
+```
+
+## Collapsing
+
+<Properties>
+  <Property name="icon" type="default">
+    Shrinks to a rail: labels and badges fade out, icons stay. The reader keeps
+    a map of the application.
+  </Property>
+  <Property name="offcanvas" type="collapsible">
+    Slides fully out of view. Use it when the content needs every pixel.
+  </Property>
+  <Property name="none" type="collapsible">
+    Always expanded — for a sidebar that is the whole interface.
+  </Property>
+</Properties>
+
+`Sidebar.Rail` turns the hairline seam into a click target, which is what makes
+the whole thing feel like real application chrome rather than a navigation
+list. Anything that should disappear with the labels gets
+`group-data-[state=collapsed]/sidebar:hidden` — the search field in the first
+example does exactly that.
+
+## Reading the state
+
+```tsx
+import { useSidebar } from "@heyo-sh/heyo-ui";
+
+const { open, setOpen, toggle, state, isMobile } = useSidebar();
+```
+
+Anything below the provider can read or drive it — a header button, a keyboard
+handler of your own, a layout that shifts when the rail collapses.
+
+## Properties
+
+### Sidebar.Provider
+
+<Properties>
+  <Property name="defaultOpen" type="boolean">
+    Uncontrolled initial state. It defaults to `true`.
+  </Property>
+  <Property name="open" type="boolean">
+    Controlled state. Pair it with `onOpenChange`.
+  </Property>
+  <Property name="onOpenChange" type="(open: boolean) => void">
+    Fires on every toggle, including the keyboard shortcut.
+  </Property>
+  <Property name="width" type="string">
+    Expanded width, any CSS length. It defaults to `"15rem"`.
+  </Property>
+  <Property name="widthIcon" type="string">
+    Collapsed rail width. It defaults to `"3.25rem"`.
+  </Property>
+  <Property name="shortcut" type="string | false">
+    The key that toggles the sidebar together with ⌘ or Ctrl. It defaults to
+    `"b"`; pass `false` to opt out.
+  </Property>
+  <Property name="mobileBreakpoint" type="string">
+    The media query below which the sidebar becomes an overlay drawer. It
+    defaults to `"(max-width: 767px)"`.
+  </Property>
+</Properties>
+
+### Sidebar
+
+<Properties>
+  <Property name="side" type='"left" | "right"'>
+    Which edge it sits on. It defaults to `left`.
+  </Property>
+  <Property name="collapsible" type='"icon" | "offcanvas" | "none"'>
+    How it collapses. It defaults to `icon`.
+  </Property>
+</Properties>
+
+### Sidebar.MenuButton and Sidebar.MenuSubButton
+
+<Properties>
+  <Property name="icon" type="IconLike">
+    The leading glyph. It stays visible when the rail collapses.
+  </Property>
+  <Property name="active" type="boolean">
+    Marks the entry as the current page.
+  </Property>
+  <Property name="render" type="RenderProp">
+    Swaps the `<button>` for a link or a router component.
+  </Property>
+  <Property name="unwrapped" type="boolean">
+    Skips the automatic `<li>` wrapper, for when you supply your own
+    `Sidebar.MenuItem` — needed around a `Collapsible`.
+  </Property>
+</Properties>
+
+### Structural parts
+
+<Properties>
+  <Property name="Sidebar.Header / Content / Footer" type="div">
+    The three stacked regions. `Content` scrolls with the restyled native
+    scrollbar; `Header` and `Footer` stay put.
+  </Property>
+  <Property name="Sidebar.Group / GroupLabel" type="div">
+    A titled section. The label fades out as the rail collapses.
+  </Property>
+  <Property name="Sidebar.Menu / MenuItem / MenuSub / MenuSubItem" type="ul, li">
+    The list structure. `Menu` is a `<ul>`; the buttons supply their own `<li>`
+    unless you pass `unwrapped`.
+  </Property>
+  <Property name="Sidebar.MenuBadge" type="BadgeProps">
+    The trailing chip on a row — literally `<Badge variant="count">`, with the
+    one rule the sidebar adds: it disappears when the rail collapses.
+  </Property>
+  <Property name="Sidebar.MenuChevron" type="span">
+    The rotating chevron for a collapsible branch.
+  </Property>
+  <Property name="Sidebar.Collapsible / CollapsibleTrigger / CollapsibleContent" type="—">
+    A nested section wired to the rail animation.
+  </Property>
+  <Property name="Sidebar.Trigger" type="button">
+    The toggle. Takes `icon` to replace the default glyph.
+  </Property>
+  <Property name="Sidebar.Rail" type="button">
+    The hairline seam, doubling as a click target.
+  </Property>
+  <Property name="Sidebar.Inset" type="main">
+    The content column that sits next to the sidebar.
+  </Property>
+  <Property name="Sidebar.Label" type="span">
+    Text that fades out as the rail collapses. Exported so a custom row can
+    join the same animation.
+  </Property>
+</Properties>

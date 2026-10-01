@@ -1,0 +1,181 @@
+---
+title: Stat
+description: One number, its name, and how it moved.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Stat.Group columns={3}>
+  <Stat label="Requests" value="142,318" delta={12.4} deltaLabel="vs last week" />
+  <Stat label="Error rate" value="0.42" unit="%" delta={-18.2} deltaGood={false} />
+  <Stat label="p95 latency" value="84" unit="ms" delta={4.1} deltaGood={false} />
+</Stat.Group>`}
+>
+  <div className="w-full rounded-lg bg-heyo-base p-4 ring-1 ring-heyo-line">
+    <HeyoUiStatGroup columns={3}>
+      <HeyoUiStat
+        label="Requests"
+        value="142,318"
+        delta={12.4}
+        deltaLabel="vs last week"
+      />
+      <HeyoUiStat
+        label="Error rate"
+        value="0.42"
+        unit="%"
+        delta={-18.2}
+        deltaGood={false}
+      />
+      <HeyoUiStat
+        label="p95 latency"
+        value="84"
+        unit="ms"
+        delta={4.1}
+        deltaGood={false}
+      />
+    </HeyoUiStatGroup>
+  </div>
+</CodeSnippet>
+
+# Stat
+
+The value is the only large type in the component and the only thing at full
+contrast. A stat where the label competes with the number is a stat nobody
+reads at a glance.
+
+## Usage
+
+```tsx
+import { Stat } from "@heyo-sh/heyo-ui";
+
+<Stat
+  label="Requests"
+  value="142,318"
+  delta={12.4}
+  deltaLabel="vs last week"
+/>;
+```
+
+## Deltas
+
+`delta` is a **number**, not a string: `-4.2` renders as "−4.2%" and the sign
+picks the colour. `deltaGood={false}` flips that mapping — for latency, error
+rate or spend, where up is exactly what you did not want.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-8 flex-wrap"
+  code={`<Stat label="Signups" value="1,204" delta={8.3} />
+<Stat label="Churn" value="2.1" unit="%" delta={6.9} deltaGood={false} />
+<Stat label="Spend" value="412" unit="EUR" delta={-11} deltaGood={false} deltaLabel="vs last month" />`}
+>
+  <HeyoUiStat label="Signups" value="1,204" delta={8.3} />
+  <HeyoUiStat
+    label="Churn"
+    value="2.1"
+    unit="%"
+    delta={6.9}
+    deltaGood={false}
+  />
+  <HeyoUiStat
+    label="Spend"
+    value="412"
+    unit="EUR"
+    delta={-11}
+    deltaGood={false}
+    deltaLabel="vs last month"
+  />
+</CodeSnippet>
+
+## Bordered, and with a chart
+
+`bordered` adds the hairline and the surface. It is off by default so a stat
+can sit inside a [`Card`](/components/card) without drawing a second box.
+`chart` is the slot under the numbers — a sparkline, a
+[`Meter`](/components/meter), a [`StatusBar`](/components/status-bar).
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap"
+  code={`<Stat
+  bordered
+  icon={IconActivity}
+  label="Uptime"
+  value="99.98"
+  unit="%"
+  chart={<StatusBar size="sm" ticks={ticks} />}
+/>`}
+>
+  <div className="w-full max-w-xs">
+    <HeyoUiStat
+      bordered
+      icon={<IconActivity />}
+      label="Uptime"
+      value="99.98"
+      unit="%"
+      chart={
+        <HeyoUiStatusBar
+          size="sm"
+          ticks={Array.from({ length: 30 }, (_, index) => ({
+            status: index === 21 ? "degraded" : "operational",
+          }))}
+        />
+      }
+    />
+  </div>
+</CodeSnippet>
+
+## Groups
+
+`Stat.Group` separates stats with hairlines rather than gaps — the dashboard
+header pattern. Dividers instead of cards, so the row reads as one band.
+
+<Callout type="note" title="A stat is not a metric chart">
+  It answers "what is it now, and which way is it going". For the shape over
+  time, put a sparkline in `chart`.
+</Callout>
+
+## Properties
+
+### Stat
+
+<Properties>
+  <Property name="label" required type="ReactNode">
+    What the number is.
+  </Property>
+  <Property name="value" required type="ReactNode">
+    The number itself — the only large type in the component.
+  </Property>
+  <Property name="unit" type="ReactNode">
+    A unit or qualifier printed after the value, smaller and muted.
+  </Property>
+  <Property name="delta" type="number">
+    Change against the previous period, as a number. The sign decides the
+    colour.
+  </Property>
+  <Property name="deltaGood" type="boolean">
+    Whether a rise is good. It defaults to `true`; pass `false` for latency,
+    errors or spend.
+  </Property>
+  <Property name="deltaUnit" type="string">
+    The suffix on the delta. It defaults to `"%"`.
+  </Property>
+  <Property name="deltaLabel" type="ReactNode">
+    What the delta is measured against, for example "vs last week".
+  </Property>
+  <Property name="icon" type="IconLike">
+    A small glyph beside the label.
+  </Property>
+  <Property name="chart" type="ReactNode">
+    The slot under the numbers.
+  </Property>
+  <Property name="bordered" type="boolean">
+    Adds the hairline and surface. Off by default.
+  </Property>
+</Properties>
+
+### Stat.Group
+
+<Properties>
+  <Property name="columns" type="2 | 3 | 4">
+    Columns on a wide screen. It defaults to `3`.
+  </Property>
+</Properties>

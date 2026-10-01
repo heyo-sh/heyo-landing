@@ -1,0 +1,252 @@
+---
+title: Button
+description: The control everything else is measured against — seven variants, four sizes, rings instead of borders.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Button variant="primary">Deploy</Button>
+<Button>Cancel</Button>
+<Button variant="ghost">Logs</Button>`}
+>
+  <HeyoUiButton variant="primary">Deploy</HeyoUiButton>
+  <HeyoUiButton>Cancel</HeyoUiButton>
+  <HeyoUiButton variant="ghost">Logs</HeyoUiButton>
+</CodeSnippet>
+
+# Button
+
+`Button` is 32px tall by default and draws its edge with a `ring`, not a
+border — so a variant change never shifts the layout by a pixel and buttons sit
+flush inside a group.
+
+`primary` is the inverse of the page: black on light, white on dark. There is
+no coloured accent anywhere in the system, which leaves hue free to mean
+exactly one thing — status.
+
+## Usage
+
+```tsx
+import { Button } from "@heyo-sh/heyo-ui";
+
+<Button variant="primary" icon={IconPlus}>
+  Create worker
+</Button>;
+```
+
+## Variants
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Button variant="primary">Primary</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="destructive-secondary">Delete</Button>
+<Button variant="link">Link</Button>`}
+>
+  <HeyoUiButton variant="primary">Primary</HeyoUiButton>
+  <HeyoUiButton variant="secondary">Secondary</HeyoUiButton>
+  <HeyoUiButton variant="outline">Outline</HeyoUiButton>
+  <HeyoUiButton variant="ghost">Ghost</HeyoUiButton>
+  <HeyoUiButton variant="destructive">Destructive</HeyoUiButton>
+  <HeyoUiButton variant="destructive-secondary">Delete</HeyoUiButton>
+  <HeyoUiButton variant="link">Link</HeyoUiButton>
+</CodeSnippet>
+
+`destructive` is a filled red button and belongs in the footer of a dialog that
+is _about_ deleting. `destructive-secondary` is the row-level version — the one
+that opens that dialog.
+
+## Sizes
+
+20, 26, 32 and 40px. `base` is the default and the height every other control
+in the library shares.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap items-end"
+  code={`<Button size="xs">Extra small</Button>
+<Button size="sm">Small</Button>
+<Button size="base">Base</Button>
+<Button size="lg">Large</Button>`}
+>
+  <HeyoUiButton size="xs">Extra small</HeyoUiButton>
+  <HeyoUiButton size="sm">Small</HeyoUiButton>
+  <HeyoUiButton size="base">Base</HeyoUiButton>
+  <HeyoUiButton size="lg">Large</HeyoUiButton>
+</CodeSnippet>
+
+## Icons
+
+`icon` and `iconEnd` accept a component, an element, or any node — heyo-ui
+ships no icon dependency. The control sizes the glyph; never do it yourself.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Button variant="primary" icon={IconPlus}>Create</Button>
+<Button iconEnd={IconChevronDown}>Environment</Button>
+<Button variant="destructive-secondary" icon={IconTrash}>Delete</Button>`}
+>
+  <HeyoUiButton variant="primary" icon={<IconPlus />}>
+    Create
+  </HeyoUiButton>
+  <HeyoUiButton iconEnd={<IconChevronDown />}>Environment</HeyoUiButton>
+  <HeyoUiButton variant="destructive-secondary" icon={<IconTrash />}>
+    Delete
+  </HeyoUiButton>
+</CodeSnippet>
+
+## Shapes
+
+`square` is an icon-only button — give it an `aria-label`. `block` fills its
+container, which is what a form's submit button usually wants.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Button shape="square" icon={IconPlus} aria-label="Add" />
+<Button shape="square" size="sm" icon={IconGear} aria-label="Settings" />
+<div className="w-56">
+  <Button shape="block" variant="primary">Block</Button>
+</div>`}
+>
+  <HeyoUiButton shape="square" icon={<IconPlus />} aria-label="Add" />
+  <HeyoUiButton
+    shape="square"
+    size="sm"
+    icon={<IconGear />}
+    aria-label="Settings"
+  />
+  <div className="w-56">
+    <HeyoUiButton shape="block" variant="primary">
+      Block
+    </HeyoUiButton>
+  </div>
+</CodeSnippet>
+
+## Loading and disabled
+
+`loading` swaps the leading icon for a spinner and blocks interaction, so the
+label stays put and the button keeps its width.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Button loading>Deploying</Button>
+<Button variant="primary" loading>Deploying</Button>
+<Button disabled>Disabled</Button>`}
+>
+  <HeyoUiButton loading>Deploying</HeyoUiButton>
+  <HeyoUiButton variant="primary" loading>
+    Deploying
+  </HeyoUiButton>
+  <HeyoUiButton disabled>Disabled</HeyoUiButton>
+</CodeSnippet>
+
+## As a link
+
+`render` swaps the element while keeping every bit of styling — the way to turn
+a button into an anchor or a router link.
+
+```tsx
+<Button render={<a href="/docs" />}>Read the docs</Button>
+<Button render={<Link to="/workers" />} variant="primary">Workers</Button>
+```
+
+## ButtonGroup
+
+Welds buttons into a single control: shared edges collapse, only the outer
+corners stay rounded, and the hovered or focused button floats above its
+neighbours so its ring is never clipped.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap"
+  code={`<ButtonGroup>
+  <Button icon={IconBold} shape="square" aria-label="Bold" />
+  <Button icon={IconItalic} shape="square" aria-label="Italic" />
+  <Button icon={IconUnderline} shape="square" aria-label="Underline" />
+</ButtonGroup>
+
+<ButtonGroup>
+  <Button>Day</Button>
+  <Button>Week</Button>
+  <Button>Month</Button>
+</ButtonGroup>`}
+>
+  <HeyoUiButtonGroup>
+    <HeyoUiButton icon={<IconBold />} shape="square" aria-label="Bold" />
+    <HeyoUiButton icon={<IconItalic />} shape="square" aria-label="Italic" />
+    <HeyoUiButton
+      icon={<IconUnderline />}
+      shape="square"
+      aria-label="Underline"
+    />
+  </HeyoUiButtonGroup>
+  <HeyoUiButtonGroup>
+    <HeyoUiButton>Day</HeyoUiButton>
+    <HeyoUiButton>Week</HeyoUiButton>
+    <HeyoUiButton>Month</HeyoUiButton>
+  </HeyoUiButtonGroup>
+</CodeSnippet>
+
+<Callout type="note" title="A group is not a choice">
+  `ButtonGroup` welds actions together. For a set that remembers which one is
+  selected, use [`ToggleGroup`](/components/toggle) instead.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property
+    name="variant"
+    type='"primary" | "secondary" | "outline" | "ghost" | "destructive" | "destructive-secondary" | "link"'
+  >
+    The visual weight. It defaults to `secondary`.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    20, 26, 32 or 40px tall. It defaults to `base`.
+  </Property>
+  <Property name="shape" type='"default" | "square" | "block"'>
+    `square` is icon-only, `block` fills the container. It defaults to
+    `default`.
+  </Property>
+  <Property name="icon" type="IconLike">
+    Rendered before the label — or as the only content when
+    `shape="square"`.
+  </Property>
+  <Property name="iconEnd" type="IconLike">
+    Rendered after the label.
+  </Property>
+  <Property name="loading" type="boolean">
+    Swaps the leading icon for a spinner and blocks interaction.
+  </Property>
+  <Property name="disabled" type="boolean">
+    The native disabled state.
+  </Property>
+  <Property name="render" type="RenderProp">
+    Renders a different element with the same styling — an `<a>`, a router
+    link.
+  </Property>
+  <Property name="className" type="string">
+    Merged through `tailwind-merge`, so `rounded-full px-6` is a pill.
+  </Property>
+</Properties>
+
+### ButtonGroup
+
+<Properties>
+  <Property name="orientation" type='"horizontal" | "vertical"'>
+    Stacks the buttons instead of placing them side by side. It defaults to
+    `horizontal`.
+  </Property>
+</Properties>
+
+### buttonVariants
+
+The `cva` definition behind the component, exported for the rare case where
+something that is not a button has to look exactly like one.
+
+```tsx
+import { buttonVariants } from "@heyo-sh/heyo-ui";
+
+<a className={buttonVariants({ variant: "outline", size: "sm" })}>Docs</a>;
+```

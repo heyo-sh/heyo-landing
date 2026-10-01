@@ -1,0 +1,235 @@
+---
+title: Tabs
+description: Three shapes of tab list, each with a moving indicator rendered for you.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Tabs defaultValue="overview">
+  <Tabs.List
+    items={[
+      { value: "overview", label: "Overview" },
+      { value: "logs", label: "Logs" },
+      { value: "settings", label: "Settings" },
+    ]}
+  />
+  <Tabs.Panel value="overview">142,318 requests this month.</Tabs.Panel>
+  <Tabs.Panel value="logs">Nothing in the last hour.</Tabs.Panel>
+  <Tabs.Panel value="settings">Two environment variables.</Tabs.Panel>
+</Tabs>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTabs defaultValue="overview">
+      <HeyoUiTabs.List
+        items={[
+          { value: "overview", label: "Overview" },
+          { value: "logs", label: "Logs" },
+          { value: "settings", label: "Settings" },
+        ]}
+      />
+      <HeyoUiTabs.Panel value="overview">
+        142,318 requests this month.
+      </HeyoUiTabs.Panel>
+      <HeyoUiTabs.Panel value="logs">
+        Nothing in the last hour.
+      </HeyoUiTabs.Panel>
+      <HeyoUiTabs.Panel value="settings">
+        Two environment variables.
+      </HeyoUiTabs.Panel>
+    </HeyoUiTabs>
+  </div>
+</CodeSnippet>
+
+# Tabs
+
+`Tabs` switch what is displayed, in place. The moving highlight is pure CSS —
+Base UI publishes the active tab's geometry as custom properties, so there is
+no measuring in React and no resize observer.
+
+`Tabs.List` renders its own indicator. You never place `Tabs.Indicator`
+yourself unless you want it somewhere unusual.
+
+## Usage
+
+```tsx
+import { Tabs } from "@heyo-sh/heyo-ui";
+
+<Tabs defaultValue="overview">
+  <Tabs.List items={tabs} />
+  <Tabs.Panel value="overview">…</Tabs.Panel>
+</Tabs>;
+```
+
+## Variants
+
+<Properties>
+  <Property name="line" type="default">
+    A rule runs the full width and the indicator sits on it. The default for
+    page-level navigation.
+  </Property>
+  <Property name="underline" type="variant">
+    Padded tabs that highlight on hover, with the indicator detached below a
+    hairline.
+  </Property>
+  <Property name="segmented" type="variant">
+    A pill that slides between tabs inside a recessed track. The selected pill
+    _is_ the indicator, so there is nothing else to place.
+  </Property>
+</Properties>
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-6"
+  code={`<Tabs defaultValue="overview" variant="line">
+  <Tabs.List items={items} />
+</Tabs>
+
+<Tabs defaultValue="overview" variant="underline">
+  <Tabs.List items={items} />
+</Tabs>
+
+<Tabs defaultValue="overview" variant="segmented">
+  <Tabs.List items={items} />
+</Tabs>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTabs defaultValue="a" variant="line">
+      <HeyoUiTabs.List
+        items={[
+          { value: "a", label: "Overview" },
+          { value: "b", label: "Logs" },
+        ]}
+      />
+    </HeyoUiTabs>
+  </div>
+  <div className="w-full max-w-md">
+    <HeyoUiTabs defaultValue="a" variant="underline">
+      <HeyoUiTabs.List
+        items={[
+          { value: "a", label: "Overview" },
+          { value: "b", label: "Logs" },
+        ]}
+      />
+    </HeyoUiTabs>
+  </div>
+  <HeyoUiTabs defaultValue="a" variant="segmented">
+    <HeyoUiTabs.List
+      items={[
+        { value: "a", label: "Overview" },
+        { value: "b", label: "Logs" },
+      ]}
+    />
+  </HeyoUiTabs>
+</CodeSnippet>
+
+## Icons and disabled tabs
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Tabs defaultValue="code">
+  <Tabs.List
+    items={[
+      { value: "code", label: "Code", icon: IconCode },
+      { value: "preview", label: "Preview", icon: IconBrowser },
+      { value: "deploy", label: "Deploy", icon: IconRocket, disabled: true },
+    ]}
+  />
+</Tabs>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTabs defaultValue="code">
+      <HeyoUiTabs.List
+        items={[
+          { value: "code", label: "Code", icon: <IconCode /> },
+          { value: "preview", label: "Preview", icon: <IconBrowser /> },
+          {
+            value: "deploy",
+            label: "Deploy",
+            icon: <IconRocket />,
+            disabled: true,
+          },
+        ]}
+      />
+    </HeyoUiTabs>
+  </div>
+</CodeSnippet>
+
+## Composed
+
+Write the tabs out when a row needs more than a label — a count, a status dot,
+a router link.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Tabs defaultValue="open">
+  <Tabs.List>
+    <Tabs.Tab value="open">
+      Open
+      <Badge variant="count">12</Badge>
+    </Tabs.Tab>
+    <Tabs.Tab value="closed">Closed</Tabs.Tab>
+  </Tabs.List>
+</Tabs>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTabs defaultValue="open">
+      <HeyoUiTabs.List>
+        <HeyoUiTabs.Tab value="open">
+          Open
+          <HeyoUiBadge variant="count">12</HeyoUiBadge>
+        </HeyoUiTabs.Tab>
+        <HeyoUiTabs.Tab value="closed">Closed</HeyoUiTabs.Tab>
+      </HeyoUiTabs.List>
+    </HeyoUiTabs>
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Tabs or Toggle?">
+  Tabs change _what_ is shown. A [`ToggleGroup`](/components/toggle) changes
+  _how_ the same thing is shown — grid or list, day or week.
+</Callout>
+
+## Properties
+
+### Tabs
+
+<Properties>
+  <Property name="variant" type='"line" | "underline" | "segmented"'>
+    The shape of the list. It defaults to `line`.
+  </Property>
+  <Property name="value / defaultValue" type="string">
+    Controlled and uncontrolled selection.
+  </Property>
+  <Property name="onValueChange" type="(value: string) => void">
+    Fires when a tab is selected.
+  </Property>
+  <Property name="orientation" type='"horizontal" | "vertical"'>
+    The axis. It defaults to `horizontal`.
+  </Property>
+</Properties>
+
+### Tabs.List
+
+<Properties>
+  <Property name="items" type="TabItem[]">
+    Shorthand: `{ value, label, icon?, disabled? }` per tab.
+  </Property>
+  <Property name="indicator" type="boolean">
+    The moving highlight, rendered for you. Pass `false` only to place
+    `Tabs.Indicator` somewhere unusual yourself.
+  </Property>
+</Properties>
+
+### Tabs.Tab, Tabs.Panel, Tabs.Indicator
+
+<Properties>
+  <Property name="value" required type="string">
+    Ties a tab to its panel.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims a tab and ignores interaction.
+  </Property>
+  <Property name="children" type="ReactNode">
+    `Tabs.Panel` holds the content for its value. `Tabs.Indicator` takes no
+    children — it is the moving highlight.
+  </Property>
+</Properties>

@@ -1,7 +1,6 @@
 @import "@fontsource-variable/figtree";
 
-@source "../content/heyo-docs";
-@source "../content/heyo-code-audit";
+/* Tailwind sources and tokens live in `theme.css`, the project's single entry. */
 
 :root {
   --heyo-docs-font-family: "Figtree Variable", sans-serif;
@@ -14,6 +13,29 @@ html {
 
 html::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * Shiki separates its line spans with a real newline, and the spans are blocks
+ * already — so a `<pre>` that still honours that character breaks every line
+ * twice. Grain and Shade stop it; Heyo and Moss do not, until the release
+ * after 3.4.0. Setting the same declaration here is idempotent with the fix.
+ */
+.heyo-docs-code .shiki code {
+  white-space: normal;
+}
+
+/*
+ * The mark is drawn in ink with no fill of its own, so it needs inverting on a
+ * dark surface. The site's own header does that with `dark:invert`; a
+ * documentation theme that renders `branding.logo` without it would leave the
+ * logo black on black.
+ *
+ * The guard is the point: this rule retires itself the moment the installed
+ * theme carries the class, so the two can never invert the same image twice.
+ */
+.dark img[src="/logo.svg"]:not([class~="dark:invert"]) {
+  filter: invert(1);
 }
 
 .shipped-heyo-logo {

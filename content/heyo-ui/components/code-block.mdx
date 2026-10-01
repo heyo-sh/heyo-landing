@@ -1,0 +1,185 @@
+---
+title: Code Block
+description: Highlighted code with line numbers, marked lines, a copy button and a filename bar — always dark.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<CodeBlock language="tsx" title="worker.ts" lineNumbers highlight={[2]}>
+  {source}
+</CodeBlock>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiCodeBlock
+      language="tsx"
+      title="worker.ts"
+      lineNumbers
+      highlight={[2]}
+    >
+      {`export default {
+  async fetch(request: Request): Promise<Response> {
+    return new Response("ok");
+  },
+};`}
+    </HeyoUiCodeBlock>
+  </div>
+</CodeSnippet>
+
+# Code Block
+
+`CodeBlock` is **always dark, in both colour modes**. A code block is a
+quotation from a terminal, and a terminal is dark — a light one reads as
+another piece of UI rather than as output, and it doubles the number of token
+palettes anyone has to keep tuned.
+
+The highlighting is **monochrome**: one grey ramp, italics for comments, a
+heavier weight for keywords. Syntax colour is decoration that competes with the
+parts of an interface where colour _means_ something. The tokens are `--code-*`
+custom properties, so a coloured palette is a handful of variables rather than
+a fork.
+
+## Usage
+
+```tsx
+import { CodeBlock } from "@heyo-sh/heyo-ui";
+
+<CodeBlock language="sh" title="Terminal">
+  bun add @heyo-sh/heyo-ui
+</CodeBlock>;
+```
+
+`children` is a string. Indentation common to every line is stripped, so a
+template literal inside your component tree does not arrive with the component
+tree's indentation.
+
+## Languages
+
+`ts`, `tsx`, `js`, `jsx`, `json`, `sh`, `css`, `html`, `yaml` and `sql` are
+understood; anything else renders plain. Setting `language` also labels the
+block.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-3"
+  code={`<CodeBlock language="sh" title="Terminal">bun add @heyo-sh/heyo-ui</CodeBlock>
+<CodeBlock language="json">{json}</CodeBlock>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiCodeBlock language="sh" title="Terminal">
+      {`bun add @heyo-sh/heyo-ui`}
+    </HeyoUiCodeBlock>
+  </div>
+  <div className="w-full max-w-md">
+    <HeyoUiCodeBlock language="json">
+      {`{
+  "name": "acme-api",
+  "region": "fra1",
+  "memory": 128
+}`}
+    </HeyoUiCodeBlock>
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Deliberately tiny">
+  The highlighter is one regular expression per language — no grammars. It
+  covers the snippets that actually appear in an interface for about a kilobyte.
+  If you already ship Shiki or Prism, pass their markup as `children` and the
+  block renders it untouched.
+</Callout>
+
+## Marked lines
+
+`highlight` takes 1-based line numbers — the ones the surrounding prose is
+about. Pair it with `lineNumbers` so the reader can follow a reference in the
+text.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<CodeBlock language="ts" lineNumbers highlight={[3, 4]} title="wrangler.toml">
+  {config}
+</CodeBlock>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiCodeBlock
+      language="yaml"
+      lineNumbers
+      highlight={[3, 4]}
+      title="wrangler.toml"
+    >
+      {`name = "acme-api"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+workers_dev = false
+minify = true`}
+    </HeyoUiCodeBlock>
+  </div>
+</CodeSnippet>
+
+## Long output
+
+`maxHeight` caps the block and scrolls past it; `wrap` wraps long lines instead
+of scrolling sideways, which is usually right for log output and never right
+for code.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<CodeBlock language="sh" maxHeight="10rem" wrap icon={IconTerminal} title="Build log">
+  {log}
+</CodeBlock>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiCodeBlock
+      language="sh"
+      maxHeight="10rem"
+      wrap
+      title="Build log"
+      hideLanguage
+    >
+      {`[12:04:11] build  ▸ bundling worker for production (esbuild 0.25)
+[12:04:14] build  ▸ 412 modules, 184 kB gzip
+[12:04:14] deploy ▸ uploading to fra1, waw1, iad1
+[12:04:19] deploy ▸ acme-api is live at https://acme-api.heyo.sh
+[12:04:19] deploy ▸ done in 8.2s
+[12:04:21] tail   ▸ waiting for logs…`}
+    </HeyoUiCodeBlock>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="children" required type="string">
+    The source. Indentation common to every line is stripped.
+  </Property>
+  <Property name="language" type="string">
+    Turns highlighting on and labels the block. `ts`, `tsx`, `js`, `jsx`,
+    `json`, `sh`, `css`, `html`, `yaml` and `sql` are understood; anything else
+    renders plain.
+  </Property>
+  <Property name="title" type="ReactNode">
+    A filename or command, shown in the bar above.
+  </Property>
+  <Property name="icon" type="IconLike">
+    A glyph in that bar.
+  </Property>
+  <Property name="lineNumbers" type="boolean">
+    It defaults to `false`.
+  </Property>
+  <Property name="highlight" type="number[]">
+    1-based lines to mark.
+  </Property>
+  <Property name="copy" type="boolean">
+    The copy control in the bar. It defaults to `true`.
+  </Property>
+  <Property name="maxHeight" type="string">
+    Caps the height and scrolls past it, for example `"20rem"`.
+  </Property>
+  <Property name="wrap" type="boolean">
+    Wraps long lines instead of scrolling sideways. It defaults to `false`.
+  </Property>
+  <Property name="hideLanguage" type="boolean">
+    Hides the language tag on the right of the bar.
+  </Property>
+  <Property name="className" type="string">
+    Merged into the root.
+  </Property>
+</Properties>

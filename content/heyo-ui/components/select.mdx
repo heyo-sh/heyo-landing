@@ -1,0 +1,249 @@
+---
+title: Select
+description: A single-choice dropdown with sticky group labels — composed, or built from data in one line.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Select defaultValue="fra">
+  <Select.Trigger placeholder="Pick a region" />
+  <Select.Content>
+    <Select.Group>
+      <Select.GroupLabel>Europe</Select.GroupLabel>
+      <Select.Item value="fra">Frankfurt</Select.Item>
+      <Select.Item value="waw">Warsaw</Select.Item>
+    </Select.Group>
+    <Select.Group>
+      <Select.GroupLabel>North America</Select.GroupLabel>
+      <Select.Item value="iad">Ashburn</Select.Item>
+    </Select.Group>
+  </Select.Content>
+</Select>`}
+>
+  <div className="w-56">
+    <HeyoUiSelect defaultValue="fra">
+      <HeyoUiSelect.Trigger placeholder="Pick a region" />
+      <HeyoUiSelect.Content>
+        <HeyoUiSelect.Group>
+          <HeyoUiSelect.GroupLabel>Europe</HeyoUiSelect.GroupLabel>
+          <HeyoUiSelect.Item value="fra">Frankfurt</HeyoUiSelect.Item>
+          <HeyoUiSelect.Item value="waw">Warsaw</HeyoUiSelect.Item>
+        </HeyoUiSelect.Group>
+        <HeyoUiSelect.Group>
+          <HeyoUiSelect.GroupLabel>North America</HeyoUiSelect.GroupLabel>
+          <HeyoUiSelect.Item value="iad">Ashburn</HeyoUiSelect.Item>
+        </HeyoUiSelect.Group>
+      </HeyoUiSelect.Content>
+    </HeyoUiSelect>
+  </div>
+</CodeSnippet>
+
+# Select
+
+`Select` picks one value from a known list. Groups rule themselves off and
+their labels stick while you scroll, so a long list never loses its headings.
+The popup caps at `18rem` — or the space available, whichever is smaller — and
+scrolls past that.
+
+**It does not lock the page.** `modal` defaults to `false`, unlike Base UI:
+picking a value from a list is not a modal task, and freezing the application
+behind one is both surprising and, if the unlock ever misses, permanent.
+
+## Usage
+
+```tsx
+import { Select } from "@heyo-sh/heyo-ui";
+
+<Select defaultValue="fra" onValueChange={setRegion}>
+  <Select.Trigger placeholder="Pick a region" />
+  <Select.Content items={regions} />
+</Select>;
+```
+
+## From data
+
+`items` builds the list, and a nested `items` array becomes a titled group —
+the same markup the example above writes by hand.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Select>
+  <Select.Trigger placeholder="Pick a region" />
+  <Select.Content
+    items={[
+      { label: "Europe", items: [
+        { value: "fra", label: "Frankfurt" },
+        { value: "waw", label: "Warsaw" },
+      ] },
+      { value: "iad", label: "Ashburn" },
+    ]}
+  />
+</Select>`}
+>
+  <div className="w-56">
+    <HeyoUiSelect>
+      <HeyoUiSelect.Trigger placeholder="Pick a region" />
+      <HeyoUiSelect.Content
+        items={[
+          {
+            label: "Europe",
+            items: [
+              { value: "fra", label: "Frankfurt" },
+              { value: "waw", label: "Warsaw" },
+            ],
+          },
+          { value: "iad", label: "Ashburn" },
+        ]}
+      />
+    </HeyoUiSelect>
+  </div>
+</CodeSnippet>
+
+## Sizes and a field
+
+The trigger takes the four control heights, and the whole thing drops into a
+[`Field`](/components/field) when it needs a label.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-3"
+  code={`<Field label="Environment" description="Where the deploy lands.">
+  <Select defaultValue="prod">
+    <Select.Trigger />
+    <Select.Content items={[
+      { value: "prod", label: "Production" },
+      { value: "staging", label: "Staging" },
+    ]} />
+  </Select>
+</Field>
+
+<Select defaultValue="24h">
+  <Select.Trigger size="sm" />
+  <Select.Content items={[{ value: "24h", label: "Last 24 hours" }]} />
+</Select>`}
+>
+  <div className="w-56">
+    <HeyoUiField label="Environment" description="Where the deploy lands.">
+      <HeyoUiSelect defaultValue="prod">
+        <HeyoUiSelect.Trigger />
+        <HeyoUiSelect.Content
+          items={[
+            { value: "prod", label: "Production" },
+            { value: "staging", label: "Staging" },
+          ]}
+        />
+      </HeyoUiSelect>
+    </HeyoUiField>
+  </div>
+  <div className="w-56">
+    <HeyoUiSelect defaultValue="24h">
+      <HeyoUiSelect.Trigger size="sm" />
+      <HeyoUiSelect.Content
+        items={[
+          { value: "24h", label: "Last 24 hours" },
+          { value: "7d", label: "Last 7 days" },
+        ]}
+      />
+    </HeyoUiSelect>
+  </div>
+</CodeSnippet>
+
+## Multiple values
+
+Pass `multiple` and the value becomes an array. For more than a handful of
+options — or anything worth typing to find — use
+[`Combobox`](/components/combobox) instead.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Select multiple defaultValue={["fra", "waw"]}>
+  <Select.Trigger placeholder="Pick regions" />
+  <Select.Content items={regions} />
+</Select>`}
+>
+  <div className="w-56">
+    <HeyoUiSelect multiple defaultValue={["fra", "waw"]}>
+      <HeyoUiSelect.Trigger placeholder="Pick regions" />
+      <HeyoUiSelect.Content
+        items={[
+          { value: "fra", label: "Frankfurt" },
+          { value: "waw", label: "Warsaw" },
+          { value: "iad", label: "Ashburn" },
+        ]}
+      />
+    </HeyoUiSelect>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+### Select
+
+<Properties>
+  <Property name="value / defaultValue" type="Value">
+    Controlled and uncontrolled selection. With `multiple`, both are arrays.
+  </Property>
+  <Property name="onValueChange" type="(value: Value) => void">
+    Fires when the selection changes.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Allows several values.
+  </Property>
+  <Property name="modal" type="boolean">
+    Whether the open list locks the page. It defaults to `false`, unlike Base
+    UI.
+  </Property>
+  <Property name="disabled / required / name" type="—">
+    Standard form behaviour, passed through to Base UI.
+  </Property>
+</Properties>
+
+### Select.Trigger
+
+<Properties>
+  <Property name="placeholder" type="string">
+    Shown when nothing is selected.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Control height. It defaults to `base`.
+  </Property>
+  <Property name="children" type="ReactNode">
+    Replaces the rendered value — pass `Select.Value` with a renderer for
+    anything custom.
+  </Property>
+</Properties>
+
+### Select.Content
+
+<Properties>
+  <Property name="items" type="SelectOption[]">
+    Shorthand. An entry is `{ value, label, disabled }`, or
+    `{ label, items }` for a titled group.
+  </Property>
+  <Property name="maxHeight" type="string">
+    Cap on the popup height. It defaults to `18rem`; anything taller scrolls.
+  </Property>
+  <Property name="sideOffset" type="number">
+    Gap between the trigger and the popup.
+  </Property>
+  <Property name="positioner" type="Select.Positioner.Props">
+    Placement overrides.
+  </Property>
+</Properties>
+
+### Items and groups
+
+<Properties>
+  <Property name="Select.Item" type="value, disabled">
+    One option. The check mark is drawn for you.
+  </Property>
+  <Property name="Select.Group / GroupLabel" type="—">
+    A titled section. It draws its own top rule, so consecutive groups separate
+    themselves — no manual `Select.Separator` between them.
+  </Property>
+  <Property name="Select.Separator" type="—">
+    A rule, for the rare case a group is not what you want.
+  </Property>
+  <Property name="Select.Value" type="children">
+    The rendered value inside the trigger, when you need to format it.
+  </Property>
+</Properties>

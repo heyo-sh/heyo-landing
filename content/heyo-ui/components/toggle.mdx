@@ -1,0 +1,183 @@
+---
+title: Toggle
+description: A button that stays pressed — on its own, or welded into a group that remembers one choice.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<ToggleGroup defaultValue={["grid"]} attached>
+  <Toggle value="grid" variant="outline" icon={IconGrid} aria-label="Grid" />
+  <Toggle value="list" variant="outline" icon={IconList} aria-label="List" />
+  <Toggle value="columns" variant="outline" icon={IconColumns} aria-label="Columns" />
+</ToggleGroup>`}
+>
+  <HeyoUiToggleGroup defaultValue={["grid"]} attached>
+    <HeyoUiToggle
+      value="grid"
+      variant="outline"
+      icon={<IconGrid />}
+      aria-label="Grid"
+    />
+    <HeyoUiToggle
+      value="list"
+      variant="outline"
+      icon={<IconList />}
+      aria-label="List"
+    />
+    <HeyoUiToggle
+      value="columns"
+      variant="outline"
+      icon={<IconColumns />}
+      aria-label="Columns"
+    />
+  </HeyoUiToggleGroup>
+</CodeSnippet>
+
+# Toggle
+
+A `Toggle` is a button that stays pressed: bold in an editor, a filter chip, a
+view mode. On its own it is a single on/off control; inside a `ToggleGroup` it
+becomes one of a set.
+
+## Usage
+
+```tsx
+import { Toggle, ToggleGroup } from "@heyo-sh/heyo-ui";
+
+<ToggleGroup defaultValue={["grid"]} attached>
+  <Toggle value="grid" variant="outline" icon={IconGrid} aria-label="Grid" />
+  <Toggle value="list" variant="outline" icon={IconList} aria-label="List" />
+</ToggleGroup>;
+```
+
+## Variants and sizes
+
+`ghost` is the default — invisible until hovered, which is what an editor
+toolbar wants. `outline` draws its own edge and suits a standalone filter.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap items-end"
+  code={`<Toggle icon={IconBold} aria-label="Bold" />
+<Toggle variant="outline" icon={IconItalic} aria-label="Italic" />
+<Toggle size="sm" variant="outline">Errors only</Toggle>
+<Toggle size="xs" variant="outline">4xx</Toggle>`}
+>
+  <HeyoUiToggle icon={<IconBold />} aria-label="Bold" />
+  <HeyoUiToggle variant="outline" icon={<IconItalic />} aria-label="Italic" />
+  <HeyoUiToggle size="sm" variant="outline">
+    Errors only
+  </HeyoUiToggle>
+  <HeyoUiToggle size="xs" variant="outline">
+    4xx
+  </HeyoUiToggle>
+</CodeSnippet>
+
+## Single or multiple
+
+A group is single-choice by default. Pass `multiple` and it behaves like a set
+of checkboxes — several filters at once.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-4 flex-wrap"
+  code={`<ToggleGroup defaultValue={["day"]}>
+  <Toggle value="day" variant="outline">Day</Toggle>
+  <Toggle value="week" variant="outline">Week</Toggle>
+</ToggleGroup>
+
+<ToggleGroup multiple defaultValue={["4xx", "5xx"]}>
+  <Toggle value="2xx" variant="outline" size="sm">2xx</Toggle>
+  <Toggle value="4xx" variant="outline" size="sm">4xx</Toggle>
+  <Toggle value="5xx" variant="outline" size="sm">5xx</Toggle>
+</ToggleGroup>`}
+>
+  <HeyoUiToggleGroup defaultValue={["day"]}>
+    <HeyoUiToggle value="day" variant="outline">
+      Day
+    </HeyoUiToggle>
+    <HeyoUiToggle value="week" variant="outline">
+      Week
+    </HeyoUiToggle>
+  </HeyoUiToggleGroup>
+  <HeyoUiToggleGroup multiple defaultValue={["4xx", "5xx"]}>
+    <HeyoUiToggle value="2xx" variant="outline" size="sm">
+      2xx
+    </HeyoUiToggle>
+    <HeyoUiToggle value="4xx" variant="outline" size="sm">
+      4xx
+    </HeyoUiToggle>
+    <HeyoUiToggle value="5xx" variant="outline" size="sm">
+      5xx
+    </HeyoUiToggle>
+  </HeyoUiToggleGroup>
+</CodeSnippet>
+
+## Attached and equal
+
+`attached` welds the buttons into one control, the way
+[`ButtonGroup`](/components/button) does. `equal` gives every toggle the width
+of the widest one — on by default for a vertical group, where ragged right
+edges look like a mistake rather than a choice.
+
+<Callout type="note" title="Toggle, Tabs or Radio?">
+  A toggle group changes how something is _displayed_.
+  [`Tabs`](/components/tabs) change what is displayed.
+  [`Radio`](/components/radio) collects a value you are going to submit.
+</Callout>
+
+## Properties
+
+### Toggle
+
+<Properties>
+  <Property name="value" type="string">
+    The value this toggle contributes inside a group.
+  </Property>
+  <Property name="pressed / defaultPressed" type="boolean">
+    Controlled and uncontrolled state, for a standalone toggle.
+  </Property>
+  <Property name="onPressedChange" type="(pressed: boolean) => void">
+    Fires when the toggle flips.
+  </Property>
+  <Property name="variant" type='"ghost" | "outline"'>
+    It defaults to `ghost`.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base"'>
+    It defaults to `base`.
+  </Property>
+  <Property name="square" type="boolean">
+    Forces a square, icon-only shape. Implied when there is no label.
+  </Property>
+  <Property name="icon" type="IconLike">
+    The glyph — a component, an element, or any node.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the control and ignores interaction.
+  </Property>
+</Properties>
+
+### ToggleGroup
+
+<Properties>
+  <Property name="value / defaultValue" type="string[]">
+    Controlled and uncontrolled selection. Always an array, even when single.
+  </Property>
+  <Property name="onValueChange" type="(value: string[]) => void">
+    Fires when the selection changes.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Allows several toggles to be pressed at once.
+  </Property>
+  <Property name="attached" type="boolean">
+    Welds the buttons into a single control.
+  </Property>
+  <Property name="equal" type="boolean">
+    Gives every toggle the width of the widest. It defaults to `true` for
+    `vertical`, `false` for `horizontal`.
+  </Property>
+  <Property name="orientation" type='"horizontal" | "vertical"'>
+    The layout axis. It defaults to `horizontal`.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims every toggle in the group.
+  </Property>
+</Properties>

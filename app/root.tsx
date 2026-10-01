@@ -18,7 +18,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/root";
 
-import "virtual:heyo-docs-theme.css";
+import "./theme.css";
 import "./app.css";
 import { config } from "virtual:heyo-docs-config";
 

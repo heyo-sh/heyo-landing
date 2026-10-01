@@ -1,0 +1,186 @@
+---
+title: Input
+description: A text input that is either a bare control or an entire accessible field, depending on the props you pass.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Input
+  label="Project name"
+  placeholder="my-worker"
+  description="Lowercase letters, numbers and dashes."
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput
+      label="Project name"
+      placeholder="my-worker"
+      description="Lowercase letters, numbers and dashes."
+    />
+  </div>
+</CodeSnippet>
+
+# Input
+
+`Input` is pressed into the surface with an inset shadow and edged with a
+1px ring. Focus thickens that ring to 1.5px and changes its colour rather than
+adding a second halo — one ring, two states, no layout shift.
+
+Pass `label` (or `description` or `error`) and you get the full
+[`Field`](/components/field) layout with its accessible wiring for free. Omit
+them and you get a bare control for a custom layout — supply `aria-label` in
+that case.
+
+## Usage
+
+```tsx
+import { Input } from "@heyo-sh/heyo-ui";
+
+<Input label="Email" type="email" placeholder="you@example.com" />;
+```
+
+## As a bare control
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-3"
+  code={`<Input icon={IconSearch} placeholder="Search…" aria-label="Search" />
+<Input prefix="https://" suffix=".heyo.sh" placeholder="acme" aria-label="Subdomain" />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput
+      icon={<IconSearch />}
+      placeholder="Search…"
+      aria-label="Search"
+    />
+  </div>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput
+      prefix="https://"
+      suffix=".heyo.sh"
+      placeholder="acme"
+      aria-label="Subdomain"
+    />
+  </div>
+</CodeSnippet>
+
+`icon` and `iconEnd` sit _inside_ the control; `prefix` and `suffix` are flush
+addons on its edges, on the recessed surface. An addon is part of the value
+("https://"), an icon is a hint about it.
+
+## Errors
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-4"
+  code={`<Input label="Email" defaultValue="not-an-email" error="Enter a valid email address." />
+
+<Input
+  label="Password"
+  type="password"
+  minLength={8}
+  error={{ message: "At least 8 characters", match: "tooShort" }}
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput
+      label="Email"
+      defaultValue="not-an-email"
+      error="Enter a valid email address."
+    />
+  </div>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput
+      label="Password"
+      type="password"
+      minLength={8}
+      description="At least 8 characters."
+    />
+  </div>
+</CodeSnippet>
+
+## Sizes
+
+The four control heights: 20, 26, 32 and 40px. `base` is the default, and it is
+the height every other control in the library shares.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-2"
+  code={`<Input size="xs" placeholder="xs" aria-label="xs" />
+<Input size="sm" placeholder="sm" aria-label="sm" />
+<Input size="base" placeholder="base" aria-label="base" />
+<Input size="lg" placeholder="lg" aria-label="lg" />`}
+>
+  <div className="flex w-full max-w-sm flex-col gap-2">
+    <HeyoUiInput size="xs" placeholder="xs" aria-label="xs" />
+    <HeyoUiInput size="sm" placeholder="sm" aria-label="sm" />
+    <HeyoUiInput size="base" placeholder="base" aria-label="base" />
+    <HeyoUiInput size="lg" placeholder="lg" aria-label="lg" />
+  </div>
+</CodeSnippet>
+
+## Disabled
+
+A disabled input drops to the recessed surface, because a field you cannot type
+into should not look like a field you can.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Input label="Project ID" defaultValue="prj_8f21c3d9" disabled />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiInput label="Project ID" defaultValue="prj_8f21c3d9" disabled />
+  </div>
+</CodeSnippet>
+
+<Callout type="note" title="Related controls">
+  [`Textarea`](/components/textarea) takes the same props plus `autoResize`;
+  [`NumberField`](/components/number-field) is the numeric sibling, and
+  [`OtpField`](/components/otp-field) the one-time-code one.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="label" type="ReactNode">
+    Renders the full field layout — label, description, error, `aria-describedby`.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the control.
+  </Property>
+  <Property name="error" type="FieldError">
+    A message, or `{ message, match }` tied to the browser's `ValidityState`.
+  </Property>
+  <Property name="optional" type="boolean">
+    Adds the muted "Optional" marker to the label.
+  </Property>
+  <Property name="labelAside" type="ReactNode">
+    A right-aligned slot on the label row.
+  </Property>
+  <Property name="size" type='"xs" | "sm" | "base" | "lg"'>
+    Control height. It defaults to `base` (32px).
+  </Property>
+  <Property name="icon" type="IconLike">
+    Rendered inside the control, before the text.
+  </Property>
+  <Property name="iconEnd" type="IconLike">
+    Rendered inside the control, after the text.
+  </Property>
+  <Property name="prefix" type="ReactNode">
+    A flush addon on the left edge, for example `https://`.
+  </Property>
+  <Property name="suffix" type="ReactNode">
+    A flush addon on the right edge, for example `.heyo.sh`.
+  </Property>
+  <Property name="fieldClassName" type="string">
+    Class for the outer field wrapper, used only when a label, description or
+    error is present.
+  </Property>
+  <Property name="className" type="string">
+    Class for the control itself.
+  </Property>
+  <Property name="ref" type="Ref<HTMLInputElement>">
+    Forwarded to the `<input>`.
+  </Property>
+</Properties>
+
+Every other `<input>` attribute — `type`, `value`, `defaultValue`, `onChange`,
+`required`, `minLength`, `autoComplete` — is passed straight through.

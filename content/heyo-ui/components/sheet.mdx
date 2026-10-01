@@ -1,0 +1,174 @@
+---
+title: Sheet
+description: A panel that slides in from an edge — for a side quest, not for a task.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Sheet>
+  <Sheet.Trigger render={<Button>Open details</Button>} />
+  <Sheet.Content>
+    <Sheet.Header>
+      <Sheet.Title>acme-api</Sheet.Title>
+      <Sheet.Description>Deployed 4 minutes ago from main@8f21c3d.</Sheet.Description>
+    </Sheet.Header>
+    <Sheet.Body>
+      <Stat label="Requests" value="142,318" delta={12.4} />
+    </Sheet.Body>
+    <Sheet.Footer>
+      <Sheet.Close render={<Button variant="ghost">Close</Button>} />
+      <Button variant="primary">Redeploy</Button>
+    </Sheet.Footer>
+  </Sheet.Content>
+</Sheet>`}
+>
+  <HeyoUiSheet>
+    <HeyoUiSheet.Trigger render={<HeyoUiButton>Open details</HeyoUiButton>} />
+    <HeyoUiSheet.Content>
+      <HeyoUiSheet.Header>
+        <HeyoUiSheet.Title>acme-api</HeyoUiSheet.Title>
+        <HeyoUiSheet.Description>
+          Deployed 4 minutes ago from main@8f21c3d.
+        </HeyoUiSheet.Description>
+      </HeyoUiSheet.Header>
+      <HeyoUiSheet.Body>
+        <HeyoUiStat label="Requests" value="142,318" delta={12.4} />
+      </HeyoUiSheet.Body>
+      <HeyoUiSheet.Footer>
+        <HeyoUiSheet.Close
+          render={<HeyoUiButton variant="ghost">Close</HeyoUiButton>}
+        />
+        <HeyoUiButton variant="primary">Redeploy</HeyoUiButton>
+      </HeyoUiSheet.Footer>
+    </HeyoUiSheet.Content>
+  </HeyoUiSheet>
+</CodeSnippet>
+
+# Sheet
+
+A `Sheet` is a [`Dialog`](/components/dialog) with a different geometry, and it
+exists as its own component for one reason: the edge it comes from decides the
+size axis, the animation and the border, and none of that is a sensible prop on
+a centred dialog.
+
+Reach for it when the content is a **side quest** to the page — a detail pane,
+a filter panel, a record's full record — rather than a task that has to end
+before the page continues.
+
+## Usage
+
+```tsx
+import { Button, Sheet } from "@heyo-sh/heyo-ui";
+
+<Sheet>
+  <Sheet.Trigger render={<Button>Details</Button>} />
+  <Sheet.Content side="right">…</Sheet.Content>
+</Sheet>;
+```
+
+## Sides
+
+`right` is the default, and it is right almost always: it is where a detail
+pane lives, and it leaves the navigation on the left untouched. `left` is for
+navigation itself, `bottom` for something that belongs to the bottom of the
+viewport.
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Sheet><Sheet.Trigger render={<Button>Right</Button>} /><Sheet.Content side="right">…</Sheet.Content></Sheet>
+<Sheet><Sheet.Trigger render={<Button>Left</Button>} /><Sheet.Content side="left">…</Sheet.Content></Sheet>
+<Sheet><Sheet.Trigger render={<Button>Bottom</Button>} /><Sheet.Content side="bottom">…</Sheet.Content></Sheet>`}
+>
+  <HeyoUiSheet>
+    <HeyoUiSheet.Trigger render={<HeyoUiButton>Right</HeyoUiButton>} />
+    <HeyoUiSheet.Content side="right">
+      <HeyoUiSheet.Header>
+        <HeyoUiSheet.Title>From the right</HeyoUiSheet.Title>
+      </HeyoUiSheet.Header>
+      <HeyoUiSheet.Body>The default.</HeyoUiSheet.Body>
+    </HeyoUiSheet.Content>
+  </HeyoUiSheet>
+  <HeyoUiSheet>
+    <HeyoUiSheet.Trigger render={<HeyoUiButton>Left</HeyoUiButton>} />
+    <HeyoUiSheet.Content side="left">
+      <HeyoUiSheet.Header>
+        <HeyoUiSheet.Title>From the left</HeyoUiSheet.Title>
+      </HeyoUiSheet.Header>
+      <HeyoUiSheet.Body>Navigation, usually.</HeyoUiSheet.Body>
+    </HeyoUiSheet.Content>
+  </HeyoUiSheet>
+  <HeyoUiSheet>
+    <HeyoUiSheet.Trigger render={<HeyoUiButton>Bottom</HeyoUiButton>} />
+    <HeyoUiSheet.Content side="bottom">
+      <HeyoUiSheet.Header>
+        <HeyoUiSheet.Title>From the bottom</HeyoUiSheet.Title>
+      </HeyoUiSheet.Header>
+      <HeyoUiSheet.Body>For viewport-anchored content.</HeyoUiSheet.Body>
+    </HeyoUiSheet.Content>
+  </HeyoUiSheet>
+</CodeSnippet>
+
+## Sizes
+
+`sm`, `base`, `lg` and `xl` set the width for a left or right sheet and the
+height for a top or bottom one — the axis follows the edge, which is exactly
+why this is a separate component.
+
+## Dismissing
+
+Like `Dialog`, a sheet is dismissible by default. `dismissible={false}` is for
+the rare panel that must be answered; for a side quest it is almost always
+wrong, since the whole point is that the page is still there behind it.
+
+<Callout type="note" title="Not a bottom sheet">
+  heyo-ui ships no phone-style drawer. `side="bottom"` is the same component
+  with a different edge, and it behaves like a dialog — because that is what it
+  is.
+</Callout>
+
+## Properties
+
+### Sheet
+
+<Properties>
+  <Property name="dismissible" type="boolean">
+    Whether the backdrop and Escape close it. It defaults to `true`.
+  </Property>
+  <Property name="open / defaultOpen" type="boolean">
+    Controlled and uncontrolled state.
+  </Property>
+  <Property name="onOpenChange" type="(open: boolean) => void">
+    Fires on open and close.
+  </Property>
+</Properties>
+
+### Sheet.Content
+
+<Properties>
+  <Property name="side" type='"right" | "left" | "top" | "bottom"'>
+    The edge it slides from. It defaults to `right`.
+  </Property>
+  <Property name="size" type='"sm" | "base" | "lg" | "xl"'>
+    Width for a left or right sheet, height for a top or bottom one.
+  </Property>
+  <Property name="hideClose" type="boolean">
+    Hides the corner close button.
+  </Property>
+</Properties>
+
+### The parts
+
+<Properties>
+  <Property name="Sheet.Trigger / Close" type="render">
+    Open and close it. Both take `render` to become a `Button`.
+  </Property>
+  <Property name="Sheet.Header / Title / Description" type="—">
+    The heading block, wired to the panel's accessible name.
+  </Property>
+  <Property name="Sheet.Body" type="—">
+    The scrolling content column.
+  </Property>
+  <Property name="Sheet.Footer" type="—">
+    Right-aligned actions, pinned to the bottom edge.
+  </Property>
+</Properties>

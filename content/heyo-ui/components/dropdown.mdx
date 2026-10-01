@@ -1,0 +1,271 @@
+---
+title: Dropdown
+description: An action menu — from data in one line, or composed with checkbox items, radio groups and submenus.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dropdown>
+  <Dropdown.Trigger render={<Button iconEnd={IconChevronDown}>Actions</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item icon={IconPencil} shortcut={<Kbd>R</Kbd>}>Rename</Dropdown.Item>
+    <Dropdown.Item icon={IconCopy}>Duplicate</Dropdown.Item>
+    <Dropdown.Separator />
+    <Dropdown.Item destructive icon={IconTrash}>Delete</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown>`}
+>
+  <HeyoUiDropdown>
+    <HeyoUiDropdown.Trigger
+      render={
+        <HeyoUiButton iconEnd={<IconChevronDown />}>Actions</HeyoUiButton>
+      }
+    />
+    <HeyoUiDropdown.Content>
+      <HeyoUiDropdown.Item
+        icon={<IconPencil />}
+        shortcut={<HeyoUiKbd>R</HeyoUiKbd>}
+      >
+        Rename
+      </HeyoUiDropdown.Item>
+      <HeyoUiDropdown.Item icon={<IconCopy />}>Duplicate</HeyoUiDropdown.Item>
+      <HeyoUiDropdown.Separator />
+      <HeyoUiDropdown.Item destructive icon={<IconTrash />}>
+        Delete
+      </HeyoUiDropdown.Item>
+    </HeyoUiDropdown.Content>
+  </HeyoUiDropdown>
+</CodeSnippet>
+
+# Dropdown
+
+`Dropdown` is a menu of actions anchored to a trigger. Rows are 20px-guttered
+so icons, check marks and radio dots all line up, whatever a given menu mixes.
+
+**It does not lock the page.** `modal` defaults to `false`, which is not Base
+UI's default: a menu is a list of things you might not do, and freezing the
+application behind one feels broken — and if the unlock ever misses, it stays
+broken.
+
+## Usage
+
+```tsx
+import { Button, Dropdown } from "@heyo-sh/heyo-ui";
+
+<Dropdown>
+  <Dropdown.Trigger render={<Button>Actions</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item onClick={rename}>Rename</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown>;
+```
+
+## From data
+
+`items` builds the whole menu — rows, separators and titled sections — from an
+array. The string `"separator"` is a rule; an entry with `items` is a section.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dropdown>
+  <Dropdown.Trigger render={<Button shape="square" icon={IconAdjustments} aria-label="Options" />} />
+  <Dropdown.Content
+    items={[
+      { label: "Workers", items: [{ label: "Restart" }, { label: "View logs" }] },
+      "separator",
+      { label: "Delete project", destructive: true },
+    ]}
+  />
+</Dropdown>`}
+>
+  <HeyoUiDropdown>
+    <HeyoUiDropdown.Trigger
+      render={
+        <HeyoUiButton
+          shape="square"
+          icon={<IconAdjustments />}
+          aria-label="Options"
+        />
+      }
+    />
+    <HeyoUiDropdown.Content
+      items={[
+        {
+          label: "Workers",
+          items: [{ label: "Restart" }, { label: "View logs" }],
+        },
+        "separator",
+        { label: "Delete project", destructive: true },
+      ]}
+    />
+  </HeyoUiDropdown>
+</CodeSnippet>
+
+## Checkbox and radio items
+
+A menu is also where small, immediate settings live. Radio items draw their own
+dot on the same 20px gutter the checkbox items use, so a mixed menu stays
+aligned.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dropdown>
+  <Dropdown.Trigger render={<Button iconEnd={IconChevronDown}>View</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Label>Columns</Dropdown.Label>
+    <Dropdown.CheckboxItem defaultChecked>Status</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem>Region</Dropdown.CheckboxItem>
+    <Dropdown.Separator />
+    <Dropdown.RadioGroup defaultValue="24h">
+      <Dropdown.RadioItem value="1h">Last hour</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="24h">Last 24 hours</Dropdown.RadioItem>
+    </Dropdown.RadioGroup>
+  </Dropdown.Content>
+</Dropdown>`}
+>
+  <HeyoUiDropdown>
+    <HeyoUiDropdown.Trigger
+      render={<HeyoUiButton iconEnd={<IconChevronDown />}>View</HeyoUiButton>}
+    />
+    <HeyoUiDropdown.Content>
+      <HeyoUiDropdown.Label>Columns</HeyoUiDropdown.Label>
+      <HeyoUiDropdown.CheckboxItem defaultChecked>
+        Status
+      </HeyoUiDropdown.CheckboxItem>
+      <HeyoUiDropdown.CheckboxItem>Region</HeyoUiDropdown.CheckboxItem>
+      <HeyoUiDropdown.Separator />
+      <HeyoUiDropdown.RadioGroup defaultValue="24h">
+        <HeyoUiDropdown.RadioItem value="1h">
+          Last hour
+        </HeyoUiDropdown.RadioItem>
+        <HeyoUiDropdown.RadioItem value="24h">
+          Last 24 hours
+        </HeyoUiDropdown.RadioItem>
+      </HeyoUiDropdown.RadioGroup>
+    </HeyoUiDropdown.Content>
+  </HeyoUiDropdown>
+</CodeSnippet>
+
+## Submenus
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Dropdown>
+  <Dropdown.Trigger render={<Button>Deploy</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item>Deploy now</Dropdown.Item>
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger icon={IconWorld}>Region</Dropdown.SubTrigger>
+      <Dropdown.SubContent>
+        <Dropdown.Item>Frankfurt</Dropdown.Item>
+        <Dropdown.Item>Warsaw</Dropdown.Item>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+  </Dropdown.Content>
+</Dropdown>`}
+>
+  <HeyoUiDropdown>
+    <HeyoUiDropdown.Trigger render={<HeyoUiButton>Deploy</HeyoUiButton>} />
+    <HeyoUiDropdown.Content>
+      <HeyoUiDropdown.Item>Deploy now</HeyoUiDropdown.Item>
+      <HeyoUiDropdown.Sub>
+        <HeyoUiDropdown.SubTrigger icon={<IconWorld />}>
+          Region
+        </HeyoUiDropdown.SubTrigger>
+        <HeyoUiDropdown.SubContent>
+          <HeyoUiDropdown.Item>Frankfurt</HeyoUiDropdown.Item>
+          <HeyoUiDropdown.Item>Warsaw</HeyoUiDropdown.Item>
+        </HeyoUiDropdown.SubContent>
+      </HeyoUiDropdown.Sub>
+    </HeyoUiDropdown.Content>
+  </HeyoUiDropdown>
+</CodeSnippet>
+
+<Callout type="note" title="Menu, list, or palette?">
+  `Dropdown` is for actions. [`Select`](/components/select) is for choosing a
+  value, [`Combobox`](/components/combobox) when that list needs filtering, and
+  [`Command`](/components/command) when the answer is "anything in the
+  application".
+</Callout>
+
+## Properties
+
+### Dropdown
+
+<Properties>
+  <Property name="modal" type="boolean">
+    Whether the open menu locks the page. It defaults to `false`, unlike Base
+    UI.
+  </Property>
+  <Property name="open" type="boolean">
+    Controlled state. Pair it with `onOpenChange`.
+  </Property>
+  <Property name="defaultOpen" type="boolean">
+    Open on first render.
+  </Property>
+  <Property name="onOpenChange" type="(open: boolean) => void">
+    Fires on open and close.
+  </Property>
+</Properties>
+
+### Dropdown.Content
+
+<Properties>
+  <Property name="items" type="DropdownEntry[]">
+    Shorthand. An entry is a row (`label`, `icon`, `shortcut`, `destructive`,
+    `disabled`, `onClick`), the string `"separator"`, or a section (`label` plus
+    nested `items`).
+  </Property>
+  <Property name="side" type='"top" | "right" | "bottom" | "left"'>
+    Preferred placement. It flips when there is no room.
+  </Property>
+  <Property name="align" type='"start" | "center" | "end"'>
+    Alignment against the trigger. It defaults to `start`.
+  </Property>
+  <Property name="sideOffset" type="number">
+    Gap between the trigger and the menu, in pixels. It defaults to `4`.
+  </Property>
+  <Property name="positioner" type="Menu.Positioner.Props">
+    Escape hatch for anything else the positioner supports.
+  </Property>
+</Properties>
+
+### Dropdown.Item
+
+<Properties>
+  <Property name="icon" type="IconLike">
+    The leading glyph.
+  </Property>
+  <Property name="shortcut" type="ReactNode">
+    A right-aligned hint, usually a [`Kbd`](/components/kbd).
+  </Property>
+  <Property name="destructive" type="boolean">
+    Red styling for an irreversible action.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the row and ignores interaction.
+  </Property>
+  <Property name="onClick" type="() => void">
+    Runs when the row is chosen.
+  </Property>
+</Properties>
+
+### The rest
+
+<Properties>
+  <Property name="Dropdown.Trigger" type="render">
+    Anything that opens the menu. Pass `render={<Button />}` to use a button.
+  </Property>
+  <Property name="Dropdown.CheckboxItem" type="checked, onCheckedChange">
+    A togglable row with a check mark in the gutter.
+  </Property>
+  <Property name="Dropdown.RadioGroup / RadioItem" type="value, onValueChange">
+    A single choice. The dot is drawn by heyo-ui, on the checkbox gutter.
+  </Property>
+  <Property name="Dropdown.Group / Label / Separator" type="—">
+    A titled section, its heading, and a rule.
+  </Property>
+  <Property name="Dropdown.Sub / SubTrigger / SubContent" type="—">
+    A nested menu. `SubContent` takes the same props as `Content`.
+  </Property>
+</Properties>

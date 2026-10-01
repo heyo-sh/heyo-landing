@@ -6,7 +6,7 @@ import {
 } from "@heyo-sh/heyo-docs/model";
 import { changelogGroupForPage } from "@heyo-sh/heyo-docs/navigation";
 import { docsSeoMeta } from "@heyo-sh/heyo-docs/seo/react-router";
-import { grainTheme } from "@heyo-sh/heyo-docs/theme/grain";
+import { heyoTheme } from "@heyo-sh/heyo-docs/theme/heyo";
 import { useDocsTheme } from "@heyo-sh/heyo-docs/theme/provider";
 import {
   Link,
@@ -104,7 +104,7 @@ function DocsShell({ pathname }: { pathname: string }) {
       openApiEndpoints={openApiEndpoints}
       pages={pages}
       pathname={pathname}
-      theme={grainTheme}
+      theme={heyoTheme}
       isDark={mounted ? resolvedTheme === "dark" : undefined}
       onThemeToggle={mounted ? toggleTheme : undefined}
     />

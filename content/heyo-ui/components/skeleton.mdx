@@ -1,0 +1,106 @@
+---
+title: Skeleton
+description: A loading placeholder in the shape of the thing that is coming.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<div className="flex items-center gap-3">
+  <Skeleton className="size-8 rounded-full" />
+  <div className="flex-1">
+    <Skeleton lines={2} />
+  </div>
+</div>`}
+>
+  <div className="flex w-full max-w-sm items-center gap-3">
+    <HeyoUiSkeleton className="size-8 rounded-full" />
+    <div className="flex-1">
+      <HeyoUiSkeleton lines={2} />
+    </div>
+  </div>
+</CodeSnippet>
+
+# Skeleton
+
+`Skeleton` is a quiet rectangle that stands in for content while it loads. It
+is deliberately cheap to render and deliberately undramatic: a placeholder is
+ambient, and a dense dashboard full of animated blocks competes with the one
+thing the reader is waiting for.
+
+## Usage
+
+```tsx
+import { Skeleton } from "@heyo-sh/heyo-ui";
+
+<Skeleton className="h-8 w-40" />;
+```
+
+A skeleton has no size of its own — it takes the shape you give it, which is
+the point: it should be the shape of the thing that is coming.
+
+## Lines
+
+`lines` renders stacked lines with a shortened last one, the way a paragraph
+actually ends.
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-6"
+  code={`<Skeleton lines={3} />
+<Skeleton lines={1} className="h-6 w-48" />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSkeleton lines={3} />
+  </div>
+  <div className="w-full max-w-sm">
+    <HeyoUiSkeleton className="h-6 w-48" />
+  </div>
+</CodeSnippet>
+
+## A loading card
+
+Match the layout you are waiting for. A skeleton that does not resemble the
+content it replaces produces a visible jump when the data lands.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Card>
+  <CardHeader>
+    <Skeleton className="h-4 w-32" />
+    <Skeleton className="h-5 w-16 rounded-full" />
+  </CardHeader>
+  <CardBody>
+    <Skeleton lines={3} />
+  </CardBody>
+</Card>`}
+>
+  <HeyoUiCard className="w-full max-w-sm">
+    <HeyoUiCardHeader>
+      <HeyoUiSkeleton className="h-4 w-32" />
+      <HeyoUiSkeleton className="h-5 w-16 rounded-full" />
+    </HeyoUiCardHeader>
+    <HeyoUiCardBody>
+      <HeyoUiSkeleton lines={3} />
+    </HeyoUiCardBody>
+  </HeyoUiCard>
+</CodeSnippet>
+
+<Callout type="note" title="Tables already do this">
+  [`DataTable`](/components/data-table) draws its own skeleton rows from
+  `loading` and `loadingRows` — you do not have to build the loading table
+  yourself.
+</Callout>
+
+## Properties
+
+<Properties>
+  <Property name="lines" type="number">
+    Renders N stacked lines with a shortened last one, like real text.
+  </Property>
+  <Property name="className" type="string">
+    The size and shape — `h-8 w-40`, `size-8 rounded-full`.
+  </Property>
+</Properties>
+
+There is nothing else to configure. A skeleton is a shape and a fill — anything
+more is a spinner wearing a different hat, and heyo-ui already has
+[`Spinner`](/components/spinner).

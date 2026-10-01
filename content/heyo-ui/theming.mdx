@@ -1,0 +1,161 @@
+---
+title: Theming
+description: Semantic tokens, one colour-mode switch, and the utilities the components are built from.
+---
+
+# Theming
+
+heyo-ui has one theming API: a `data-mode` attribute. Everything else is a set
+of semantic CSS custom properties you are free to override.
+
+## Light and dark
+
+Set `data-mode` on any ancestor — usually `<html>`. Omit it and the components
+follow the operating system.
+
+<CodeBlock language="html" title="index.html">
+  {`<html data-mode="dark"></html>`}
+</CodeBlock>
+
+```tsx
+document.documentElement.setAttribute("data-mode", "dark");
+```
+
+Every token resolves both modes at once through `light-dark()`, which reads the
+CSS `color-scheme` property. That is why no component in the library contains a
+`dark:` variant, and why switching a subtree works exactly like switching the
+page:
+
+<CodeBlock language="html" title="A panel that is always dark">
+  {`<section data-mode="dark">…</section>`}
+</CodeBlock>
+
+## Surfaces
+
+The dark ramp is flat on purpose and anchored on `#111` as the secondary
+surface. **The page and the sidebar share one value**: a sidebar lighter than
+the page reads as a floating panel, which is the busyness this design avoids.
+Separation comes from a single hairline, never from a fill.
+
+| Token              | Light       | Dark        | Use                                               |
+| ------------------ | ----------- | ----------- | ------------------------------------------------- |
+| `bg-heyo-canvas`   | `#fafafa`   | `#0a0a0a`   | Page background. Also the sidebar, on purpose     |
+| `bg-heyo-sidebar`  | alias       | alias       | Override it to detach the sidebar from the page   |
+| `bg-heyo-base`     | `#ffffff`   | `#111111`   | Secondary surface — cards, dialogs, menus, tables |
+| `bg-heyo-elevated` | `#fafafa`   | `#161616`   | Card footers, table stripes                       |
+| `bg-heyo-recessed` | `#f4f4f5`   | `#0d0d0d`   | Wells, code blocks, segmented tracks, addons      |
+| `bg-heyo-tint`     | translucent | translucent | Hover — correct over any surface                  |
+| `bg-heyo-contrast` | `#18181b`   | `#fafafa`   | Inverted surfaces — tooltips, the primary button  |
+
+## Edges
+
+| Token                | Light     | Dark      | Use                              |
+| -------------------- | --------- | --------- | -------------------------------- |
+| `ring-heyo-hairline` | 8% black  | 7% white  | A flat seam between two surfaces |
+| `ring-heyo-line`     | 13% black | 11% white | The edge of something raised     |
+
+Edges are **translucent**, not solid grey. A solid line has to be re-picked for
+every surface it might land on; a translucent one is correct on all of them.
+
+## Text and status
+
+| Token                                                           | Use                                                                                                                          |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `text-heyo-strong` / `-default` / `-subtle` / `-inactive`       | Hierarchy. `default` is the thing being acted on, `subtle` is context — hints, descriptions, idle navigation, placeholders   |
+| `bg-heyo-brand` / `-hover` / `-tint`                            | The accent. Anything filled with it puts `heyo-on-brand` on top, never a hard-coded white — the accent is near-white in dark |
+| `*-heyo-info` / `-success` / `-warning` / `-danger` (+ `-tint`) | Status, the only place hue carries meaning. `heyo-danger` is the bright indicator; `heyo-danger-solid` carries white text    |
+
+<CodeSnippet
+  previewClassName="heyo-ui gap-2 flex-wrap"
+  code={`<Badge dot variant="success">Healthy</Badge>
+<Badge dot variant="warning">Degraded</Badge>
+<Badge dot variant="danger">Down</Badge>
+<Badge dot variant="info">Deploying</Badge>`}
+>
+  <HeyoUiBadge dot variant="success">
+    Healthy
+  </HeyoUiBadge>
+  <HeyoUiBadge dot variant="warning">
+    Degraded
+  </HeyoUiBadge>
+  <HeyoUiBadge dot variant="danger">
+    Down
+  </HeyoUiBadge>
+  <HeyoUiBadge dot variant="info">
+    Deploying
+  </HeyoUiBadge>
+</CodeSnippet>
+
+## Overriding a token
+
+Tokens are plain CSS custom properties, so an override is one declaration. To
+detach the sidebar from the page in dark mode:
+
+<CodeBlock language="css" title="app.css">
+  {`[data-mode="dark"] {
+  --color-heyo-sidebar: #0d0d0d;
+}`}
+</CodeBlock>
+
+Scope it to a subtree and only that subtree changes:
+
+<CodeBlock language="css" title="app.css">
+  {`.marketing-panel {
+  --color-heyo-base: #fffdf7;
+}`}
+</CodeBlock>
+
+## Type and radii
+
+The scale is deliberately short: 12 / 13 / 14 / 16 / 18 / 22 / 28px. Almost
+everything in an application sits on `base` (14px). Hierarchy comes from weight
+and colour instead of size — **medium** names a surface or a group (field
+labels, section labels, card titles, table headers) and **normal** lives inside
+one (button labels, navigation items, table cells, body copy).
+
+Radii follow the same containment rule: `sm` (4px) for a chip, `md` (6px) for a
+control, `lg` (8px) for a card or popup, `2xl` (14px) for a window.
+
+## Utilities
+
+A handful of utilities are worth using directly in your own markup.
+
+| Utility              | What it does                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `heyo-focus`         | The standard focus ring — a hairline with a 2px offset, identical on every focusable element. Never hand-roll it                       |
+| `heyo-placeholder`   | Placeholder colour on a field                                                                                                          |
+| `inset-shadow-field` | The pressed-in fill that marks a text input                                                                                            |
+| `heyo-scrollbar`     | The native scrollbar, restyled: thin, translucent, no track, no buttons. No extra DOM, no JavaScript. Every scrollable surface uses it |
+
+<Callout type="note" title="ScrollArea or heyo-scrollbar?">
+  They are not interchangeable. [`ScrollArea`](/components/scroll-area) replaces
+  the browser's scrollbar with real elements and an optional edge fade — use it
+  for designed surfaces. `heyo-scrollbar` only restyles the native one.
+</Callout>
+
+## Overriding styles
+
+Every component merges your `className` through `tailwind-merge`, so conflicts
+resolve the way you expect:
+
+```tsx
+<Button className="rounded-full px-6">Pill</Button>
+```
+
+Components also expose stable `data-slot` attributes (`button`, `input`,
+`sidebar-menu-button`, …) for global overrides and end-to-end tests:
+
+<CodeBlock language="css" title="app.css">
+  {`[data-slot="dialog"] {
+  max-width: 32rem;
+}`}
+</CodeBlock>
+
+## Code blocks are always dark
+
+The one part of the system that does not follow the colour mode. A code block
+is a quotation from a terminal, and a terminal is dark — a light one reads as
+another piece of UI rather than as output, and it doubles the number of token
+palettes that have to stay tuned. The highlighting is monochrome and exposed as
+`--code-*` custom properties, so a coloured palette is a handful of variables
+rather than a fork.

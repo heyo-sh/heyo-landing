@@ -1,0 +1,140 @@
+---
+title: Slider
+description: A value picker — pass an array for a range and the extra thumbs are rendered for you.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Slider
+  label="Memory"
+  defaultValue={128}
+  min={64}
+  max={512}
+  step={64}
+  showValue
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSlider
+      label="Memory"
+      defaultValue={128}
+      min={64}
+      max={512}
+      step={64}
+      showValue
+    />
+  </div>
+</CodeSnippet>
+
+# Slider
+
+`Slider` is for a value whose _position_ between two bounds matters more than
+its exact figure — memory, concurrency, a price filter. When the number itself
+is the point, use [`NumberField`](/components/number-field).
+
+## Usage
+
+```tsx
+import { Slider } from "@heyo-sh/heyo-ui";
+
+<Slider
+  label="Memory"
+  defaultValue={128}
+  min={64}
+  max={512}
+  step={64}
+  showValue
+/>;
+```
+
+## Ranges
+
+Pass an array and you get a range: the extra thumb, the filled track between
+them, and an array back from `onValueChange`.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Slider label="Price" defaultValue={[20, 80]} showValue />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSlider label="Price" defaultValue={[20, 80]} showValue />
+  </div>
+</CodeSnippet>
+
+## Labels and descriptions
+
+`showValue` prints the current value at the right end of the label row — the
+only place it can go without moving as the thumb does.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Slider
+  label="Concurrency"
+  description="How many requests a single worker handles at once."
+  defaultValue={8}
+  min={1}
+  max={32}
+  showValue
+/>`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSlider
+      label="Concurrency"
+      description="How many requests a single worker handles at once."
+      defaultValue={8}
+      min={1}
+      max={32}
+      showValue
+    />
+  </div>
+</CodeSnippet>
+
+## Bare and disabled
+
+<CodeSnippet
+  previewClassName="heyo-ui flex-col gap-5"
+  code={`<Slider defaultValue={40} aria-label="Volume" />
+<Slider defaultValue={40} disabled aria-label="Volume" />`}
+>
+  <div className="w-full max-w-sm">
+    <HeyoUiSlider defaultValue={40} aria-label="Volume" />
+  </div>
+  <div className="w-full max-w-sm">
+    <HeyoUiSlider defaultValue={40} disabled aria-label="Volume" />
+  </div>
+</CodeSnippet>
+
+## Properties
+
+<Properties>
+  <Property name="value / defaultValue" type="number | number[]">
+    Controlled and uncontrolled value. An array makes it a range.
+  </Property>
+  <Property name="onValueChange" type="(value) => void">
+    Fires while dragging, with the same shape you passed in.
+  </Property>
+  <Property name="onValueCommitted" type="(value) => void">
+    Fires once, when the thumb is released — the right place for a request.
+  </Property>
+  <Property name="min / max / step" type="number">
+    Bounds and increment. They default to `0`, `100` and `1`.
+  </Property>
+  <Property name="label" type="ReactNode">
+    The label row above the track.
+  </Property>
+  <Property name="showValue" type="boolean">
+    Prints the current value at the right end of the label row.
+  </Property>
+  <Property name="description" type="ReactNode">
+    Muted helper text under the control.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the track and ignores interaction.
+  </Property>
+  <Property name="orientation" type='"horizontal" | "vertical"'>
+    The axis. It defaults to `horizontal`.
+  </Property>
+  <Property name="name" type="string">
+    Form field name, passed through to Base UI.
+  </Property>
+</Properties>

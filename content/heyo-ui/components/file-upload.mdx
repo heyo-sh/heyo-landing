@@ -1,0 +1,182 @@
+---
+title: File Upload
+description: A drop zone that is also a button, with a file list that tracks progress.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<FileUpload
+  accept="image/*,.pdf"
+  multiple
+  maxSize={5 * 1024 * 1024}
+  description="PNG, JPG or PDF up to 5 MB."
+  onFiles={upload}
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiFileUpload
+      accept="image/*,.pdf"
+      multiple
+      maxSize={5 * 1024 * 1024}
+      description="PNG, JPG or PDF up to 5 MB."
+    />
+  </div>
+</CodeSnippet>
+
+# File Upload
+
+`FileUpload` is a drop zone **and** a button, always both: drag and drop is
+undiscoverable on its own and impossible on a phone. The whole zone is a
+`<label>` for a hidden file input — one element, keyboard-focusable, and the
+click path needs no JavaScript at all.
+
+## Usage
+
+```tsx
+import { FileUpload } from "@heyo-sh/heyo-ui";
+
+<FileUpload accept="image/*" multiple onFiles={upload} />;
+```
+
+`onFiles` receives everything accepted, from both the drop and the picker,
+after `accept` and `maxSize` have had their say.
+
+## The file list
+
+Hand it `files` and it renders the list: name, size, a progress bar while the
+upload runs, an error when it fails, and a remove control wired to `onRemove`.
+Leave `files` out and render the list yourself.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<FileUpload
+  multiple
+  files={[
+    { id: "1", name: "architecture.pdf", size: 184320, status: "done" },
+    { id: "2", name: "screenshot.png", size: 98304, progress: 46, status: "uploading" },
+    { id: "3", name: "notes.txt", size: 2048, status: "error", error: "Unsupported type" },
+  ]}
+  onRemove={cancel}
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiFileUpload
+      multiple
+      files={[
+        { id: "1", name: "architecture.pdf", size: 184320, status: "done" },
+        {
+          id: "2",
+          name: "screenshot.png",
+          size: 98304,
+          progress: 46,
+          status: "uploading",
+        },
+        {
+          id: "3",
+          name: "notes.txt",
+          size: 2048,
+          status: "error",
+          error: "Unsupported type",
+        },
+      ]}
+    />
+  </div>
+</CodeSnippet>
+
+A file with no `progress` draws no bar: `undefined` means "not tracking
+progress", which is different from zero.
+
+## Copy that says what is accepted
+
+`label` is the headline inside the zone and `description` is the line beneath
+it. Put the formats and the size limit in the description — a rejection after
+the fact is a worse experience than a sentence before it.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<FileUpload
+  icon={IconCloudUpload}
+  label="Drop a certificate"
+  description="PEM or PKCS#12, up to 1 MB."
+  accept=".pem,.p12"
+  maxSize={1024 * 1024}
+/>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiFileUpload
+      icon={<IconCloudUpload />}
+      label="Drop a certificate"
+      description="PEM or PKCS#12, up to 1 MB."
+      accept=".pem,.p12"
+      maxSize={1024 * 1024}
+    />
+  </div>
+</CodeSnippet>
+
+## formatBytes
+
+The same helper the file list uses, exported so your own rows read identically.
+
+```tsx
+import { formatBytes } from "@heyo-sh/heyo-ui";
+
+formatBytes(184320); // "180 KB"
+```
+
+## Properties
+
+<Properties>
+  <Property name="onFiles" type="(files: File[]) => void">
+    Fires with everything accepted, for both the drop and the picker.
+  </Property>
+  <Property name="accept" type="string">
+    The `accept` attribute of the hidden input, for example `"image/*,.pdf"`.
+  </Property>
+  <Property name="multiple" type="boolean">
+    Allows more than one file per selection.
+  </Property>
+  <Property name="maxSize" type="number">
+    Rejects anything larger, in bytes, before `onFiles` sees it.
+  </Property>
+  <Property name="icon" type="IconLike">
+    The glyph inside the zone.
+  </Property>
+  <Property name="label" type="ReactNode">
+    The headline inside the zone.
+  </Property>
+  <Property name="description" type="ReactNode">
+    The second line — formats, size limits.
+  </Property>
+  <Property name="files" type="UploadedFile[]">
+    The list to render under the zone.
+  </Property>
+  <Property name="onRemove" type="(id: string) => void">
+    Fires when a row's remove control is used.
+  </Property>
+  <Property name="disabled" type="boolean">
+    Dims the zone and ignores drops.
+  </Property>
+</Properties>
+
+### UploadedFile
+
+<Properties>
+  <Property name="id" required type="string">
+    Stable id, handed back to `onRemove`.
+  </Property>
+  <Property name="name" required type="string">
+    The file name shown in the row.
+  </Property>
+  <Property name="size" required type="number">
+    Size in bytes, formatted with `formatBytes`.
+  </Property>
+  <Property name="progress" type="number">
+    0–100. `undefined` means "not tracking progress" and draws no bar.
+  </Property>
+  <Property name="status" type='"pending" | "uploading" | "done" | "error"'>
+    Drives the row's icon and tone.
+  </Property>
+  <Property name="error" type="ReactNode">
+    The message shown under the row when the upload failed.
+  </Property>
+</Properties>

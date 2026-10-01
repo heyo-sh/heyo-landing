@@ -1,0 +1,63 @@
+---
+title: Heyo
+description: The console theme — a monochrome accent, hairline edges, and a dense 13 / 14px scale.
+---
+
+# Heyo
+
+Heyo carries the [heyo-ui](https://heyo.sh/heyo-ui/introduction) design
+language into documentation. It is built for developer products whose
+interface is a console: dense, flat, and quiet enough that colour can mean one
+thing only.
+
+<Callout type="tip" title="You are looking at it">
+  This site renders with the Heyo theme, so every page on it is the preview.
+</Callout>
+
+## What it changes
+
+<Properties>
+  <Property name="Monochrome accent" type="--primary">
+    The primary colour is the inverse of the page — near-black on light,
+    near-white on dark. A blue primary button competes with a blue callout for
+    the same glance; an ink-coloured one never does, which leaves hue free to
+    signal status.
+  </Property>
+  <Property name="Flat surfaces" type="--sidebar">
+    The sidebar shares the page fill instead of floating on a tint of its own.
+    Separation is a single hairline.
+  </Property>
+  <Property name="Translucent edges" type="--border">
+    A solid grey line has to be re-picked for every surface it might sit on; a
+    translucent one is correct on all of them.
+  </Property>
+  <Property name="Dense type" type="12 / 13 / 14 / 16px">
+    Hierarchy comes from weight and colour rather than size, so a page of
+    reference material stays scannable without growing.
+  </Property>
+</Properties>
+
+Slot placement differs from the other bundled themes on purpose: search and the
+group switcher live in the sidebar head, the breadcrumb owns the header, and
+colour mode is toggled from the header so it survives a closed drawer.
+
+## Configure Heyo
+
+```ts title="heyo-docs.config.ts"
+export default heyoDocs({
+  content: "content",
+  theme: "heyo",
+  mode: "system",
+});
+```
+
+The official React Router, Next.js, and Astro integrations generate and load
+the theme's stylesheet from the selected `theme` automatically. To customize
+colors, radius, or typography, see
+[Overriding styles](https://heyo.sh/heyo-docs/manage-website/appearance#overriding-styles).
+
+<Callout type="note" title="Documenting a heyo-ui application">
+  Because the theme and the component library share a type scale, shadows and
+  radii, a live heyo-ui preview inside an MDX page is measured with the same
+  ruler as the prose around it.
+</Callout>

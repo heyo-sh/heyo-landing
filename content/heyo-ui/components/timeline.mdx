@@ -1,0 +1,189 @@
+---
+title: Timeline
+description: A vertical sequence of events on one continuous rail — deploys, audit entries, an incident.
+---
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Timeline>
+  <Timeline.Item
+    active
+    tone="brand"
+    icon={IconRocket}
+    title="Deploying to production"
+    time="now"
+  >
+    Rolling out to fra1, waw1 and iad1.
+  </Timeline.Item>
+  <Timeline.Item tone="success" icon={IconCircleCheck} title="Build passed" time="2m ago">
+    412 modules, 184 kB gzip.
+  </Timeline.Item>
+  <Timeline.Item icon={IconGitBranch} title="Pushed main@8f21c3d" time="3m ago" />
+</Timeline>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTimeline>
+      <HeyoUiTimeline.Item
+        active
+        tone="brand"
+        icon={<IconRocket />}
+        title="Deploying to production"
+        time="now"
+      >
+        Rolling out to fra1, waw1 and iad1.
+      </HeyoUiTimeline.Item>
+      <HeyoUiTimeline.Item
+        tone="success"
+        icon={<IconCircleCheck />}
+        title="Build passed"
+        time="2m ago"
+      >
+        412 modules, 184 kB gzip.
+      </HeyoUiTimeline.Item>
+      <HeyoUiTimeline.Item
+        icon={<IconGitBranch />}
+        title="Pushed main@8f21c3d"
+        time="3m ago"
+      />
+    </HeyoUiTimeline>
+  </div>
+</CodeSnippet>
+
+# Timeline
+
+The rail is **one continuous line** drawn by the list and masked at both ends,
+not a stack of per-item segments: segments leave hairline seams between entries
+that you can see the moment two markers have different tones.
+
+It fades out at the bottom, because an event feed almost never _ends_ — it just
+stops being loaded, and a line that stops dead implies otherwise.
+
+## Usage
+
+```tsx
+import { Timeline } from "@heyo-sh/heyo-ui";
+
+<Timeline>
+  <Timeline.Item title="Build passed" time="2m ago" tone="success" />
+</Timeline>;
+```
+
+## Density
+
+`full` gives every entry an icon-sized marker. `compact` uses a dot on a
+hairline rail, which is what an audit log with fifty rows wants. Set it on the
+list; the items inherit it.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Timeline density="compact">
+  <Timeline.Item density="compact" tone="success" title="deploy succeeded" time="12:04" />
+  <Timeline.Item density="compact" tone="warning" title="cold start 1.2s" time="12:03" />
+  <Timeline.Item density="compact" tone="danger" title="origin returned 500" time="12:01" />
+</Timeline>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTimeline density="compact">
+      <HeyoUiTimeline.Item
+        density="compact"
+        tone="success"
+        title="deploy succeeded"
+        time="12:04"
+      />
+      <HeyoUiTimeline.Item
+        density="compact"
+        tone="warning"
+        title="cold start 1.2s"
+        time="12:03"
+      />
+      <HeyoUiTimeline.Item
+        density="compact"
+        tone="danger"
+        title="origin returned 500"
+        time="12:01"
+      />
+    </HeyoUiTimeline>
+  </div>
+</CodeSnippet>
+
+## Day separators
+
+`Timeline.Separator` is a heading between entries, and it is **sticky** —
+scrolling a month of deploys never leaves you wondering which day you are
+looking at.
+
+<CodeSnippet
+  previewClassName="heyo-ui"
+  code={`<Timeline density="compact">
+  <Timeline.Separator>Today</Timeline.Separator>
+  <Timeline.Item density="compact" title="Deployed acme-api" time="12:04" />
+  <Timeline.Separator>Yesterday</Timeline.Separator>
+  <Timeline.Item density="compact" title="Rotated signing key" time="18:20" />
+</Timeline>`}
+>
+  <div className="w-full max-w-md">
+    <HeyoUiTimeline density="compact">
+      <HeyoUiTimeline.Separator>Today</HeyoUiTimeline.Separator>
+      <HeyoUiTimeline.Item
+        density="compact"
+        title="Deployed acme-api"
+        time="12:04"
+      />
+      <HeyoUiTimeline.Separator>Yesterday</HeyoUiTimeline.Separator>
+      <HeyoUiTimeline.Item
+        density="compact"
+        title="Rotated signing key"
+        time="18:20"
+      />
+    </HeyoUiTimeline>
+  </div>
+</CodeSnippet>
+
+## Properties
+
+### Timeline
+
+<Properties>
+  <Property name="density" type='"full" | "compact"'>
+    `full` gives every entry an icon-sized marker; `compact` uses a dot on a
+    hairline rail. It defaults to `full`.
+  </Property>
+</Properties>
+
+### Timeline.Item
+
+<Properties>
+  <Property name="title" required type="ReactNode">
+    The headline of the entry.
+  </Property>
+  <Property name="time" type="ReactNode">
+    Right-aligned and muted — a timestamp, a duration, an actor.
+  </Property>
+  <Property name="icon" type="IconLike">
+    Rendered inside the marker. It falls back to a dot.
+  </Property>
+  <Property
+    name="tone"
+    type='"neutral" | "brand" | "info" | "success" | "warning" | "danger"'
+  >
+    The marker's colour. It defaults to `neutral`.
+  </Property>
+  <Property name="active" type="boolean">
+    Draws attention to the entry that is still happening: the marker gets a slow
+    halo and the row a faint tint.
+  </Property>
+  <Property name="density" type='"full" | "compact"'>
+    Match the `density` set on the list.
+  </Property>
+  <Property name="children" type="ReactNode">
+    The body under the title.
+  </Property>
+</Properties>
+
+### Timeline.Separator
+
+<Properties>
+  <Property name="children" type="ReactNode">
+    A sticky heading between entries — usually a date.
+  </Property>
+</Properties>
