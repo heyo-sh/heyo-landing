@@ -1,21 +1,19 @@
 import { heyoDocs } from "@heyo-sh/heyo-docs/config";
 
+import { docsAi } from "./docs-ai.config.ts";
+
 export default heyoDocs({
   siteUrl: "https://heyo.sh/heyo-docs",
-  title: "Heyo Docs example",
-  description: "The thin React Router shell around the Heyo Docs runtime.",
+  title: "Heyo Docs",
+  description:
+    "A themeable documentation toolkit for React Router, Next.js, and Astro.",
   content: "content/heyo-docs",
   theme: "heyo",
   navigation: [
     { label: "Readme", href: "https://heyo.sh" },
     { label: "GitHub", href: "https://github.com/heyo-sh/heyo-docs" },
   ],
-  ai: {
-    chat: {
-      provider: "openai",
-      model: "gpt-5-nano",
-    },
-  },
+  ai: docsAi,
   groups: [
     {
       group: "Documentation",

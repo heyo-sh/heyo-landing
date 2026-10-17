@@ -1,0 +1,84 @@
+---
+title: Vercel
+description: Deploy Heyo Status to Vercel with PostgreSQL and authenticated cron jobs.
+---
+
+# Deploy to Vercel
+
+Choose Vercel in `create-heyo-status` to get PostgreSQL integration and cron
+routes for checks, daily summaries and cleanup. The overlay works with Next.js,
+React Router and Astro; Vercel runs the status page and API as live functions.
+
+## Create a Vercel project
+
+Pass the deployment target to the creator. Replace `next` with `react-router`
+or `astro` as needed. Vercel requires PostgreSQL: its function filesystem is
+not persistent storage for SQLite.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template next --deployment vercel --database postgres`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template next --deployment vercel --database postgres`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template next --deployment vercel --database postgres`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template next --deployment vercel --database postgres`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The generated `vercel.json` schedules `/api/cron/checks`,
+`/api/cron/summarize` and `/api/cron/cleanup`. If you edit the cron expressions,
+keep them in sync with `checks.interval`, `checks.summaryCron` and
+`checks.cleanupCron` in your config.
+
+## Configure the public URL, database and secrets
+
+Set `siteUrl` to the final HTTPS address for feeds, notifications and
+subscription links. Configure a pooled PostgreSQL connection in
+`heyo-status.database.ts` using a private secret source; do not commit
+credentials. Set `adminToken` only when you need the management API.
+
+Vercel sends `Authorization: Bearer <CRON_SECRET>` to cron routes. The handler
+does **not** read this variable automatically: configure `cronSecret` in
+`heyo-status.config.ts` from a private secret source, and set Vercel's own
+`CRON_SECRET` to the **same value** in the project's environment settings.
+Without `cronSecret`, cron routes return `503` rather than allowing anonymous
+check runs or cleanup.
+
+```ts title="heyo-status.config.ts"
+siteUrl: "https://status.acme.com",
+cronSecret: process.env.CRON_SECRET, // explicitly read from Vercel's environment
+```
+
+## Migrate and deploy
+
+Provision PostgreSQL and run migrations against the production database before
+the first release and after package upgrades. Then log in and use the generated
+deploy script:
+
+```bash
+bun run db:migrate
+bunx vercel login
+bun run deploy
+```
+
+`bun run deploy` runs `vercel --prod`; the platform builds the selected
+framework. Check that the public API and an authenticated cron invocation
+work after deployment:
+
+```bash
+curl https://status.acme.com/api/heyo-status/healthz
+curl -H "authorization: Bearer $CRON_SECRET" https://status.acme.com/api/cron/checks
+```
+
+Keep Vercel plan limits in mind when setting cron frequency. Native TCP and
+TLS monitors need a Node.js 20.19+ runtime (Astro 7 needs Node.js 22.12+).
+
+<RelatedTopics title="Continue deploying">
+  <RelatedTopic icon="folder" name="PostgreSQL" src="https://heyo.sh/heyo-status/databases/postgres" />
+  <RelatedTopic icon="cursor" name="Checks and scheduling" src="https://heyo.sh/heyo-status/manage-status-page/checks" />
+</RelatedTopics>

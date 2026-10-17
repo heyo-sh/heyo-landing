@@ -53,6 +53,25 @@ with:
 | `max-pr-commits`   | `100`               | Maximum commits in a full audit, or `unlimited`.                  |
 | `max-new-commits`  | `20`                | Maximum new commits in an incremental audit, or `unlimited`.      |
 
+## Outputs
+
+The Action also publishes two outputs for later workflow steps:
+
+| Output       | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `outcome`    | `published`, `skipped`, `stale`, or `skipped-fork-without-auth-token`. |
+| `conclusion` | The GitHub Check conclusion when a report was produced.                |
+
+```yaml
+- id: audit
+  uses: heyo-sh/heyo-code-audit@v1
+  with:
+    model: gpt-5
+    auth-token: ${{ secrets.OPENAI_API_KEY }}
+- if: steps.audit.outputs.outcome == 'published'
+  run: echo "Check conclusion: ${{ steps.audit.outputs.conclusion }}"
+```
+
 Set `verification: false` only when you intentionally accept discovery findings
 without separate verification. Use `unlimited` only if your repository policy
 permits it. Invalid provider, model, authentication, check, path, and limit

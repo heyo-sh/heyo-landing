@@ -1,7 +1,5 @@
 /** Cloudflare Worker secret configured with `wrangler secret put`. */
 interface Env {
-  /** Preferred generic API-key binding; provider-specific auth stays in config. */
+  /** Server-only secret mapped to ai.chat.auth for this site. */
   HEYO_DOCS_AI_API_KEY?: string;
-  /** @deprecated Use HEYO_DOCS_AI_API_KEY or config.ai.chat.auth. */
-  OPENAI_API_KEY?: string;
 }

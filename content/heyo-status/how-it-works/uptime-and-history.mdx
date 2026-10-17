@@ -1,0 +1,171 @@
+---
+title: Uptime and history
+description: How raw results become daily summaries, uptime percentages and the public snapshot.
+---
+
+# Uptime and history
+
+A status page answers two questions: what is happening now, and what has been
+happening. Heyo Status keeps raw observations for the recent past, compacts
+older ones into daily rows, and derives everything a page shows from that one
+query.
+
+## Two tables
+
+| Table                    | Row meaning                                        | Written by            |
+| ------------------------ | -------------------------------------------------- | --------------------- |
+| `status_results`         | one check of one monitor                           | every check run       |
+| `status_daily_summaries` | one monitor-day: totals, downtime, latency, latest | the summarize job     |
+
+Compaction (`summaryCron`, default `10 0 * * *`) reads every raw result before
+the start of today, writes one summary row per monitor per day with
+`ON CONFLICT … DO UPDATE`, and deletes the raw rows it consumed. Re-running it
+is safe.
+
+Cleanup (`cleanupCron`, default `0 3 * * *`) deletes raw results older than
+`retentionDays` and summaries older than the same boundary.
+
+<Callout type="info" title="Summaries win over raw rows">
+  When a day has both a summary and raw rows — a retried compaction, say — the
+  summary is authoritative and the raw rows for that day are ignored. That is
+  what keeps a compaction retry from double counting.
+</Callout>
+
+## Building a snapshot
+
+`getStatusSnapshot(config, now?)` reads three things in parallel: history for
+every public monitor over `displayDays`, active incidents, and upcoming
+maintenance windows. Then it derives:
+
+<Properties>
+  <Property name="days" type="DaySnapshot[]">
+    Exactly `displayDays` entries, oldest first, one per UTC day. Each carries
+    a status (`up`, `down`, `degraded`, `empty`), a tooltip, the check and
+    failure counts, downtime in minutes and a down percentage.
+  </Property>
+  <Property name="uptimePercent" type="number | null">
+    Uptime across the whole displayed window. `null` when no checks exist —
+    never `0`, which would read as a total outage.
+  </Property>
+  <Property name="uptimePercent24h / 7d / 30d / 90d" type="number | null">
+    Period uptime. Raw rows are filtered by exact timestamp; daily summaries
+    cannot be split, so their whole calendar day is included.
+  </Property>
+  <Property name="latencySeries" type="LatencySample[]">
+    Hourly averages over the last 24 hours while raw rows exist, otherwise
+    daily averages over the last 7 days. Empty buckets are omitted, not
+    reported as zero latency.
+  </Property>
+  <Property name="latestStatus / latestCheckedAt / latestLatencyMs" type="…">
+    The newest observation, preferring a raw row over a summary when it is
+    newer.
+  </Property>
+  <Property name="avgLatencyMs" type="number | null">
+    Mean latency across every check in the window.
+  </Property>
+</Properties>
+
+A day with no checks is `empty`, not `down`. A day where every check failed is
+`down`; a day with some failures is `degraded`.
+
+## Downtime in minutes
+
+Each failing raw result is attributed the time until the next observation,
+clamped to the end of its UTC day and to `now`. The sum is rounded up to whole
+minutes. This gives a defensible "minutes down" figure from sampled data
+without pretending the sampling was continuous.
+
+## Overall and group status
+
+```ts
+type OverallStatus = "operational" | "degraded" | "major-outage" | "maintenance";
+```
+
+Resolved in strict order:
+
+1. An `in-progress` maintenance window → `maintenance`
+2. An active `critical` incident → `major-outage`
+3. Any other active incident → `degraded`
+4. Every monitor failing → `major-outage`
+5. Some monitors failing → `degraded`
+6. Otherwise → `operational`
+
+Group status is simpler: `operational` with no failures, `outage` when every
+monitor in the group is failing, `degraded` in between.
+
+## The snapshot payload
+
+```ts
+interface StatusSnapshot {
+  generatedAt: Date;
+  retentionDays: number;
+  displayDays: number;
+  overall: OverallStatus;
+  groups: MonitorGroup[];
+  monitors: MonitorSnapshot[];
+  activeIncidents: Incident[];
+  scheduledMaintenances: Maintenance[];
+  hasConfig: boolean;
+  hasData: boolean;
+}
+```
+
+`hasConfig` is false when no public monitor is configured, and `hasData` is
+false until the first check lands. Themes use them to show an onboarding
+state instead of an empty grid.
+
+Private monitors are filtered out before any of this runs, so they cannot
+appear in a group, a percentage or a metric.
+
+## Reading it
+
+```ts
+const snapshot = await statusPage.api.getSnapshot();
+const monitors = await statusPage.api.listMonitors();
+const api = await statusPage.api.getMonitor("API");
+
+statusPage.api.invalidate(); // after an out-of-band database write
+```
+
+Pass an explicit `Date` to bypass the cache and get a deterministic result:
+
+```ts
+const atNoon = await statusPage.api.getSnapshot(new Date("2026-01-01T12:00:00Z"));
+```
+
+To build a snapshot from history you loaded yourself — a test, a migration,
+an export — use the pure function:
+
+```ts
+import { buildStatusSnapshot } from "@heyo-sh/heyo-status/snapshot";
+
+const snapshot = buildStatusSnapshot(config, data, now, incidents, maintenance);
+```
+
+## Seeding history
+
+A brand new page has an empty grid. The CLI can fabricate deterministic,
+evenly distributed history — 100 checks per monitor per day — and compact it
+immediately:
+
+```bash
+heyo-status db seed --uptime 99.95 --days 90
+```
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Retention and intervals"
+    src="https://heyo.sh/heyo-status/manage-status-page/checks"
+  />
+  <RelatedTopic
+    icon="folder"
+    name="Database schema"
+    src="https://heyo.sh/heyo-status/databases/schema-and-migrations"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Status endpoints"
+    src="https://heyo.sh/heyo-status/http-api/status"
+  />
+</RelatedTopics>

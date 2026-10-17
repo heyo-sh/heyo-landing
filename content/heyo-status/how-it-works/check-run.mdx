@@ -1,0 +1,142 @@
+---
+title: The check run
+description: What happens, in order, every time monitors are checked.
+---
+
+# The check run
+
+One function does the work — `statusPage.cron.runChecks(now?)` — and every
+trigger calls it: the local scheduler, a Cloudflare cron event, a Vercel cron
+route, `node-cron`, `heyo-status check run` and
+`POST /admin/checks/run`. The order of operations matters, so it is the same
+everywhere.
+
+<Mermaid chart={`flowchart TD
+  A["runChecks(now)"] --> B["Run every non-composite monitor concurrently"]
+  B --> C["Derive composite monitors from that batch"]
+  C --> D["Count prior consecutive failures (one history read)"]
+  D --> E["Collect monitor.down / monitor.recovered / ssl.expiring"]
+  E --> F["Insert results into status_results"]
+  F --> G["Reconcile automatic incidents"]
+  G --> H["Invalidate the snapshot cache"]
+  H --> I["Dispatch all events to channels and subscribers"]
+`} />
+
+## Step by step
+
+<Steps>
+  <Step title="Run the checks">
+    Every monitor that performs I/O runs concurrently, so a run costs the
+    slowest monitor, not their sum. Each check is wrapped so that it always
+    returns a storable `CheckResult` — an exception becomes a failed result
+    with the error message, never a thrown run.
+  </Step>
+
+  <Step title="Derive composites">
+    Composite monitors do no I/O. They are evaluated against the results just
+    collected, which is why their components must be monitors that actually
+    perform a check. Results are then reordered to match configuration order,
+    so CLI output and notifications stay stable.
+  </Step>
+
+  <Step title="Count failures before writing">
+    Transition events are decided *before* the batch is persisted, using one
+    history read for the whole batch. That is what makes `monitor.down` fire
+    exactly on the run where the consecutive-failure count reaches
+    `notifications.failureThreshold`, and `monitor.recovered` fire exactly
+    once after a threshold-reaching outage.
+  </Step>
+
+  <Step title="Persist">
+    Results are inserted into `status_results` — one row per monitor per run,
+    with name, type, status, latency, message and timestamp.
+  </Step>
+
+  <Step title="Reconcile incidents">
+    With `incidents.enabled`, failing monitors can open an automatic incident
+    and recovering ones can progress it toward resolution. See
+    [Automatic incidents](https://heyo.sh/heyo-status/how-it-works/automatic-incidents).
+  </Step>
+
+  <Step title="Invalidate and dispatch">
+    The snapshot cache is dropped so the next render is current, then monitor
+    and incident events are delivered to every subscribed channel. Delivery
+    failures are isolated and logged; they never fail the run.
+  </Step>
+</Steps>
+
+## A single result
+
+```ts
+interface CheckResult {
+  name: string;
+  type: "http" | "ssl" | "tcp" | "dns" | "composite";
+  status: boolean;
+  message: string;
+  latencyMs: number;
+  checkedAt: Date;
+}
+```
+
+HTTP checks return extra diagnostics on the in-memory result —
+`httpStatus`, `responseHeaders`, `bodyMatch`, `jsonMatch` — and SSL checks add
+`expiresInDays` and `expiring`. Those fields drive the event type and the
+message; the persisted row keeps the six common columns.
+
+`latencyMs` is wall-clock time for the whole check, measured with
+`performance.now()` and rounded, so a soft-retried HTTP check honestly
+includes its retry delay.
+
+## Maintenance suppression
+
+If `maintenance.enabled` is on, monitors covered by an `in-progress` window
+are filtered out before events are collected and before incidents are
+reconciled. They are still checked and still stored — the uptime grid should
+show what really happened — they simply do not page anyone.
+
+## Running it yourself
+
+<CodeBlockGroup defaultValue="heyo-status">
+  <CodeBlock language="bash" title="heyo-status">
+    {`heyo-status check run`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="curl">
+    {`curl -X POST https://status.acme.com/api/heyo-status/admin/checks/run -H "authorization: Bearer $ADMIN_TOKEN"`}
+  </CodeBlock>
+  <CodeBlock language="ts" title="Programmatic">
+    {`const results = await statusPage.cron.runChecks();`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The CLI prints one line per monitor and exits non-zero when any check failed,
+which makes it usable as a smoke test in CI:
+
+```text
+UP   Website (http) 128ms — HTTP 200
+DOWN API (http) 10002ms — HTTP timed out after 10000ms
+Stored 2 check result(s); 1 failed.
+```
+
+<Callout type="info" title="Checks without a scheduler never run">
+  `heyoStatus()` does not start timers. Nothing is checked until a scheduler
+  calls `runChecks`, which is what keeps the same configuration safe to import
+  in a build step, a test or a CLI command.
+</Callout>
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Monitor types and options"
+    src="https://heyo.sh/heyo-status/manage-status-page/monitors"
+  />
+  <RelatedTopic
+    icon="lightbulb"
+    name="How uptime is calculated"
+    src="https://heyo.sh/heyo-status/how-it-works/uptime-and-history"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Notification delivery"
+    src="https://heyo.sh/heyo-status/how-it-works/notification-delivery"
+  />
+</RelatedTopics>

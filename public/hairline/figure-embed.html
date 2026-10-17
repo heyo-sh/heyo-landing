@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hairline figure</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+  html { background: #fafafa; }
+  html.dark { background: #0a0a0a; }
+  body { display: grid; place-items: center; }
+  #stage {
+    width: 100%;
+    --hairline-plate: #fafafa;
+    --hairline-hi: #232327;
+    --hairline-edge: #888890;
+    --hairline-mid: #aaaab2;
+    --hairline-lo: #d0d0d5;
+  }
+  .dark #stage {
+    --hairline-plate: #0a0a0a;
+    --hairline-hi: #f4f4f5;
+    --hairline-edge: #b0b0bb;
+    --hairline-mid: #81818c;
+    --hairline-lo: #52525d;
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="/hairline/kernel.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  if (params.get("theme") === "dark") document.documentElement.classList.add("dark");
+  const figureName = params.get("figure");
+  if (!["conduit", "folio", "mixer"].includes(figureName)) throw new Error("Unknown figure");
+  window.hairline = (figure) => {
+    const stage = document.getElementById("stage");
+    HL.inject(document);
+    stage.setAttribute("data-hairline", figure.name);
+    stage.setAttribute("role", "img");
+    stage.setAttribute("aria-label", figure.means);
+    const svg = HL.mk("svg", { viewBox: "0 0 400 320", "aria-hidden": "true" }, stage);
+    figure.mount({ stage, svg, read: { textContent: "rest" } }, figure.range[1]);
+  };
+  const script = document.createElement("script");
+  script.type = "module";
+  script.src = "/hairline/" + figureName + ".js";
+  document.body.appendChild(script);
+</script>
+</body>
+</html>

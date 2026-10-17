@@ -1,0 +1,133 @@
+---
+title: Incident endpoints
+description: Read incidents publicly and manage their timelines with an admin token.
+---
+
+# Incident endpoints
+
+Reads are public. Every mutation lives behind `/admin/*` and requires
+`adminToken`. With [incidents disabled](https://heyo.sh/heyo-status/manage-status-page/incidents),
+these routes return `404 { "error": "This feature is disabled." }`.
+
+## `GET /incidents`
+
+```bash
+curl "https://status.acme.com/api/heyo-status/incidents?status=investigating,identified&limit=10"
+```
+
+| Query | Type | Notes |
+| --- | --- | --- |
+| `status` | `investigating`, `identified`, `monitoring`, `resolved` | Comma-separated. |
+| `severity` | `minor`, `major`, `critical` | Comma-separated. |
+| `from`, `to` | ISO-8601 | Inclusive bounds. |
+| `limit`, `offset` | non-negative integer | Pagination. |
+
+```json
+[
+  {
+    "id": "inc_2f8c1d",
+    "title": "Elevated API latency",
+    "status": "monitoring",
+    "severity": "major",
+    "affectedMonitors": ["API"],
+    "auto": false,
+    "createdAt": "2026-01-01T10:02:00.000Z",
+    "updatedAt": "2026-01-01T10:41:00.000Z",
+    "resolvedAt": null,
+    "updates": [
+      {
+        "id": "upd_91ab3c",
+        "status": "investigating",
+        "message": "We are investigating elevated response times.",
+        "createdAt": "2026-01-01T10:02:00.000Z"
+      },
+      {
+        "id": "upd_a04f7d",
+        "status": "monitoring",
+        "message": "A fix is deployed; watching latency.",
+        "createdAt": "2026-01-01T10:41:00.000Z"
+      }
+    ]
+  }
+]
+```
+
+## `GET /incidents/:id`
+
+One incident with its timeline, or `404 { "error": "Incident not found." }`.
+
+## `POST /admin/incidents`
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/incidents \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "title": "Elevated API latency",
+    "severity": "major",
+    "affectedMonitors": ["API"],
+    "message": "We are investigating elevated response times.",
+    "status": "investigating"
+  }'
+```
+
+<Properties>
+  <Property name="title" type="string" required>
+    Non-empty; trimmed.
+  </Property>
+  <Property name="severity" type='"minor" | "major" | "critical"' required />
+  <Property name="affectedMonitors" type="string[]" required>
+    Trimmed and de-duplicated. An empty array means global.
+  </Property>
+  <Property name="message" type="string" required>
+    The first timeline entry.
+  </Property>
+  <Property name="status" type='"investigating" | "identified" | "monitoring"'>
+    Defaults to `investigating`. Creating one as `resolved` is rejected.
+  </Property>
+</Properties>
+
+Returns `201` with the created incident and dispatches `incident.created`.
+
+## `POST /admin/incidents/:id/updates`
+
+Append a timeline entry — the normal way to progress an incident.
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/incidents/inc_2f8c1d/updates \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"status":"resolved","message":"Latency is back to normal."}'
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `status` | yes | Any incident status, including `resolved`. |
+| `message` | yes | Timeline text. |
+| `severity` | no | Changes severity with this entry. |
+
+Dispatches `incident.resolved` for `resolved`, otherwise `incident.updated`.
+
+## `PATCH /admin/incidents/:id`
+
+Edit fields without writing a narrative update. Omitted fields keep their
+current value, and `message` defaults to `"Incident details updated."`.
+
+```bash
+curl -X PATCH https://status.acme.com/api/heyo-status/admin/incidents/inc_2f8c1d \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"severity":"critical"}'
+```
+
+## `DELETE /admin/incidents/:id`
+
+`204` on success, `404` if unknown. Deletion removes the incident and its
+timeline; it does not emit an event. Prefer resolving — a deleted incident
+disappears from the public history and feeds.
+
+<RelatedTopics title="Related">
+  <RelatedTopic icon="cursor" name="Configure incidents" src="https://heyo.sh/heyo-status/manage-status-page/incidents" />
+  <RelatedTopic icon="lightbulb" name="Automatic incidents" src="https://heyo.sh/heyo-status/how-it-works/automatic-incidents" />
+  <RelatedTopic icon="code" name="Maintenance endpoints" src="https://heyo.sh/heyo-status/http-api/maintenance" />
+</RelatedTopics>

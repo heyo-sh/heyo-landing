@@ -1,0 +1,72 @@
+---
+title: Maintenance
+description: Schedule maintenance windows, suppress alerts and publish upcoming work.
+---
+
+# Maintenance
+
+Maintenance windows are enabled by default. They appear on the status page
+and suppress alerts for affected monitors while in progress.
+
+```ts title="heyo-status.config.ts"
+maintenance: { enabled: true },
+```
+
+Setting `maintenance.enabled: false` makes `/maintenance` and
+`/admin/maintenance/*` return `404`. Windows no longer suppress alerts, and
+the snapshot contains no upcoming or in-progress maintenance.
+
+## The maintenance model
+
+```ts
+interface Maintenance {
+  id: string;
+  title: string;
+  description: string;
+  affectedMonitors: string[];
+  scheduledStart: Date;
+  scheduledEnd: Date;
+  status: "scheduled" | "in-progress" | "completed";
+  createdAt: Date;
+}
+```
+
+The status is derived from the clock: reading upcoming windows refreshes
+`scheduled` → `in-progress` → `completed` against the current time.
+`scheduledEnd` must be after `scheduledStart`.
+
+## Schedule a window
+
+Create a window locally with the CLI, which talks directly to the database,
+or use the admin API. HTTP management requires `adminToken` in the config;
+load it from a private secret source.
+
+<CodeBlockGroup defaultValue="heyo-status">
+  <CodeBlock language="bash" title="heyo-status">
+    {`heyo-status maintenance create --title "Database upgrade" --description "Read-only for about 30 minutes." --monitors "API,Dashboard" --start 2026-02-01T02:00:00Z --end 2026-02-01T03:00:00Z
+
+heyo-status maintenance list`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="curl">
+    {`curl -X POST https://status.acme.com/api/heyo-status/admin/maintenance -H "authorization: Bearer $ADMIN_TOKEN" -H "content-type: application/json" -d '{"title":"Database upgrade","affectedMonitors":["API"],"scheduledStart":"2026-02-01T02:00:00Z","scheduledEnd":"2026-02-01T03:00:00Z"}'`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+## Alert suppression
+
+While a window is `in-progress`, the monitors it names are excluded from
+`monitor.down`, `monitor.recovered` and `ssl.expiring` events, as well as
+automatic incident creation and reconciliation. They are still checked and
+results are stored, so uptime history shows what actually happened. An empty
+`affectedMonitors` array suppresses alerts for every monitor.
+
+<Callout type="info" title="Completed windows are not published">
+  The snapshot and <code>GET /maintenance</code> include only scheduled and
+  in-progress windows; completed ones are omitted.
+</Callout>
+
+<RelatedTopics title="Related">
+  <RelatedTopic icon="cursor" name="Incidents" src="https://heyo.sh/heyo-status/manage-status-page/incidents" />
+  <RelatedTopic icon="code" name="Maintenance endpoints" src="https://heyo.sh/heyo-status/http-api/maintenance" />
+  <RelatedTopic icon="check" name="CLI commands" src="https://heyo.sh/heyo-status/cli" />
+</RelatedTopics>

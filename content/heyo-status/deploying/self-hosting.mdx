@@ -1,0 +1,91 @@
+---
+title: Self-hosting
+description: Run a Heyo Status framework app with persistent storage and one scheduler on your own server.
+---
+
+# Self-host Heyo Status
+
+Self-hosting means running the generated framework server alongside a
+scheduler. Choose SQLite on a persistent disk or PostgreSQL, and run exactly
+one scheduler for checks, summarization and cleanup. Unlike static sites, the
+status page and API must read fresh data at request time.
+
+## Create a project
+
+Choose **Configure later** in the creator to skip platform-specific files.
+The default database is SQLite; switch to PostgreSQL if your host has no
+persistent local disk.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template react-router --deployment later --database sqlite`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template react-router --deployment later --database sqlite`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template react-router --deployment later --database sqlite`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template react-router --deployment later --database sqlite`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+Replace `react-router` with `next` or `astro` if needed. Install Bun 1.4.3+
+for the creator, generated CLI and `dev` script; the production framework
+server can run on Node (20.19+ for Next.js or React Router, 22.12+ for Astro 7).
+
+## Set up storage and the public URL
+
+Set `siteUrl` to the canonical HTTPS address for feeds, notifications and
+subscription links. Use a persistent path in `heyo-status.database.ts`, such
+as `sqlite("/data/status.sqlite")` with a mounted `/data` volume. An ephemeral
+container filesystem loses check history on redeploy. For PostgreSQL, supply
+its connection string from a private source and run `bun run db:migrate`
+before starting the server and after upgrades.
+
+```ts title="heyo-status.config.ts"
+siteUrl: "https://status.acme.com",
+```
+
+## Run one scheduler
+
+The local `bun dev` script already runs the framework and checks. In
+production, run a scheduler beside the server (for example, `node-cron`):
+
+```ts title="scheduler.ts"
+import { scheduleStatusPage } from "@heyo-sh/heyo-status/deployments/node";
+import cron from "node-cron";
+import { statusPage } from "./heyo-status.config";
+
+const scheduler = scheduleStatusPage(statusPage, cron);
+process.once("SIGTERM", () => scheduler.stop());
+process.once("SIGINT", () => scheduler.stop());
+```
+
+Install `node-cron` for this example. `scheduleStatusPage()` registers the
+configured checks, summarize and cleanup expressions. Run this process **once**
+per deployment: starting it on every replica duplicates checks and alerts.
+Alternatively, use an external scheduler to call the CLI jobs; an authenticated
+`POST /api/heyo-status/admin/checks/run` only runs checks, not the other two
+jobs.
+
+## Build and verify
+
+Build and run the framework's generated start script on your server:
+
+```bash
+bun run build
+bun run start
+curl https://status.acme.com/api/heyo-status/healthz
+```
+
+Keep `adminToken` out of source control if enabling management routes. Without
+it, the management API stays closed (`503`), while public status reads still
+work. Run the server behind a reverse proxy that forwards the real host, and
+make sure the scheduler can access the same database as the server.
+
+<RelatedTopics title="Continue deploying">
+  <RelatedTopic icon="folder" name="SQLite" src="https://heyo.sh/heyo-status/databases/sqlite" />
+  <RelatedTopic icon="check" name="CLI commands" src="https://heyo.sh/heyo-status/cli" />
+</RelatedTopics>

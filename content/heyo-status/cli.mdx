@@ -1,0 +1,259 @@
+---
+title: CLI
+description: dev, check, db, incident and maintenance — every command, flag and exit code.
+---
+
+# CLI
+
+The `heyo-status` CLI is the executable included in
+`@heyo-sh/heyo-status`. It is **not** a separate package or the
+`create-heyo-status` project generator. It reads the project's configuration
+and database directly; it does not need a running server or an API token.
+
+## Install the CLI globally
+
+To run the commands below as `heyo-status ...` **directly in your terminal**,
+install Bun 1.4.3+ and the CLI globally. Make sure both `bun` and your
+package manager's global bin directory are on `PATH`, then run commands from
+the directory containing
+`heyo-status.config.ts`:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`# Modern Yarn has no global install; use Bun for the CLI.
+bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+```bash
+cd my-status-page
+heyo-status check run
+```
+
+`create-heyo-status` creates a project; it does **not** install the CLI
+globally. It adds `@heyo-sh/heyo-status` as a **project dependency** for the
+framework adapters, config and UI. If you opted out of installing dependencies
+in the creator, run the package manager's `install` command in the project.
+When integrating manually, install the project dependency too (for example,
+`bun add @heyo-sh/heyo-status`). Global and project installations serve
+different purposes; keep their versions compatible.
+
+<Callout type="info" title="Global install is for direct shell commands">
+  A project's <code>package.json</code> scripts can run the local binary
+  without a global install: <code>"check": "heyo-status check run"</code>
+  runs with <code>bun run check</code>. The documented direct
+  <code>heyo-status ...</code> commands assume the global installation above
+  (or that you added <code>node_modules/.bin</code> to your shell's PATH).
+</Callout>
+
+Cloudflare/D1 projects use Wrangler migrations and Worker cron triggers rather
+than local CLI checks, because a shell process has no Worker D1 binding. See
+[deploying to Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare).
+
+## Commands
+
+The commands below assume the global installation and must be run from the
+project root unless you pass `--config`.
+
+```bash
+heyo-status dev [--config <path>] [--port <port>] [-- <framework dev command>]
+heyo-status check run [--config <path>]
+heyo-status db migrate [--config <path>]
+heyo-status db seed --uptime <0-100> --days <n> [--config <path>]
+heyo-status incident create --title <title> --severity <severity> --monitors <a,b> --message <message>
+heyo-status incident update <id> --status <status> --message <message> [--severity <severity>]
+heyo-status incident resolve <id> --message <message>
+heyo-status incident list [--status <status>] [--severity <severity>]
+heyo-status maintenance create --title <title> --monitors <a,b> --start <ISO> --end <ISO> [--description <text>]
+heyo-status maintenance list
+```
+
+Every command accepts `--config`, defaulting to
+`./heyo-status.config.ts`. The configuration must export the `heyoStatus()`
+result as `statusPage` or as the default export.
+
+<Callout type="info" title="Bun runs the CLI even with npm, pnpm or Yarn">
+  The binary has a Bun shebang and loads the TypeScript configuration
+  directly. Installing the package with another manager does not remove the
+  Bun requirement.
+</Callout>
+
+## `dev`
+
+Starts the local cron scheduler and, optionally, a framework dev server.
+
+```bash
+heyo-status dev -- next dev
+heyo-status dev -- bunx --bun react-router dev
+heyo-status dev --port 4000
+```
+
+- Everything after `--` is spawned as a child process with inherited stdio;
+  the scheduler stops when it exits.
+- Without a command, the CLI serves the API itself on `--port` (default
+  `3000`) plus a small index page at `/`. This path requires Bun.
+- One check runs immediately, so a fresh database is never empty.
+- Then `checks.interval`, `checks.summaryCron` and `checks.cleanupCron` drive
+  the schedule.
+- `SIGINT` and `SIGTERM` stop both the server and the scheduler.
+
+The scheduler evaluates once per second but runs each job at most once per
+minute, and the minute of the initial check is marked consumed so
+`* * * * *` does not fire twice at startup.
+
+## `check run`
+
+Runs every monitor once, stores the results, reconciles automatic incidents
+and dispatches notifications.
+
+```bash
+heyo-status check run
+```
+
+```text
+UP   Website (http) 128ms — HTTP 200
+DOWN API (http) 10002ms — HTTP timed out after 10000ms
+Stored 2 check result(s); 1 failed.
+```
+
+| Exit code | Meaning                              |
+| --------- | ------------------------------------ |
+| `0`       | Every check passed, or no monitors.  |
+| `1`       | At least one check failed.           |
+
+The non-zero exit makes it usable as a post-deploy smoke test.
+
+## `db migrate`
+
+```bash
+heyo-status db migrate
+```
+
+Calls `migrate()` when the adapter exposes it — PostgreSQL and D1 — and
+otherwise reports that embedded migrations are applied automatically, which
+is the SQLite case. Run it per environment before the first deploy and after
+upgrading the package.
+
+## `db seed`
+
+Fabricates deterministic history so a new page has something to draw.
+
+```bash
+heyo-status db seed --uptime 99.95 --days 90
+```
+
+| Flag       | Required | Notes                         |
+| ---------- | -------- | ----------------------------- |
+| `--uptime` | yes      | `0`–`100`.                    |
+| `--days`   | yes      | Positive integer.             |
+
+It writes 100 evenly distributed checks per monitor per day, with failures
+spread to match the requested uptime exactly, then compacts everything before
+today into daily summaries:
+
+```text
+Seeded 54000 check result(s) for 6 monitor(s) across 90 day(s) at 99.95% uptime.
+Compacted 53400 result(s) into 534 daily summary row(s).
+```
+
+<Callout type="warning" title="Seeded data is indistinguishable from real data">
+  Seed a development or demo database only. There is no "unseed"; clearing it
+  means deleting the rows yourself or starting from a fresh database.
+</Callout>
+
+## `incident`
+
+```bash
+heyo-status incident create \
+  --title "Elevated API latency" \
+  --severity major \
+  --monitors "API,Dashboard" \
+  --message "We are investigating elevated response times."
+
+heyo-status incident update inc_2f8c1d --status monitoring --message "A fix is deployed."
+heyo-status incident update inc_2f8c1d --severity critical --message "Escalating."
+heyo-status incident resolve inc_2f8c1d --message "Latency is back to normal."
+heyo-status incident list --status investigating --severity major
+```
+
+| Command   | Required flags                                   | Optional                                    |
+| --------- | ------------------------------------------------ | ------------------------------------------- |
+| `create`  | `--title`, `--severity`, `--monitors`, `--message` | `--status` (not `resolved`)               |
+| `update`  | positional `<id>`                                 | `--status`, `--severity`, `--message`       |
+| `resolve` | positional `<id>`, `--message`                    | —                                           |
+| `list`    | —                                                 | `--status`, `--severity`                    |
+
+`--monitors` is a comma-separated list, trimmed and de-duplicated. Records
+are printed as formatted JSON, so the output pipes into `jq`.
+
+`update --status resolved` is equivalent to `resolve`. Omitting `--message`
+on `update` uses `"Incident details updated."`.
+
+## `maintenance`
+
+```bash
+heyo-status maintenance create \
+  --title "Database upgrade" \
+  --description "Read-only for about 30 minutes." \
+  --monitors "API,Dashboard" \
+  --start 2026-02-01T02:00:00Z \
+  --end 2026-02-01T03:00:00Z
+
+heyo-status maintenance list
+```
+
+`--start` and `--end` are ISO-8601; `--end` must be after `--start`.
+`list` prints upcoming and in-progress windows, with their status refreshed
+against the current time.
+
+## Option parsing
+
+- `--name value` and `--name=value` are both accepted.
+- An unknown option is an error — flags are never silently ignored.
+- Repeating an option is an error.
+- An option whose value is missing or starts with `--` is an error.
+- Unexpected positional arguments are rejected, except where documented.
+
+Failures print `heyo-status failed: <message>` and exit `1`.
+
+## CLI versus HTTP
+
+| Task                     | CLI                              | HTTP                            |
+| ------------------------ | -------------------------------- | ------------------------------- |
+| Run checks               | `check run`                      | `POST /admin/checks/run`        |
+| Compact history          | `dev` scheduler                  | — (cron only)                   |
+| Delete old history       | `dev` scheduler                  | — (cron only)                   |
+| Create an incident       | `incident create`                | `POST /admin/incidents`         |
+| Migrate                  | `db migrate`                     | —                               |
+| Seed                     | `db seed`                        | —                               |
+
+The CLI talks to the database directly, so it needs database access but no
+admin token. The HTTP API needs a token but no database access. Use the CLI
+locally and in CI; use the API from a deployed environment.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Scheduling"
+    src="https://heyo.sh/heyo-status/manage-status-page/checks"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Admin endpoints"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Configuration"
+    src="https://heyo.sh/heyo-status/manage-status-page/configuration"
+  />
+</RelatedTopics>

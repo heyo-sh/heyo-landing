@@ -1,0 +1,93 @@
+---
+title: Maintenance endpoints
+description: Read scheduled maintenance publicly and manage windows with an admin token.
+---
+
+# Maintenance endpoints
+
+Reads are public. Mutations live behind `/admin/*` and require `adminToken`.
+With [maintenance disabled](https://heyo.sh/heyo-status/manage-status-page/maintenance),
+these routes return `404 { "error": "This feature is disabled." }`.
+
+## `GET /maintenance`
+
+Upcoming and in-progress windows. Completed ones are not published.
+
+```bash
+curl https://status.acme.com/api/heyo-status/maintenance
+```
+
+```json
+[
+  {
+    "id": "mnt_71be90",
+    "title": "Database upgrade",
+    "description": "Read-only for about 30 minutes.",
+    "affectedMonitors": ["API", "Dashboard"],
+    "scheduledStart": "2026-02-01T02:00:00.000Z",
+    "scheduledEnd": "2026-02-01T03:00:00.000Z",
+    "status": "scheduled",
+    "createdAt": "2026-01-20T09:14:00.000Z"
+  }
+]
+```
+
+`status` is derived from the clock each time the list is read.
+
+## `POST /admin/maintenance`
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/maintenance \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "title": "Database upgrade",
+    "description": "Read-only for about 30 minutes.",
+    "affectedMonitors": ["API"],
+    "scheduledStart": "2026-02-01T02:00:00Z",
+    "scheduledEnd": "2026-02-01T03:00:00Z"
+  }'
+```
+
+<Properties>
+  <Property name="title" type="string" required />
+  <Property name="description" type="string" />
+  <Property name="affectedMonitors" type="string[]" required>
+    Empty means every monitor.
+  </Property>
+  <Property name="scheduledStart" type="ISO-8601" required />
+  <Property name="scheduledEnd" type="ISO-8601" required>
+    Must be after `scheduledStart`.
+  </Property>
+</Properties>
+
+Returns `201` and dispatches `maintenance.scheduled`, `maintenance.starting`
+or `maintenance.completed` depending on the derived status.
+
+## `PATCH /admin/maintenance/:id`
+
+Any subset of `title`, `description`, `affectedMonitors`, `scheduledStart`,
+`scheduledEnd` and `status`. An empty body is rejected with
+`400 { "error": "At least one field must be provided." }`.
+
+```bash
+curl -X PATCH https://status.acme.com/api/heyo-status/admin/maintenance/mnt_71be90 \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"status":"completed"}'
+```
+
+## `DELETE /admin/maintenance/:id`
+
+`204` on success, `404` if unknown.
+
+<Callout type="info" title="Every mutation invalidates the snapshot">
+  The cached snapshot is dropped on each write, so the page and API agree
+  immediately rather than after the TTL.
+</Callout>
+
+<RelatedTopics title="Related">
+  <RelatedTopic icon="cursor" name="Configure maintenance" src="https://heyo.sh/heyo-status/manage-status-page/maintenance" />
+  <RelatedTopic icon="code" name="Incident endpoints" src="https://heyo.sh/heyo-status/http-api/incidents" />
+  <RelatedTopic icon="check" name="CLI commands" src="https://heyo.sh/heyo-status/cli" />
+</RelatedTopics>

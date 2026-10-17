@@ -1,0 +1,292 @@
+---
+title: Notifications
+description: Slack, Discord, signed webhooks and email channels, and the events they receive.
+---
+
+# Notifications
+
+A notification channel is an object with an `id`, a `type`, an optional
+`events` filter and a `send()` method. Four builders ship with the package,
+and anything matching the contract can be added to `notifications.channels`.
+
+```ts
+import { discord, email, slack, webhook } from "@heyo-sh/heyo-status/notifications";
+
+notifications: {
+  failureThreshold: 3,
+  channels: [
+    slack({ webhookUrl: process.env.SLACK_WEBHOOK_URL!, mentionOnCritical: "<!here>" }),
+    discord({ webhookUrl: process.env.DISCORD_WEBHOOK_URL!, mentionRole: "ops" }),
+    webhook({ url: "https://ops.acme.com/hooks/status", secret: process.env.HOOK_SECRET! }),
+    email({
+      transport: "resend",
+      apiKey: process.env.RESEND_API_KEY!,
+      from: "status@acme.com",
+      to: ["oncall@acme.com"],
+    }),
+  ],
+},
+```
+
+<Properties>
+  <Property name="failureThreshold" type="number">
+    Defaults to `3`. A `monitor.down` event fires on the check run where the
+    consecutive-failure count *reaches* this number — not before and not
+    again. The matching `monitor.recovered` fires once afterwards.
+  </Property>
+  <Property name="channels" type="NotificationChannel[]">
+    Defaults to `[]`. Channel ids must be unique.
+  </Property>
+</Properties>
+
+## Event catalogue
+
+| Event                    | Raised when                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| `monitor.down`           | A monitor's consecutive failures reach `failureThreshold`.           |
+| `monitor.recovered`      | A monitor succeeds after a threshold-reaching outage.                |
+| `ssl.expiring`           | An SSL monitor fails *only* because of an approaching expiry.        |
+| `incident.created`       | An incident is opened manually or automatically.                     |
+| `incident.updated`       | A timeline entry is added, or the incident is edited.                |
+| `incident.resolved`      | An incident reaches `resolved`.                                      |
+| `maintenance.scheduled`  | A window is created or edited while `scheduled`.                     |
+| `maintenance.starting`   | A window becomes `in-progress`.                                      |
+| `maintenance.completed`  | A window becomes `completed`.                                        |
+
+Every builder accepts an `events` array of selectors. Wildcards are expanded
+once, at construction, so the dispatcher only compares exact names:
+
+```ts
+slack({ webhookUrl, events: ["monitor.*", "incident.created", "incident.resolved"] });
+webhook({ url, secret, events: ["*"] });
+```
+
+Valid selectors are any event name, `monitor.*`, `ssl.*`, `incident.*`,
+`maintenance.*` and `*`. An empty array, a duplicate or an unknown selector
+throws. Omitting `events` subscribes the channel to everything.
+
+## Slack
+
+```ts
+slack({
+  id: "slack-ops",
+  webhookUrl: process.env.SLACK_WEBHOOK_URL!,
+  channel: "#status",
+  mentionOnCritical: "<!here> production incident",
+  includeLatency: true,
+  events: ["monitor.*", "incident.*"],
+});
+```
+
+<Properties>
+  <Property name="webhookUrl" type="string" required>
+    Slack incoming-webhook URL.
+  </Property>
+  <Property name="id" type="string">
+    Defaults to `"slack"`. Appears in the notification log.
+  </Property>
+  <Property name="channel" type="string">
+    Incoming-webhook channel override.
+  </Property>
+  <Property name="mentionOnCritical" type="string">
+    Fallback text used only when the event belongs to a `critical` incident.
+  </Property>
+  <Property name="includeLatency" type="boolean">
+    Defaults to `true`. Adds the latency field to the Block Kit payload.
+  </Property>
+  <Property name="fetch" type="NotificationFetch">
+    Injectable fetch, for tests or a proxy.
+  </Property>
+</Properties>
+
+Messages are Block Kit: a coloured header, the check message, detail fields
+(type, target, status, latency, consecutive failures) and a **View Status
+Page** button when `siteUrl` is configured.
+
+## Discord
+
+```ts
+discord({
+  id: "discord-ops",
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+  mentionRole: "1234567890",
+  events: ["incident.*", "maintenance.*"],
+});
+```
+
+`mentionRole` accepts a role ID (rendered as `<@&id>`), an existing
+`<@&id>` mention, or a plain name (rendered as `@name`). The payload is a
+single embed, coloured green for recoveries, red for failures and amber for
+everything else.
+
+## Signed webhooks
+
+```ts
+webhook({
+  id: "ops-bridge",
+  url: "https://ops.acme.com/hooks/status",
+  secret: process.env.HOOK_SECRET!,
+  headers: { "x-source": "heyo-status" },
+  retries: 3,
+  retryDelayMs: 250,
+});
+```
+
+<Properties>
+  <Property name="url" type="string" required>
+    HTTP(S) destination.
+  </Property>
+  <Property name="secret" type="string" required>
+    Shared secret used for the HMAC-SHA256 signature. Cannot be empty.
+  </Property>
+  <Property name="retries" type="number">
+    Defaults to `3` total attempts, between 1 and 10.
+  </Property>
+  <Property name="retryDelayMs" type="number">
+    Defaults to `250`, doubled on each retry.
+  </Property>
+  <Property name="headers" type="Record<string, string>">
+    Extra request headers. `content-type` and the signature headers are always
+    set by the channel.
+  </Property>
+</Properties>
+
+Each request carries:
+
+```http
+content-type: application/json
+x-heyo-timestamp: 1767225600
+x-heyo-signature: t=1767225600,v1=<hex HMAC-SHA256 of `${timestamp}.${body}`>
+```
+
+Verify it on the receiving side with the helper the package exports:
+
+```ts
+import { verifyWebhookSignature } from "@heyo-sh/heyo-status/notifications";
+
+const body = await request.text();
+const valid = await verifyWebhookSignature(
+  process.env.HOOK_SECRET!,
+  request.headers.get("x-heyo-signature") ?? "",
+  body,
+);
+```
+
+The payload is the stable JSON produced by `toStatusEventPayload()`:
+
+```json
+{
+  "event": "monitor.down",
+  "timestamp": "2026-01-01T00:05:00.000Z",
+  "monitor": {
+    "name": "API",
+    "type": "http",
+    "group": "API",
+    "target": "https://api.acme.com/health",
+    "status": false,
+    "message": "HTTP 503, expected 200",
+    "latencyMs": 142,
+    "consecutiveFailures": 3
+  }
+}
+```
+
+`incident` and `maintenance` objects are added for their respective events.
+
+## Email
+
+```ts
+email({
+  transport: "resend",
+  apiKey: process.env.RESEND_API_KEY!,
+  from: "status@acme.com",
+  to: ["oncall@acme.com", "sre@acme.com"],
+});
+```
+
+| Transport    | Requirements                                                                   |
+| ------------ | ------------------------------------------------------------------------------ |
+| `resend`     | `apiKey`. Optional `endpoint` override.                                        |
+| `aws-ses`    | `accessKeyId`, `secretAccessKey`, optional `region` (default `us-east-1`), `sessionToken`, `endpoint`. Requests are SigV4-signed in-process; no AWS SDK is bundled. |
+| `cloudflare` | A `send` callback bound to your Email binding.                                 |
+| `smtp`       | A `send` callback backed by your SMTP transport.                               |
+
+```ts
+email({
+  transport: "cloudflare",
+  from: "status@acme.com",
+  to: "oncall@acme.com",
+  async send(message) {
+    await env.STATUS_EMAIL.send(new EmailMessage(message.from, message.to[0], message.text));
+  },
+});
+```
+
+An email channel is also what makes **public email subscriptions** possible:
+the first configured email channel exposes `sendEmail()`, which the
+subscription flow reuses for confirmation and incident mail. Without one,
+`POST /subscribers` with `type: "email"` answers `503`.
+
+## Custom channels
+
+Any object matching `NotificationChannel` is accepted:
+
+```ts
+import type { NotificationChannel } from "@heyo-sh/heyo-status/types";
+
+const pagerduty: NotificationChannel = {
+  id: "pagerduty",
+  type: "webhook",
+  events: ["monitor.down", "incident.created"],
+  async send(event) {
+    await fetch("https://events.pagerduty.com/v2/enqueue", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        routing_key: process.env.PD_ROUTING_KEY,
+        event_action: "trigger",
+        payload: {
+          summary: event.monitor?.message ?? event.incident?.title ?? event.type,
+          severity: "error",
+          source: event.monitor?.target ?? "heyo-status",
+        },
+      }),
+    });
+    return { attempts: 1 };
+  },
+};
+```
+
+`type` must be one of `slack`, `discord`, `webhook` or `email` — it classifies
+the row written to the notification log. Returning
+`{ attempts }` records how many tries the delivery took.
+
+## Delivery guarantees
+
+- Channel failures are isolated. A broken webhook never fails a check run, an
+  incident update or an HTTP request.
+- Every attempt is written to `notification_log` with its channel, event,
+  status, attempt count and error, readable via
+  `GET /admin/notifications/log`.
+- Writing that log is itself best-effort: a logging failure is swallowed for
+  the same reason.
+- Only the generic `webhook` channel retries. Slack, Discord and email report
+  the first failure.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="How events are produced and dispatched"
+    src="https://heyo.sh/heyo-status/how-it-works/notification-delivery"
+  />
+  <RelatedTopic
+    icon="chat"
+    name="Public subscriptions"
+    src="https://heyo.sh/heyo-status/manage-status-page/subscribers"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Notification log endpoint"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+</RelatedTopics>

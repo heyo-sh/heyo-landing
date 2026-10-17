@@ -1,0 +1,95 @@
+---
+title: Cloudflare
+description: Deploy Heyo Status to Cloudflare Workers with D1 and scheduled checks.
+---
+
+# Deploy to Cloudflare
+
+Choose Cloudflare in `create-heyo-status` to get a Worker, D1 binding,
+migrations and cron triggers for your framework. The Worker serves live status
+pages and runs checks, daily summaries and cleanup. Cloudflare supports React
+Router, Next.js (OpenNext) and Astro.
+
+## Create a Cloudflare project
+
+Pass the deployment target to the creator. Replace `react-router` with `next`
+or `astro` if needed. Cloudflare always uses D1; SQLite cannot run on Workers.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template react-router --deployment cloudflare --database d1`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The generated overlay sets the D1 binding before framework requests and
+scheduled events. It includes `wrangler.jsonc` with three triggers. Keep them
+aligned with `checks.interval`, `checks.summaryCron` and `checks.cleanupCron`
+in `heyo-status.config.ts` when changing schedules.
+
+## Set the public URL and database
+
+Set `siteUrl` to the canonical HTTPS address so feeds, notifications and
+subscription emails link to the correct host:
+
+```ts title="heyo-status.config.ts"
+siteUrl: "https://status.acme.com",
+```
+
+Create the D1 database and put its returned `database_id` in `wrangler.jsonc`:
+
+```bash
+bunx wrangler login
+bunx wrangler d1 create my-status-page
+bunx wrangler d1 migrations apply my-status-page --local
+bunx wrangler d1 migrations apply my-status-page --remote
+```
+
+The local migration command is also part of the generated `bun dev` script.
+Apply remote migrations before publishing and after schema upgrades. Change
+`wrangler.jsonc`'s Worker name to a unique project name for shared releases.
+
+## Deploy
+
+```bash
+bun run deploy
+```
+
+The generated `deploy` script builds the appropriate framework output and
+publishes it with Wrangler. Use it instead of uploading a static page: status
+snapshots and the API need a Worker on every request. Verify the live API:
+
+```bash
+curl https://status.acme.com/api/heyo-status/healthz
+curl https://status.acme.com/api/heyo-status/status/summary
+```
+
+Cloudflare `bun dev` builds and runs the real Worker rather than hot-reloading
+a framework proxy; restart it after changing application code.
+
+## Secrets and runtime limits
+
+Management endpoints are closed (`503`) until you explicitly set `adminToken`
+in the config. If you need them, source the token from a private secret and
+pass the binding into your Worker configuration; a Wrangler secret is **not**
+automatically read by `heyoStatus()`. Never commit production tokens. Keep
+the public page and read-only endpoints available without a token.
+
+<Callout type="warning" title="TCP and TLS checks are not available on Workers">
+  Workers do not expose <code>node:net</code> or <code>node:tls</code>.
+  <code>tcp</code> and <code>ssl</code> monitors report unavailable. Use HTTP
+  and DNS checks here, or run those checks from a Node host.
+</Callout>
+
+<RelatedTopics title="Continue deploying">
+  <RelatedTopic icon="folder" name="Cloudflare D1" src="https://heyo.sh/heyo-status/databases/d1" />
+  <RelatedTopic icon="cursor" name="Checks and scheduling" src="https://heyo.sh/heyo-status/manage-status-page/checks" />
+</RelatedTopics>

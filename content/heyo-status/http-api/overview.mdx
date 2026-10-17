@@ -1,0 +1,150 @@
+---
+title: API overview
+description: Routing, authentication, error shapes and the full endpoint map.
+---
+
+# API overview
+
+Every endpoint is served by one catch-all route. `statusPage.handler` strips
+`basePath` from the incoming URL, so a path below is always reached at
+`basePath + path` — by default `/api/heyo-status`.
+
+```
+https://status.acme.com/api/heyo-status/status
+└──────── origin ──────┘└── basePath ─┘└ path ┘
+```
+
+## Endpoint map
+
+| Method | Path                            | Auth  | Enabled by                 |
+| ------ | ------------------------------- | ----- | -------------------------- |
+| GET    | `/status`                       | —     | always                     |
+| GET    | `/status/summary`               | —     | always                     |
+| GET    | `/monitors`                     | —     | always                     |
+| GET    | `/monitors/:name`               | —     | always                     |
+| GET    | `/monitors/:name/uptime`        | —     | always                     |
+| GET    | `/badge/:name.svg`              | —     | `metrics.badges`           |
+| GET    | `/metrics`                      | —     | `metrics.prometheus`       |
+| GET    | `/rss.xml`                      | —     | `incidents.enabled`        |
+| GET    | `/atom.xml`                     | —     | `incidents.enabled`        |
+| GET    | `/incidents`                    | —     | `incidents.enabled`        |
+| GET    | `/incidents/:id`                | —     | `incidents.enabled`        |
+| GET    | `/maintenance`                  | —     | `maintenance.enabled`      |
+| POST   | `/subscribers`                  | —     | `subscribers.enabled`      |
+| GET    | `/subscribers/confirm`          | —     | `subscribers.enabled`      |
+| DELETE | `/subscribers/:id`              | —     | `subscribers.enabled`      |
+| GET    | `/subscribers/:id/unsubscribe`  | —     | `subscribers.enabled`      |
+| POST   | `/subscribers/:id/unsubscribe`  | —     | `subscribers.enabled`      |
+| GET    | `/healthz`                      | —     | always                     |
+| POST   | `/admin/checks/run`             | token | always                     |
+| POST   | `/admin/incidents`              | token | `incidents.enabled`        |
+| POST   | `/admin/incidents/:id/updates`  | token | `incidents.enabled`        |
+| PATCH  | `/admin/incidents/:id`          | token | `incidents.enabled`        |
+| DELETE | `/admin/incidents/:id`          | token | `incidents.enabled`        |
+| POST   | `/admin/maintenance`            | token | `maintenance.enabled`      |
+| PATCH  | `/admin/maintenance/:id`        | token | `maintenance.enabled`      |
+| DELETE | `/admin/maintenance/:id`        | token | `maintenance.enabled`      |
+| GET    | `/admin/notifications/log`      | token | always                     |
+
+A disabled feature answers `404 { "error": "This feature is disabled." }`,
+which is deliberate — it does not reveal whether the route exists.
+
+## Authentication
+
+Everything under `/admin/*` requires:
+
+```http
+Authorization: Bearer <admin-token>
+```
+
+The token comes only from `adminToken` in the configuration. Comparison is
+constant-time.
+
+| Situation             | Response                                                                 |
+| --------------------- | ------------------------------------------------------------------------ |
+| No token configured   | `503 { "error": "The management API is disabled. Set adminToken in heyo-status.config.ts." }` |
+| Wrong or missing header | `401 { "error": "Unauthorized." }`                                     |
+
+Public endpoints are unauthenticated by design — a status page is meant to be
+readable during an outage, including by people who cannot sign in.
+
+## Status codes
+
+| Code  | Meaning                                                           |
+| ----- | ----------------------------------------------------------------- |
+| `200` | Success.                                                           |
+| `201` | Created — an incident, a maintenance window, a confirmed subscription. |
+| `202` | Accepted — a subscription awaiting email confirmation.             |
+| `204` | Deleted. No body.                                                  |
+| `400` | Invalid input. The message names the field.                        |
+| `401` | Missing or wrong bearer token.                                     |
+| `404` | Not found, or the feature is disabled.                             |
+| `501` | Manual checks require the status-page runtime.                     |
+| `503` | Management API disabled, or an email delivery dependency failed.   |
+| `500` | Unexpected error, including an unreachable database.               |
+
+Errors are always JSON:
+
+```json
+{ "error": "severity must be a valid incident severity." }
+```
+
+Read routes have nothing to recover from, so a database that is unreachable —
+an unbound D1 binding or an unavailable database connection — is reported with the same
+shape and the actionable message, rather than a plain-text `500`.
+
+## Conventions
+
+- Request bodies must be JSON objects; arrays and scalars are rejected.
+- Timestamps in requests and responses are ISO-8601 (`2026-01-01T02:00:00Z`).
+- List filters accept comma-separated values: `?status=investigating,identified`.
+- `limit` and `offset` are non-negative integers.
+- String arrays are trimmed and de-duplicated; empty entries are rejected.
+- Monitor names in a path must be percent-encoded.
+
+## Quick examples
+
+```bash
+BASE=https://status.acme.com/api/heyo-status
+
+curl "$BASE/status/summary"
+curl "$BASE/monitors/API/uptime"
+curl "$BASE/incidents?status=investigating&limit=5"
+
+curl -X POST "$BASE/admin/incidents" \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"title":"Degraded API","severity":"major","affectedMonitors":["API"],"message":"Investigating."}'
+```
+
+## Calling the handler directly
+
+The HTTP surface is available without a framework, which is what the tests
+and the CLI dev server use:
+
+```ts
+const response = await statusPage.handler(
+  new Request("https://status.acme.com/api/heyo-status/status"),
+);
+```
+
+Router-relative paths are passed through unchanged, so
+`new Request("http://localhost/status")` works too.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="code"
+    name="Status endpoints"
+    src="https://heyo.sh/heyo-status/http-api/status"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Admin endpoints"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Admin API"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+</RelatedTopics>

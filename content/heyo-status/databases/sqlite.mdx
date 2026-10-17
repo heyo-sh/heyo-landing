@@ -1,0 +1,120 @@
+---
+title: SQLite
+description: Embedded SQLite for local development and self-hosted deployments.
+---
+
+# SQLite
+
+The embedded adapter is the default for local development and for anything
+self-hosted on Bun or Node with a writable disk. It applies the bundled
+migrations on construction, so there is no separate setup step.
+
+```ts title="heyo-status.database.ts"
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const database = sqlite("status.sqlite");
+```
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+
+import { database } from "./heyo-status.database";
+
+export const statusPage = heyoStatus({ database, title: "Acme Status" });
+```
+
+## Driver selection
+
+`sqlite()` picks a driver for the runtime it finds:
+
+| Runtime                                              | Driver                                |
+| ---------------------------------------------------- | ------------------------------------- |
+| Bun, or an explicit `client`                          | `bun:sqlite` through Drizzle          |
+| Node (`next start`, `react-router-serve`, Astro node) | `node:sqlite`                         |
+
+Both are resolved lazily through `createRequire`, never a static import, so a
+bundler cannot hoist `bun:sqlite` into a build that will run on Node — or
+into a Workers bundle, where neither exists.
+
+## Options
+
+```ts
+sqlite("status.sqlite");
+sqlite({ file: "/var/lib/acme/status.sqlite" });
+sqlite({ file: ":memory:" });
+sqlite({ client: new Database("status.sqlite"), migrate: false });
+```
+
+<Properties>
+  <Property name="file" type="string">
+    Defaults to `"status.sqlite"`, relative to the process working directory.
+    Use an absolute path in production.
+  </Property>
+  <Property name="client" type="Database">
+    An existing `bun:sqlite` client when you want to own its lifecycle.
+    Cannot be combined with `file`.
+  </Property>
+  <Property name="migrate" type="boolean">
+    Defaults to `true`. Applies the bundled migrations on construction.
+  </Property>
+</Properties>
+
+`:memory:` is ideal for tests: each instance starts migrated and empty, and
+disappears with the process.
+
+## Extra methods
+
+Beyond the shared adapter contract, the SQLite adapter exposes:
+
+```ts
+const results = await database.listResults({
+  names: ["API"],
+  from: new Date("2026-01-01"),
+  to: new Date("2026-02-01"),
+  limit: 500,
+});
+
+database.close();
+```
+
+`listResults()` reads raw rows — useful for exports and ad-hoc analysis —
+and `close()` releases the connection in a test teardown.
+
+## Operational notes
+
+- The file must live on a **writable, persistent** disk. Serverless
+  filesystems are ephemeral or read-only, which is why neither Vercel nor
+  Cloudflare offers SQLite in the generator matrix.
+- Back it up like any SQLite database: copy the file while the process is
+  idle, or use `sqlite3 .backup`.
+- One process should own the file. A single container or VM running the
+  framework server plus the scheduler is the intended shape.
+- `heyo-status db migrate` reports that the embedded migrations are applied
+  automatically; there is nothing further to run.
+
+## Where it fits
+
+| Deployment            | SQLite  | Alternative           |
+| --------------------- | ------- | --------------------- |
+| Local development     | yes     | —                     |
+| Bun or Node container | yes     | PostgreSQL            |
+| Vercel                | no      | PostgreSQL            |
+| Cloudflare Workers    | no      | D1                    |
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="folder"
+    name="Schema and migrations"
+    src="https://heyo.sh/heyo-status/databases/schema-and-migrations"
+  />
+  <RelatedTopic
+    icon="globe"
+    name="Self-hosting"
+    src="https://heyo.sh/heyo-status/deploying/self-hosting"
+  />
+  <RelatedTopic
+    icon="code"
+    name="PostgreSQL"
+    src="https://heyo.sh/heyo-status/databases/postgres"
+  />
+</RelatedTopics>

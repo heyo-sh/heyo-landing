@@ -1,17 +1,16 @@
 import { heyoDocs } from "@heyo-sh/heyo-docs/config";
 
+import { docsAi } from "./docs-ai.config.ts";
+
 export default heyoDocs({
   siteUrl: "https://heyo.sh/heyo-code-audit",
   title: "Heyo Code Audit",
   description: "Verified AI code reviews for GitHub pull requests.",
   content: "content/heyo-code-audit",
   theme: "heyo",
+  ai: docsAi,
   navigation: [
     { label: "Readme", href: "https://heyo.sh" },
-    {
-      label: "Marketplace",
-      href: "https://github.com/marketplace/actions/heyo-code-audit",
-    },
     { label: "GitHub", href: "https://github.com/heyo-sh/heyo-code-audit" },
   ],
   groups: [

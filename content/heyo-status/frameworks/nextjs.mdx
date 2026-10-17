@@ -1,0 +1,192 @@
+---
+title: Next.js
+description: Create a Next.js status page with Heyo Status or integrate the App Router into an existing app.
+---
+
+# Next.js
+
+For a new status page, use `create-heyo-status`. The Next.js starter supplies a
+live page, API route, database adapter and local check scheduler. Choose a
+Cloudflare or Vercel deployment overlay to add platform cron jobs. Unlike
+static documentation, status snapshots must be rendered on every request.
+
+## Recommended: create a project
+
+Pass `next` to select the template without a prompt. Omit flags to choose the
+framework, deployment, database and theme interactively.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template next
+cd my-status-page
+bun dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template next
+cd my-status-page
+npm run dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template next
+cd my-status-page
+pnpm dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template next
+cd my-status-page
+yarn dev`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The starter installs the package in the **project**, not globally. To run
+`heyo-status check run` directly in your terminal, install the CLI globally
+(Bun 1.4.3+ required), then run it from the generated project's root:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`# Modern Yarn has no global install; use Bun for the CLI.
+bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+```bash
+cd my-status-page
+# SQLite or Vercel/PostgreSQL only; Cloudflare/D1 uses Worker cron triggers.
+heyo-status check run
+```
+
+If you skipped dependency installation in the creator, install the project's
+dependencies too — the Next.js adapter needs them. Replace the example
+monitors in `heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev`
+runs the local scheduler and `bun run check` runs a check without needing the
+global CLI. On Cloudflare/D1, `bun dev` runs the Worker and cron triggers
+schedule checks instead (no `check` script).
+
+## Manual, minimal integration
+
+Use this path when the status page must live inside an existing Next.js App
+Router application. It covers the live page and API; you still need a database
+with persistent storage and a production scheduler. The generated project is
+preferable when you need the complete deployment setup.
+
+### 1. Install and configure
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add -g @heyo-sh/heyo-status
+bun add @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install -g @heyo-sh/heyo-status
+npm install @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add -g @heyo-sh/heyo-status
+pnpm add @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`# Modern Yarn has no global install; use Bun for the CLI.
+bun add -g @heyo-sh/heyo-status
+yarn add @heyo-sh/heyo-status`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+Install from the project root. The first command exposes `heyo-status` in
+your shell (ensure the global bin directory is on `PATH`); the second adds the
+Next.js adapter and config to the app. The CLI needs Bun 1.4.3+ regardless of
+package manager.
+
+Create `heyo-status.config.ts` at the project root. This SQLite example needs
+a persistent filesystem; for Vercel use PostgreSQL, and for Cloudflare use D1
+and the generated Worker overlay.
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+  title: "Acme Status",
+  monitors: [{ name: "Website", type: "http", url: "https://acme.com" }],
+});
+
+export default statusPage;
+```
+
+From the project root, run `heyo-status check run`. The global CLI loads
+that config directly; it needs database access but no running Next.js server.
+See [CLI commands](https://heyo.sh/heyo-status/cli) for more. For
+Cloudflare/D1, use Worker cron triggers rather than a shell without the D1
+binding.
+
+### 2. Mount the API
+
+Mount the catch-all handler at the default `basePath`, `/api/heyo-status`. A
+dynamic import keeps embedded SQLite out of Next's build-time static analysis.
+
+```ts title="app/api/heyo-status/[...path]/route.ts"
+import { statusHandler } from "@heyo-sh/heyo-status/next";
+
+async function handle(method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", request: Request) {
+  const { statusPage } = await import("../../../../heyo-status.config");
+  return statusHandler(statusPage)[method](request);
+}
+
+export const GET = (request: Request) => handle("GET", request);
+export const POST = (request: Request) => handle("POST", request);
+export const PATCH = (request: Request) => handle("PATCH", request);
+export const PUT = (request: Request) => handle("PUT", request);
+export const DELETE = (request: Request) => handle("DELETE", request);
+```
+
+### 3. Render a fresh snapshot
+
+Import the theme stylesheet in `app/layout.tsx`. Render the head bootstrap
+script there as in the generated layout when using light/dark mode.
+
+```tsx title="app/layout.tsx"
+import "@heyo-sh/heyo-status/theme/status.css";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <html lang="en"><body>{children}</body></html>;
+}
+```
+
+```tsx title="app/page.tsx"
+import { StatusPage } from "@heyo-sh/heyo-status/ui";
+
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  const { statusPage } = await import("../heyo-status.config");
+  const snapshot = await statusPage.api.getSnapshot();
+  return <StatusPage snapshot={snapshot} theme={statusPage.theme} title={statusPage.title} />;
+}
+```
+
+Pass `branding`, `colors`, `mode`, `basePath`, `metrics` and subscriber settings
+as well if configured. `force-dynamic` is essential: without it, Next.js can
+serve a snapshot from build time instead of the latest checks.
+
+### 4. Schedule checks
+
+`statusPage.cron` exposes `runChecks`, `summarize` and `cleanup`. The manual
+integration needs a scheduler to call them; a route alone does not run checks.
+For a production deployment, use the generated [Vercel cron
+routes](https://heyo.sh/heyo-status/deploying/vercel) or [Cloudflare Worker
+triggers](https://heyo.sh/heyo-status/deploying/cloudflare). On your own server,
+run [one scheduler](https://heyo.sh/heyo-status/deploying/self-hosting).
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="cursor" name="Configure monitors" src="https://heyo.sh/heyo-status/manage-status-page/monitors" />
+  <RelatedTopic icon="globe" name="Deploy to Vercel" src="https://heyo.sh/heyo-status/deploying/vercel" />
+</RelatedTopics>

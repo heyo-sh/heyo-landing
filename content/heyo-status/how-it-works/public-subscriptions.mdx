@@ -1,0 +1,160 @@
+---
+title: Public subscriptions
+description: Double opt-in, idempotency, unsubscribing and the protections around visitor-supplied destinations.
+---
+
+# Public subscriptions
+
+A subscription endpoint is an unauthenticated write that causes outbound
+traffic. Everything on this page exists because of that one sentence.
+
+## Creating a subscription
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/subscribers \
+  -H "content-type: application/json" \
+  -d '{"type":"email","target":"person@example.com"}'
+```
+
+<Steps>
+  <Step title="Validate">
+    The method must be enabled in `subscribers.methods`. Email targets must
+    look like an address; webhook targets must be HTTP(S), publicly routable
+    and free of credentials.
+  </Step>
+
+  <Step title="Deduplicate">
+    A subscription is identified by its destination. If one already exists and
+    is confirmed — or is pending and younger than 15 minutes — the request
+    returns the same public response without sending anything. Repeating the
+    request is therefore harmless.
+  </Step>
+
+  <Step title="Issue a token">
+    When confirmation is required, a 32-byte random token is generated with
+    `crypto.getRandomValues` and stored with the pending row.
+  </Step>
+
+  <Step title="Send">
+    Confirmation mail goes out through the first configured email channel. If
+    sending fails, the pending row is deleted again so the address is not left
+    stranded, and the API answers `503`.
+  </Step>
+</Steps>
+
+Responses never reveal whether a destination was already subscribed:
+
+| Case                                  | Response                       |
+| ------------------------------------- | ------------------------------ |
+| Confirmation required                 | `202 { "status": "pending" }`  |
+| Confirmation not required             | `201 { "status": "subscribed" }` |
+| Already subscribed (either state)     | the same response as above     |
+
+Anyone can submit somebody else's address, so the subscription id — which is
+an unsubscribe capability — and the confirmation state are never disclosed.
+
+## Confirming
+
+```
+GET /api/heyo-status/subscribers/confirm?token=<token>
+```
+
+The token is single use. A valid one returns the subscriber record; an invalid
+or already-consumed one returns `404`. The response carries
+`Cache-Control: no-store` and `Referrer-Policy: no-referrer` so the token is
+not leaked to a cache or a third-party page.
+
+## Unsubscribing
+
+Two routes, because a mail client cannot issue a `DELETE`:
+
+```
+GET  /api/heyo-status/subscribers/:id/unsubscribe   → a confirm page
+POST /api/heyo-status/subscribers/:id/unsubscribe   → performs the removal
+DELETE /api/heyo-status/subscribers/:id             → programmatic removal
+```
+
+The link in an email opens a small, self-contained HTML page with a confirm
+button. A link that unsubscribed on `GET` would fire whenever a mail scanner
+prefetched it, so the destructive step is always a `POST`. The page is
+`noindex`, `no-store`, and depends on none of the application's assets — it
+still works if the rest of the deployment is broken, which is exactly when
+somebody is trying to leave.
+
+## Concurrency
+
+Two simultaneous requests for the same destination both pass the duplicate
+check. The database's unique index settles it: the losing insert is caught,
+the winner is looked up, and the loser returns the winner's public response
+rather than an error the visitor cannot act on.
+
+## Protecting against request forgery
+
+Webhook targets go through `isPubliclyRoutableHost()` before they are ever
+stored. Rejected:
+
+| Category                 | Examples                                             |
+| ------------------------ | ---------------------------------------------------- |
+| Loopback                 | `127.0.0.1`, `::1`, `localhost`, `*.localhost`        |
+| Private ranges           | `10/8`, `172.16/12`, `192.168/16`, `fc00::/7`         |
+| Link-local and metadata  | `169.254.0.0/16` (incl. `169.254.169.254`), `fe80::/10` |
+| Carrier-grade NAT        | `100.64.0.0/10`                                       |
+| Multicast and reserved   | `224.0.0.0/4`, `ff00::/8`, `0.0.0.0`                  |
+| IPv4-mapped IPv6         | `::ffff:127.0.0.1` in either notation                 |
+| Reserved suffixes        | `.local`, `.internal`, `.home.arpa`, `.localdomain`   |
+| URL credentials          | `https://user:pass@host`                              |
+
+<Callout type="warning" title="Literal filtering is not a sandbox">
+  A hostname that resolves to a private address today can resolve somewhere
+  else tomorrow; URL validation cannot see through DNS or prevent rebinding.
+  If you enable visitor-supplied webhooks, restrict outbound network access at
+  the platform level too.
+</Callout>
+
+## What subscribers receive
+
+Only incident and maintenance events. Monitor-level signals stay internal:
+
+| Event                   | Delivered to subscribers |
+| ----------------------- | ------------------------ |
+| `incident.*`            | yes                      |
+| `maintenance.*`         | yes                      |
+| `monitor.down`          | no                       |
+| `monitor.recovered`     | no                       |
+| `ssl.expiring`          | no                       |
+
+A subscription may filter by monitor. `monitors: null` or an empty list means
+everything; otherwise only events naming one of those monitors are sent, and
+global events — an incident with no affected monitors — always go to everyone.
+
+Email bodies include a **View status page** link and an unsubscribe link,
+both built from `siteUrl`. Without `siteUrl` configured there is no absolute
+base to build them from, so neither link is included — which is one more
+reason to set it before enabling subscriptions. Webhook deliveries use the
+same JSON payload shape as configured webhook channels.
+
+## Failure isolation
+
+- A failure to list subscribers is swallowed: an incident update must not fail
+  because the subscriber table is unavailable.
+- Each destination is delivered independently; one failure does not stop the
+  rest.
+- Every delivery, successful or not, is written to the notification log.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Enabling subscriptions"
+    src="https://heyo.sh/heyo-status/manage-status-page/subscribers"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Subscriber endpoints"
+    src="https://heyo.sh/heyo-status/http-api/subscribers"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Subscribers"
+    src="https://heyo.sh/heyo-status/manage-status-page/subscribers"
+  />
+</RelatedTopics>

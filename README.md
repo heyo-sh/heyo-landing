@@ -35,6 +35,30 @@ design system inside the same document. Two files make that safe:
   portals to `document.body`. Add a preview with
   `<CodeSnippet previewClassName="heyo-ui">`.
 
+## Landing page figures
+
+`/` uses Hairline 0.5.0 for its interactive SVG illustrations. The hero uses
+`Settle` (the whole hero panel activates it on hover); the community section
+uses the landing page's original flickering contribution grid. The
+"Open source, always" uses one custom figure, `public/hairline/conduit.js`,
+mirrored to frame the text. Its standalone preview, `hairline-conduit.html`,
+includes intensity, theme and play controls. The landing page mounts it through
+`public/hairline/figure-embed.html`. Earlier `folio.js` and `mixer.js` designs
+remain as alternatives with standalone previews. The remaining figures are
+selected from `@lucasmarkes/hairline/react`.
+
+The previous hero is kept as an alternative built with the
+[hairline-create skill](https://hairline.lucasmarkes.com/skill):
+`public/hairline/workbench.js` is its editable source,
+`public/hairline/hairline-workbench.html` its standalone preview (with intensity,
+theme and play controls), and `public/hairline/workbench-embed.html` its compact
+embed. The unchanged upstream `kernel.js` and library are MIT licensed; see
+`public/hairline/LICENSE`.
+
+To regenerate a standalone preview after editing its figure's `.js` file, use
+the upstream skill's `build.mjs`, `validate.mjs` and `look.mjs` scripts. None of
+those scripts or the upstream kernel/bench should be edited locally.
+
 ## Local development
 
 ```bash

@@ -1,0 +1,191 @@
+---
+title: Admin endpoints
+description: Authentication, running checks on demand and reading the notification log.
+---
+
+# Admin endpoints
+
+Every mutation lives behind one authenticated prefix, so a public status page
+can never be edited by its visitors.
+
+## Authentication
+
+```http
+Authorization: Bearer <admin-token>
+```
+
+The token comes only from `adminToken` in the configuration. There is no
+environment-variable fallback; omitting it keeps the management API closed.
+
+| Situation               | Response                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| No token configured     | `503 { "error": "The management API is disabled. Set adminToken in heyo-status.config.ts." }` |
+| Missing or wrong header | `401 { "error": "Unauthorized." }`                                            |
+
+Comparison is constant time, and the header is matched case-insensitively
+against `Bearer <token>`.
+
+<Callout type="warning" title="Closed by default is the point">
+  A freshly deployed status page is not writable by anyone. Setting the token
+  is a deliberate act, not something you can forget into being insecure.
+</Callout>
+
+```ts
+heyoStatus({
+  // …
+  adminToken: "your-private-token", // do not commit production credentials
+});
+```
+
+Generate one with `openssl rand -hex 32` and provide it to the config from a
+private secret source. Do not commit production credentials; there is no token
+list to maintain. In the shell examples below, `$ADMIN_TOKEN` means the same
+configured token; it is not an environment variable read by Heyo Status.
+
+## `POST /admin/checks/run`
+
+Runs every configured monitor once, stores the results, reconciles automatic
+incidents and dispatches notifications. It is the same code path as the
+scheduler.
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/checks/run \
+  -H "authorization: Bearer $ADMIN_TOKEN"
+```
+
+```json
+[
+  {
+    "name": "Website",
+    "type": "http",
+    "status": true,
+    "message": "HTTP 200",
+    "latencyMs": 96,
+    "checkedAt": "2026-01-01T12:00:00.000Z"
+  }
+]
+```
+
+| Response | When                                                                |
+| -------- | -------------------------------------------------------------------- |
+| `200`    | Results array.                                                       |
+| `501`    | `{ "error": "Manual checks require the status-page runtime." }` — the app was built with `createStatusApp()` without a `runChecks` option. |
+
+Useful as an external trigger for a platform without cron, as a deploy-time
+warm-up so the page is never empty, and when verifying a monitor change.
+
+<Callout type="info" title="Only checks have an HTTP trigger">
+  Summarize and cleanup have no route. Run them with `heyo-status`, with
+  `scheduleStatusPage()`, or through your platform's cron integration.
+</Callout>
+
+## `GET /admin/notifications/log`
+
+Every delivery attempt, newest first.
+
+```bash
+curl -H "authorization: Bearer $ADMIN_TOKEN" \
+  "https://status.acme.com/api/heyo-status/admin/notifications/log?status=failed&limit=20"
+```
+
+| Query       | Type                                   | Notes            |
+| ----------- | -------------------------------------- | ---------------- |
+| `channelId` | string                                 | exact match      |
+| `eventType` | any event name                         | comma-separated  |
+| `status`    | `sent`, `failed`                       | comma-separated  |
+| `limit`     | non-negative integer                   |                  |
+| `offset`    | non-negative integer                   |                  |
+
+```json
+[
+  {
+    "id": "ntf_6ac204",
+    "channelId": "slack",
+    "channelType": "slack",
+    "eventType": "monitor.down",
+    "status": "failed",
+    "attempts": 1,
+    "error": "Slack delivery failed with HTTP 404: no_service",
+    "monitorName": "API",
+    "incidentId": null,
+    "maintenanceId": null,
+    "createdAt": "2026-01-01T10:02:00.000Z"
+  }
+]
+```
+
+The log stores no payload, no webhook URL, no credentials and no recipient.
+It exists to debug delivery, not to replay it.
+
+## Incident and maintenance management
+
+Documented in full in the [incident endpoints](https://heyo.sh/heyo-status/http-api/incidents)
+and [maintenance endpoints](https://heyo.sh/heyo-status/http-api/maintenance):
+
+| Method | Path                           |
+| ------ | ------------------------------ |
+| POST   | `/admin/incidents`             |
+| POST   | `/admin/incidents/:id/updates` |
+| PATCH  | `/admin/incidents/:id`         |
+| DELETE | `/admin/incidents/:id`         |
+| POST   | `/admin/maintenance`           |
+| PATCH  | `/admin/maintenance/:id`       |
+| DELETE | `/admin/maintenance/:id`       |
+
+## Scripting it
+
+```ts title="scripts/open-incident.ts"
+const base = "https://status.acme.com/api/heyo-status";
+const adminToken = "your-private-token"; // load from a private source
+const headers = {
+  authorization: `Bearer ${adminToken}`,
+  "content-type": "application/json",
+};
+
+const incident = await fetch(`${base}/admin/incidents`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    title: "Deploy rollback in progress",
+    severity: "major",
+    affectedMonitors: ["API"],
+    message: "Rolling back the 14:02 deploy.",
+  }),
+}).then((response) => response.json());
+
+await fetch(`${base}/admin/incidents/${incident.id}/updates`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ status: "resolved", message: "Rollback complete." }),
+});
+```
+
+For a local or CI context, the CLI does the same without a token or a
+network round trip — it talks to the database directly:
+
+```bash
+heyo-status incident create --title "…" --severity major --monitors API --message "…"
+```
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="code"
+    name="Incident endpoints"
+    src="https://heyo.sh/heyo-status/http-api/incidents"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Maintenance endpoints"
+    src="https://heyo.sh/heyo-status/http-api/maintenance"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Configuration"
+    src="https://heyo.sh/heyo-status/manage-status-page/configuration"
+  />
+  <RelatedTopic
+    icon="check"
+    name="CLI commands"
+    src="https://heyo.sh/heyo-status/cli"
+  />
+</RelatedTopics>

@@ -1,11 +1,19 @@
 import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
-import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
 
 export const streamTimeout = 5_000;
 
-/** Web Streams entry required by Cloudflare Workers and build prerendering. */
+/**
+ * Web Streams entry required by Cloudflare Workers and build prerendering.
+ *
+ * The response is awaited to completion rather than streamed: the Vite adapter
+ * imports MDX eagerly, so a streamed shell would ship Suspense fallbacks into
+ * prerendered HTML. `renderToString` cannot replace this — React Router puts
+ * its hydration data behind a Suspense boundary, and a string render aborts it,
+ * leaving the client waiting on a stream that never arrives (the page renders
+ * but never hydrates).
+ */
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -32,13 +40,7 @@ export default async function handleRequest(
     },
   );
   shellRendered = true;
-
-  if (
-    (request.headers.get("user-agent") &&
-      isbot(request.headers.get("user-agent")!)) ||
-    routerContext.isSpaMode
-  )
-    await body.allReady;
+  await body.allReady;
 
   responseHeaders.set("Content-Type", "text/html");
   return new Response(body, {

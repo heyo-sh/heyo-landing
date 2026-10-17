@@ -1,0 +1,181 @@
+---
+title: Schema and migrations
+description: The tables, the migration list, the adapter contract and how to write your own.
+---
+
+# Schema and migrations
+
+Core code never talks to a driver. It talks to `StatusDatabaseAdapter`, and
+SQLite, D1 and PostgreSQL are three implementations of that one interface.
+Anything matching it — an ORM you already use, a hosted API, an in-memory
+fake — can be passed as `database`.
+
+## Tables
+
+| Table                     | Holds                                                              |
+| ------------------------- | ------------------------------------------------------------------ |
+| `status_results`          | One row per check: name, type, status, latency, message, timestamp. |
+| `status_daily_summaries`  | One row per monitor-day: totals, down checks, down minutes, latency totals and extremes, latest state. |
+| `incidents`               | Title, status, severity, affected monitors, `auto`, timestamps.     |
+| `incident_updates`        | Timeline entries belonging to an incident.                          |
+| `maintenance_windows`     | Title, description, affected monitors, scheduled range, status.     |
+| `notification_log`        | Delivery attempts: channel, event, status, attempts, error.         |
+| `subscribers`             | Public subscriptions, with a unique index on the destination.       |
+| `__heyo_status_migrations`| Applied migration ids.                                              |
+
+```sql
+CREATE TABLE IF NOT EXISTS status_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  status INTEGER NOT NULL,
+  latency_ms INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS status_daily_summaries (
+  name TEXT NOT NULL,
+  day_start_at INTEGER NOT NULL,
+  total_checks INTEGER NOT NULL,
+  down_checks INTEGER NOT NULL,
+  down_minutes INTEGER NOT NULL,
+  total_latency_ms INTEGER NOT NULL DEFAULT 0,
+  min_latency_ms INTEGER,
+  max_latency_ms INTEGER,
+  latest_status INTEGER NOT NULL,
+  latest_checked_at INTEGER NOT NULL,
+  PRIMARY KEY (name, day_start_at)
+);
+```
+
+Timestamps are epoch milliseconds everywhere, which is what makes history
+portable between SQLite, D1 and PostgreSQL.
+
+## Migration list
+
+| Id                            | Adds                                       |
+| ----------------------------- | ------------------------------------------ |
+| `0000_initial`                | `status_results`, `status_daily_summaries` |
+| `0001_incidents_maintenance`  | `incidents`, `incident_updates`, `maintenance_windows` |
+| `0002_notification_log`       | `notification_log`                         |
+| `0003_subscribers`            | `subscribers`                              |
+| `0004_subscriber_uniqueness`  | the unique index on the subscriber destination |
+
+Each adapter records applied ids in `__heyo_status_migrations`, so applying
+them twice is a no-op.
+
+## Applying them
+
+| Adapter        | How                                                                 |
+| -------------- | -------------------------------------------------------------------- |
+| SQLite         | Automatic on construction, unless `migrate: false`.                 |
+| D1             | `wrangler d1 migrations apply <name> --local\|--remote`, or `await database.migrate()`. |
+| PostgreSQL     | `heyo-status db migrate`, or `await database.migrate()`.            |
+
+```bash
+heyo-status db migrate
+```
+
+The command calls `migrate()` when the adapter exposes it, and otherwise
+reports that embedded migrations are already applied. Production request
+handlers never migrate on their own.
+
+## The adapter contract
+
+```ts
+interface StatusDatabaseAdapter {
+  insertCheckResults(results: CheckResult[]): Promise<void>;
+  getSnapshot(monitors: string[], displayDays: number, now?: Date): Promise<SnapshotData>;
+  summarizeHistory(before: Date): Promise<SummarizeResult>;
+  cleanup(retentionDays: number, now?: Date): Promise<void>;
+
+  createIncident(incident: NewIncident): Promise<Incident>;
+  updateIncident(id: string, update: IncidentUpdate): Promise<Incident>;
+  resolveIncident(id: string, message: string): Promise<Incident>;
+  listIncidents(options: IncidentListOptions): Promise<Incident[]>;
+  getIncident(id: string): Promise<Incident | null>;
+  deleteIncident(id: string): Promise<void>;
+
+  createMaintenance(window: NewMaintenance): Promise<Maintenance>;
+  listUpcoming(now?: Date): Promise<Maintenance[]>;
+  getMaintenance(id: string): Promise<Maintenance | null>;
+  updateMaintenance(id: string, update: MaintenanceUpdate): Promise<Maintenance>;
+  deleteMaintenance(id: string): Promise<void>;
+
+  createSubscriber(subscriber: NewSubscriber): Promise<Subscriber>;
+  confirmSubscriber(confirmToken: string): Promise<Subscriber | null>;
+  listSubscribers(options?: SubscriberListOptions): Promise<Subscriber[]>;
+  deleteSubscriber(id: string): Promise<boolean>;
+
+  recordNotification(notification: NewNotificationLog): Promise<NotificationLog>;
+  listNotificationLog(options?: NotificationLogOptions): Promise<NotificationLog[]>;
+}
+```
+
+Configuration validation checks that all 21 methods exist before accepting a
+`database`, so a partial implementation fails at startup rather than on the
+first incident.
+
+Contracts worth honouring when implementing your own:
+
+- `listUpcoming()` must refresh `scheduled` → `in-progress` → `completed`
+  against `now` before returning, and must not return completed windows.
+- `deleteSubscriber()` returns `false` for an unknown id rather than throwing.
+- `confirmSubscriber()` consumes the token; a second call must return `null`.
+- `summarizeHistory()` must be idempotent — upsert the summary, then delete
+  the raw rows it consumed.
+- `getSnapshot()` returns both raw results and daily summaries for the
+  window; snapshot construction merges them.
+
+## Deferring construction
+
+```ts
+import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
+
+export const database = lazyStatusDatabase(async () => {
+  const client = await connectSomehow();
+  return myAdapter(client);
+});
+```
+
+Use it whenever the adapter needs a per-request binding or a deployment
+secret. The resolver runs at most once, on the first query, and a failure is
+not cached — a recovered connection or newly available binding can work on
+the next request.
+
+The wrapper also forwards `migrate()` to the resolved adapter, which is how
+`heyo-status db migrate` works with D1 and PostgreSQL overlays.
+
+## Drizzle schema
+
+The Drizzle table definitions are exported for direct queries against the
+same database:
+
+```ts
+import {
+  notificationLog,
+  statusDailySummaries,
+  statusResults,
+  statusSchema,
+  subscribers,
+} from "@heyo-sh/heyo-status/db";
+```
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="How history is compacted"
+    src="https://heyo.sh/heyo-status/how-it-works/uptime-and-history"
+  />
+  <RelatedTopic
+    icon="folder"
+    name="SQLite"
+    src="https://heyo.sh/heyo-status/databases/sqlite"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Configuration"
+    src="https://heyo.sh/heyo-status/manage-status-page/configuration"
+  />
+</RelatedTopics>

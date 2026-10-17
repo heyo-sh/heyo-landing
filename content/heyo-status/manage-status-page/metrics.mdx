@@ -1,0 +1,161 @@
+---
+title: Metrics and badges
+description: Control what the page shows, and expose badges and Prometheus metrics.
+---
+
+# Metrics and badges
+
+`metrics` does two jobs: it decides which numbers the UI renders, and it
+enables the two machine-readable surfaces — SVG badges and a Prometheus
+exposition.
+
+```ts
+metrics: {
+  showLatency: true,
+  showLatencyChart: true,
+  showUptimePercent: true,
+  uptimePeriods: ["24h", "7d", "30d", "90d"],
+  badges: true,
+  prometheus: false,
+},
+```
+
+<Properties>
+  <Property name="showLatency" type="boolean">
+    Defaults to `true`. Shows the most recent latency on monitor cards.
+  </Property>
+  <Property name="showLatencyChart" type="boolean">
+    Defaults to `true`. Renders the latency sparkline.
+  </Property>
+  <Property name="showUptimePercent" type="boolean">
+    Defaults to `true`. Shows the uptime meters.
+  </Property>
+  <Property name="uptimePeriods" type='("24h" | "7d" | "30d" | "90d")[]'>
+    Defaults to all four. Which meters appear, in order. No duplicates.
+  </Property>
+  <Property name="badges" type="boolean">
+    Defaults to `true`. Serves `/badge/:name.svg`.
+  </Property>
+  <Property name="prometheus" type="boolean">
+    Defaults to `false`. Serves `/metrics` when enabled.
+  </Property>
+</Properties>
+
+The first four options are presentation only — the data is always computed and
+always available over the API. They are forwarded to the UI through the
+`metrics` prop:
+
+```tsx
+<StatusPage snapshot={snapshot} metrics={statusPage.metrics} />
+```
+
+<Callout type="info" title="Periods are bounded by displayDays">
+  A `90d` meter can only report what exists. With
+  <code>checks.displayDays: 30</code> the 90-day value covers 30 days of
+  history, because nothing older is read.
+</Callout>
+
+## Badges
+
+```
+GET /api/heyo-status/badge/API.svg
+GET /api/heyo-status/badge/overall.svg?metric=status
+GET /api/heyo-status/badge/API.svg?metric=uptime&period=30d
+GET /api/heyo-status/badge/API.svg?metric=latency&label=Latency
+```
+
+| Query     | Values                           | Default                       |
+| --------- | -------------------------------- | ----------------------------- |
+| `metric`  | `status`, `uptime`, `latency`    | `status`                      |
+| `period`  | `24h`, `7d`, `30d`, `90d`        | `24h` (uptime only)           |
+| `label`   | any string                       | the monitor name, or `status` |
+
+The reserved name `overall` renders the page-level state. Percent-encode names
+containing spaces: `/badge/Web%20App.svg`.
+
+Badges are SVG, served with `cache-control: public, max-age=60`, which keeps
+an embedded badge fresh without turning every README view into a database
+read. Colours follow the value: green above 99.9% uptime or healthy, amber
+above 95% or degraded, red below, grey when there is no data.
+
+```md
+![API](https://status.acme.com/api/heyo-status/badge/API.svg)
+![Uptime](https://status.acme.com/api/heyo-status/badge/API.svg?metric=uptime&period=30d)
+```
+
+With `badges: false`, the route answers `404`.
+
+## Prometheus
+
+Set `prometheus: true` to register `/metrics`, served as
+`text/plain; version=0.0.4`.
+
+| Metric                                   | Labels              | Meaning                                       |
+| ---------------------------------------- | ------------------- | --------------------------------------------- |
+| `heyo_status_up`                         | `monitor`, `type`, `group` | `1` operational, `0` failing.          |
+| `heyo_status_latency_milliseconds`       | `monitor`, `type`, `group` | Latency of the most recent check.      |
+| `heyo_status_uptime_ratio`               | `monitor`, `period` | Uptime per period, `0`–`1`.                   |
+| `heyo_status_last_check_timestamp_seconds` | `monitor`         | Unix time of the last check.                  |
+| `heyo_status_overall`                    | `state`             | One-hot overall state.                        |
+| `heyo_status_monitors`                   | —                   | Number of public monitors.                    |
+| `heyo_status_active_incidents`           | —                   | Count of active incidents.                    |
+| `heyo_status_scheduled_maintenances`     | —                   | Count of scheduled or running windows.        |
+| `heyo_status_snapshot_timestamp_seconds` | —                   | When the snapshot was generated.              |
+
+```yaml title="prometheus.yml"
+scrape_configs:
+  - job_name: heyo-status
+    metrics_path: /api/heyo-status/metrics
+    scheme: https
+    static_configs:
+      - targets: ["status.acme.com"]
+```
+
+Only aggregate, already-public data is exposed: no incident text, no monitor
+targets, and nothing from a `private` monitor.
+
+<Callout type="warning" title="/metrics is public">
+  The exposition is not behind the admin token. If a scrape endpoint should
+  not be world-readable, keep <code>prometheus: false</code> and read the same
+  numbers from <code>/status</code> behind your own gateway, or restrict the
+  path at the edge.
+</Callout>
+
+Generate the same exposition yourself from any snapshot:
+
+```ts
+import { createPrometheusMetrics, prometheusContentType } from "@heyo-sh/heyo-status/metrics";
+
+const body = createPrometheusMetrics(await statusPage.api.getSnapshot());
+return new Response(body, { headers: { "content-type": prometheusContentType } });
+```
+
+## Building badges programmatically
+
+```ts
+import { createMonitorBadge, createOverallBadge } from "@heyo-sh/heyo-status/badge";
+
+const snapshot = await statusPage.api.getSnapshot();
+const monitor = snapshot.monitors.find((candidate) => candidate.name === "API")!;
+
+createMonitorBadge(monitor, { metric: "uptime", period: "30d", label: "API uptime" });
+createOverallBadge(snapshot, { label: "Acme" });
+```
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="code"
+    name="Badge, feed and metric endpoints"
+    src="https://heyo.sh/heyo-status/http-api/badges-feeds-metrics"
+  />
+  <RelatedTopic
+    icon="lightbulb"
+    name="How uptime is calculated"
+    src="https://heyo.sh/heyo-status/how-it-works/uptime-and-history"
+  />
+  <RelatedTopic
+    icon="sun"
+    name="Themes"
+    src="https://heyo.sh/heyo-status/manage-status-page/themes"
+  />
+</RelatedTopics>

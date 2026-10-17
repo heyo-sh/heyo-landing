@@ -1,0 +1,162 @@
+---
+title: Subscribers
+description: Enable public subscriptions over email, feeds and webhooks, safely.
+---
+
+# Subscribers
+
+Public subscriptions let visitors receive incident and maintenance updates.
+They are **disabled by default**, because enabling them turns a read-only page
+into something that stores visitor-supplied destinations and sends outbound
+requests on their behalf.
+
+```ts
+subscribers: {
+  enabled: true,
+  methods: ["email", "rss"],
+  requireConfirmation: true,
+},
+```
+
+<Properties>
+  <Property name="enabled" type="boolean">
+    Defaults to `false`. While false, every `/subscribers*` route answers
+    `404` and the page shows no subscribe control.
+  </Property>
+  <Property name="methods" type='("email" | "rss" | "webhook")[]'>
+    Defaults to `["email", "rss"]`. Duplicates are rejected.
+  </Property>
+  <Property name="requireConfirmation" type="boolean">
+    Defaults to `true`. Email subscriptions use double opt-in.
+  </Property>
+</Properties>
+
+## The three methods
+
+| Method    | Storage                  | Notes                                                                 |
+| --------- | ------------------------ | --------------------------------------------------------------------- |
+| `email`   | a `subscribers` row      | Needs a configured email notification channel. Double opt-in by default. |
+| `rss`     | nothing                  | A link to `/rss.xml` and `/atom.xml` in the subscribe dialog.          |
+| `webhook` | a `subscribers` row      | Visitor-supplied HTTP(S) URL. Opt-in only; see the warning below.      |
+
+RSS is not a stored subscription — it is a URL — so it adds nothing to the
+database and nothing to send.
+
+<Callout type="warning" title="Visitor-supplied webhooks need a network policy">
+  Enabling <code>"webhook"</code> lets anonymous visitors make your deployment
+  issue HTTP requests to a host they choose. Heyo Status rejects loopback,
+  private, link-local, carrier-grade NAT and multicast literals, credentials
+  in the URL, and reserved suffixes such as <code>.local</code> and
+  <code>.internal</code> — but URL validation cannot see through DNS. Pair it
+  with an egress policy if you enable it.
+</Callout>
+
+## Email requires an email channel
+
+Confirmation and incident mail are sent through the **first configured email
+notification channel**, reusing its transport and `from` address. Without one,
+`POST /subscribers` with `type: "email"` answers `503` and explains why.
+
+```ts
+import { email } from "@heyo-sh/heyo-status/notifications";
+
+notifications: {
+  channels: [
+    email({
+      transport: "resend",
+      apiKey: process.env.RESEND_API_KEY!,
+      from: "status@acme.com",
+      to: ["oncall@acme.com"],
+    }),
+  ],
+},
+subscribers: { enabled: true, methods: ["email", "rss"] },
+```
+
+The channel's own `to` list keeps receiving operational alerts; subscriber
+mail is addressed only to the subscription.
+
+## What subscribers receive
+
+Only public, already-published lifecycle events:
+
+- `incident.created`, `incident.updated`, `incident.resolved`
+- `maintenance.scheduled`, `maintenance.starting`, `maintenance.completed`
+
+Monitor-level events (`monitor.down`, `monitor.recovered`, `ssl.expiring`) are
+**never** sent to public subscribers — those are operational signals for your
+own channels.
+
+A subscription may optionally name monitors through the API. A subscription
+with `monitors: null` (the default) receives everything; one with a list only
+receives events affecting those monitors, and global events — an incident with
+an empty `affectedMonitors` — always go to everyone.
+
+## The subscribe dialog
+
+When `subscribers.enabled` is true and no `subscribeHref` or `onSubscribe`
+override is passed, `<StatusPage />` renders a **Subscribe** button that opens
+the bundled dialog lazily on first use:
+
+```tsx
+<StatusPage
+  snapshot={snapshot}
+  basePath={statusPage.basePath}
+  subscribersEnabled={statusPage.subscribers.enabled}
+  subscriberMethods={statusPage.subscribers.methods}
+/>
+```
+
+The dialog shows one tab per configured method and posts to
+`${basePath}/subscribers`. To send visitors to your own page instead:
+
+```tsx
+<StatusPage snapshot={snapshot} subscribersEnabled subscribeHref="/subscribe" />
+```
+
+## Endpoints
+
+| Method   | Path                            | Purpose                                                 |
+| -------- | ------------------------------- | ------------------------------------------------------- |
+| `POST`   | `/subscribers`                  | Create a subscription. `202 pending` or `201 subscribed`. |
+| `GET`    | `/subscribers/confirm?token=`   | Consume a single-use confirmation token.                 |
+| `GET`    | `/subscribers/:id/unsubscribe`  | A self-contained HTML confirm page.                      |
+| `POST`   | `/subscribers/:id/unsubscribe`  | Performs the removal from that page.                     |
+| `DELETE` | `/subscribers/:id`              | Programmatic removal.                                    |
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/subscribers \
+  -H "content-type: application/json" \
+  -d '{"type":"email","target":"person@example.com"}'
+```
+
+Full request and response details are in the
+[subscriber API reference](https://heyo.sh/heyo-status/http-api/subscribers), and
+the privacy reasoning behind the responses is in
+[How public subscriptions work](https://heyo.sh/heyo-status/how-it-works/public-subscriptions).
+
+## Operational notes
+
+- Subscriptions are identified by destination, so repeating a request is
+  idempotent and cannot mail an address twice.
+- A pending confirmation is reused for 15 minutes before a new token is issued.
+- Deliveries are isolated per destination and written to the notification log.
+- A failure to list subscribers never fails an incident update.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="Double opt-in and SSRF protections"
+    src="https://heyo.sh/heyo-status/how-it-works/public-subscriptions"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Admin API"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+  <RelatedTopic
+    icon="chat"
+    name="Email channels"
+    src="https://heyo.sh/heyo-status/manage-status-page/notifications"
+  />
+</RelatedTopics>

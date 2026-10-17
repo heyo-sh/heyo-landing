@@ -7,6 +7,7 @@ import { heyoDocs } from "@heyo-sh/heyo-docs/vite";
 
 import codeAuditConfig from "./heyo-code-audit-docs.config.ts";
 import config from "./heyo-docs-docs.config.ts";
+import statusConfig from "./heyo-status-docs.config.ts";
 import uiConfig from "./heyo-ui-docs.config.ts";
 import { scopedHeyoDocs } from "./app/lib/scoped-heyo-docs-vite.ts";
 import { platformPlugins, platformViteConfig } from "./platform.vite.ts";
@@ -71,6 +72,7 @@ export default defineConfig({
     reactRouter(),
     heyoDocs({ config }),
     scopedHeyoDocs({ config: codeAuditConfig, scope: "code-audit" }),
+    scopedHeyoDocs({ config: statusConfig, scope: "status" }),
     scopedHeyoDocs({ config: uiConfig, scope: "ui" }),
   ],
 });

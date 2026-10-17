@@ -1,0 +1,131 @@
+import { DocsApp } from "@heyo-sh/heyo-docs";
+import {
+  createDocsModel,
+  findDocsPage,
+  findOpenApiEndpoint,
+} from "@heyo-sh/heyo-docs/model";
+import { changelogGroupForPage } from "@heyo-sh/heyo-docs/navigation";
+import { docsSeoMeta } from "@heyo-sh/heyo-docs/seo/react-router";
+import { heyoTheme } from "@heyo-sh/heyo-docs/theme/heyo";
+import { useDocsTheme } from "@heyo-sh/heyo-docs/theme/provider";
+import {
+  Link,
+  redirect,
+  useLoaderData,
+  useParams,
+  type ClientLoaderFunctionArgs,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
+import { forwardRef, type ComponentPropsWithoutRef } from "react";
+
+import { docsMdxComponents } from "../components/docs-mdx-components";
+import { preloadDocsPage } from "../lib/preload-docs-page";
+import { iconSet } from "../heyo-docs-icons";
+import { config } from "virtual:heyo-docs-status-config";
+import { pages } from "virtual:heyo-docs-status-content";
+import { openApiEndpoints } from "virtual:heyo-docs-status-openapi/index";
+
+const DOCS_BASE_PATH = "/heyo-status";
+
+function pathnameFor(params: Record<string, string | undefined>): string {
+  const path = params["*"]?.replace(/^\/+|\/+$/g, "");
+  return path ? `/${path}` : "/";
+}
+
+function docsPath(href: string) {
+  if (
+    href === "/" ||
+    !href.startsWith("/") ||
+    href.startsWith("//") ||
+    href.startsWith(DOCS_BASE_PATH)
+  )
+    return href;
+
+  return `${DOCS_BASE_PATH}${href}`;
+}
+
+const RouterLink = forwardRef<HTMLAnchorElement, ComponentPropsWithoutRef<"a">>(
+  function RouterLink({ href = "/", ...props }, ref) {
+    return <Link {...props} ref={ref} to={docsPath(href)} />;
+  },
+);
+
+function model() {
+  return createDocsModel(config, pages, [], openApiEndpoints);
+}
+
+export async function loader({ params }: LoaderFunctionArgs) {
+  const pathname = pathnameFor(params);
+  if (pathname === "/") return redirect(`${DOCS_BASE_PATH}/introduction`);
+
+  const docs = model();
+  const page = findDocsPage(docs.pages, pathname);
+  const endpoint = findOpenApiEndpoint(docs.endpoints, pathname);
+  if (!page && !endpoint) throw new Response("Not Found", { status: 404 });
+  return {};
+}
+
+/** Loads the page's MDX chunk before the browser displays the new route. */
+export async function clientLoader({
+  params,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
+  const page = findDocsPage(model().pages, pathnameFor(params));
+  const [data] = await Promise.all([
+    serverLoader<Awaited<ReturnType<typeof loader>>>(),
+    preloadDocsPage(page),
+  ]);
+  return data;
+}
+
+export const meta: MetaFunction = ({ params }) => {
+  const docs = model();
+  const pathname = pathnameFor(params);
+  const page = findDocsPage(docs.pages, pathname);
+  const endpoint = findOpenApiEndpoint(docs.endpoints, pathname);
+  if (!page && !endpoint)
+    return [
+      { title: `Not found | ${config.title}` },
+      { name: "robots", content: "noindex" },
+    ];
+
+  return docsSeoMeta({
+    config,
+    pathname,
+    page,
+    endpoint,
+    navigation: docs.navigation,
+    changelogGroup: page
+      ? changelogGroupForPage(config.groups, page, docs.pages)
+      : undefined,
+  });
+};
+
+export default function StatusDocsRoute() {
+  useLoaderData<typeof loader>();
+  return <DocsShell pathname={pathnameFor(useParams())} />;
+}
+
+function DocsShell({ pathname }: { pathname: string }) {
+  const { mounted, resolvedTheme, toggleTheme } = useDocsTheme();
+
+  return (
+    <DocsApp
+      config={config}
+      iconSet={iconSet}
+      link={RouterLink}
+      mdxComponents={docsMdxComponents}
+      openApiEndpoints={openApiEndpoints}
+      pages={pages}
+      pathname={pathname}
+      theme={heyoTheme}
+      isDark={mounted ? resolvedTheme === "dark" : undefined}
+      onThemeToggle={mounted ? toggleTheme : undefined}
+    />
+  );
+}
+
+export function ErrorBoundary() {
+  return <DocsShell pathname="/__not-found" />;
+}

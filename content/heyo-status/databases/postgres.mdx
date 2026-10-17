@@ -1,0 +1,127 @@
+---
+title: PostgreSQL
+description: Use node-postgres, Neon, Supabase or Drizzle with the same portable repository.
+---
+
+# PostgreSQL
+
+PostgreSQL is the database for Vercel and for any deployment that needs a
+managed, shared store. The adapter reuses the same portable SQL repository as
+D1, translated to the PostgreSQL dialect, so behaviour is identical across
+backends.
+
+No driver is bundled. You pass a client, which keeps connection pooling and
+credentials in your hands.
+
+```ts title="heyo-status.database.ts"
+import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
+import { postgres } from "@heyo-sh/heyo-status/deployments/vercel";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+// Replace this local example before deployment; never commit production credentials.
+const connectionString = "postgres://postgres:postgres@localhost:5432/my_status_page";
+
+export const database = lazyStatusDatabase(() =>
+  postgres(drizzle(new Pool({ connectionString }))),
+);
+```
+
+<Callout type="info" title="Lazy database connection">
+  The pool is created on the first query rather than on import, so the config
+  remains importable during builds even without a live database connection.
+  Set the connection string in `heyo-status.database.ts` for generated projects;
+  use a private secret source for production credentials.
+</Callout>
+
+## Accepted clients
+
+`postgres()` takes anything with a compatible query surface:
+
+| Client                        | Shape                                      |
+| ----------------------------- | ------------------------------------------ |
+| `pg` `Pool` / `Client`        | `query(text, values) => { rows }`          |
+| Neon serverless driver        | the same `query` shape                     |
+| Supabase `postgres` client    | the same `query` shape                     |
+| `drizzle(pool)`               | `execute(query)`                           |
+
+```ts
+import { postgres } from "@heyo-sh/heyo-status/db/postgres";
+import { Pool } from "pg";
+
+const database = postgres(new Pool({ connectionString: "postgres://localhost:5432/my_status_page" }));
+```
+
+Both import paths are the same implementation:
+`@heyo-sh/heyo-status/db/postgres` and
+`@heyo-sh/heyo-status/deployments/vercel`.
+
+## Migrations
+
+```bash
+heyo-status db migrate
+```
+
+Through the lazy wrapper this calls `PostgresStatusDatabase.migrate()`, which
+applies the bundled migrations and records them in
+`__heyo_status_migrations`. Run it:
+
+- once per environment before the first deploy, and
+- after upgrading the package, as part of your release job.
+
+```ts
+// A one-off deployment migration job.
+import { database } from "./heyo-status.database";
+
+await database.migrate();
+```
+
+Request handlers never migrate automatically, so a cold start cannot race
+schema changes.
+
+## Options
+
+```ts
+postgres(client);
+postgres(client, { migrate: true });
+```
+
+`migrate: true` applies migrations on construction — appropriate for local
+and test databases, not for a shared production one.
+
+## Connection pooling
+
+Serverless functions and pooled PostgreSQL need care:
+
+- On Vercel, prefer a pooled connection string (PgBouncer, Neon pooler,
+  Supabase pooler). A direct connection per invocation exhausts the server.
+- Keep the pool small; a status page issues a handful of queries per request.
+- A status page is read-heavy, and `cache.snapshotTtlMs` removes most repeated
+  reads inside one instance.
+
+## Operational notes
+
+- Timestamps are stored as epoch milliseconds, exactly as in SQLite and D1,
+  so history is portable between backends.
+- A unique index on the subscriber destination is what makes concurrent
+  subscription requests resolve to one row.
+- `heyo-status check run` and `db seed` work against PostgreSQL from a
+  developer machine as long as the configured database is reachable.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="globe"
+    name="Deploying to Vercel"
+    src="https://heyo.sh/heyo-status/deploying/vercel"
+  />
+  <RelatedTopic
+    icon="folder"
+    name="Schema and migrations"
+    src="https://heyo.sh/heyo-status/databases/schema-and-migrations"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Deploy to Vercel"
+    src="https://heyo.sh/heyo-status/deploying/vercel"
+  />
+</RelatedTopics>

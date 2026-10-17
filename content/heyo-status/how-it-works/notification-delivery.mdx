@@ -1,0 +1,165 @@
+---
+title: Notification delivery
+description: How events are enriched, filtered, delivered and logged.
+---
+
+# Notification delivery
+
+Events are produced in two places — the check run and the admin API — and
+delivered through one dispatcher. The dispatcher's contract is simple: it must
+never let a channel failure break monitoring, and it must record what it
+tried.
+
+## Producing monitor events
+
+`collectMonitorNotificationEvents()` runs **before** a batch of results is
+written, so the failure counts it reads are the ones that precede the batch.
+
+For each monitor not covered by an `in-progress` maintenance window:
+
+| Condition                                                     | Event               |
+| ------------------------------------------------------------- | ------------------- |
+| Failing, and `priorFailures + 1 === failureThreshold`          | `monitor.down` or `ssl.expiring` |
+| Succeeding, and `priorFailures >= failureThreshold`            | `monitor.recovered` |
+| Anything else                                                  | no event            |
+
+The strict equality is deliberate: a monitor that stays down does not re-page
+every five minutes, and a monitor that was never considered down does not
+announce a recovery.
+
+`ssl.expiring` is chosen from the `expiring` flag the SSL checker sets, never
+by matching the message text — rewording a check must not silently turn an
+expiry warning into an outage alert.
+
+## Enriching
+
+Every event passes through `enrichStatusEvent()`, which attaches the page
+identity and, for monitor events, configuration detail:
+
+```ts
+{
+  type: "monitor.down",
+  occurredAt: Date,
+  monitor: {
+    name: "API",
+    type: "http",
+    group: "API",                       // from the monitor configuration
+    target: "https://api.acme.com/health", // url, host:port, host, or components
+    status: false,
+    message: "HTTP 503, expected 200",
+    latencyMs: 142,
+    consecutiveFailures: 3,
+  },
+  page: { title: "Acme Status", siteUrl: "https://status.acme.com" },
+}
+```
+
+`target` is derived per type: the URL for `http`, `host:port` for `ssl` and
+`tcp`, the host for `dns`, and the component list for `composite`.
+
+## Filtering and delivery
+
+```ts
+for (const event of events) {
+  for (const channel of config.notifications.channels) {
+    if (channel.events && !channel.events.includes(event.type)) continue;
+    await channel.send(event);
+  }
+}
+```
+
+Wildcard selectors were already expanded when the channel was built, so the
+dispatcher only compares exact names. Channels are tried in configuration
+order, and each delivery is awaited so ordering is predictable.
+
+## Isolation
+
+Every `send()` is wrapped. A thrown error becomes a `failed` delivery record
+with the message; it is never rethrown. This is what lets a status page keep
+monitoring while a Slack webhook has been revoked.
+
+Writing the log is best-effort for the same reason — a logging failure is
+swallowed rather than escalated.
+
+## The delivery log
+
+Each attempt becomes a row:
+
+```ts
+interface NotificationLog {
+  id: string;
+  channelId: string;
+  channelType: "slack" | "discord" | "webhook" | "email";
+  eventType: StatusEventType;
+  status: "sent" | "failed";
+  attempts: number;
+  error: string | null;
+  monitorName: string | null;
+  incidentId: string | null;
+  maintenanceId: string | null;
+  createdAt: Date;
+}
+```
+
+Note what is **not** stored: no payload, no webhook URL, no credentials, no
+recipient. The log is for debugging delivery, not for replaying it.
+
+```bash
+curl -H "authorization: Bearer $ADMIN_TOKEN" \
+  "https://status.acme.com/api/heyo-status/admin/notifications/log?status=failed&limit=20"
+```
+
+Filters: `channelId`, `eventType` (comma-separated), `status`, `limit`,
+`offset`.
+
+## Retries
+
+Only the generic `webhook` channel retries, with exponential backoff:
+`retries` total attempts (default 3) starting at `retryDelayMs` (default
+250 ms), doubling each time. The attempt count reaches the log either from the
+successful result or from the thrown delivery error.
+
+Slack, Discord and email report their first failure. Wrap them in a custom
+channel if you need provider-specific retry semantics.
+
+## Public subscribers
+
+After configured channels, incident and maintenance events are also delivered
+to confirmed public subscribers, if subscriptions are enabled. Monitor-level
+events never are. See
+[Public subscriptions](https://heyo.sh/heyo-status/how-it-works/public-subscriptions).
+
+## Dispatching your own event
+
+```ts
+import { dispatchNotifications } from "@heyo-sh/heyo-status";
+
+await dispatchNotifications(statusPage, {
+  type: "incident.updated",
+  occurredAt: new Date(),
+  incident,
+});
+```
+
+The return value is one `NotificationDispatchResult` per channel per event,
+with `channelId`, `eventType`, `status`, `attempts` and `error` — useful in
+tests, where it is the only way to assert delivery without mocking the
+database.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="chat"
+    name="Configuring channels"
+    src="https://heyo.sh/heyo-status/manage-status-page/notifications"
+  />
+  <RelatedTopic
+    icon="lightbulb"
+    name="The check run"
+    src="https://heyo.sh/heyo-status/how-it-works/check-run"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Admin endpoints"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+</RelatedTopics>

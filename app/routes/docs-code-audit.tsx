@@ -13,12 +13,14 @@ import {
   redirect,
   useLoaderData,
   useParams,
+  type ClientLoaderFunctionArgs,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "react-router";
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
 import { docsMdxComponents } from "../components/docs-mdx-components";
+import { preloadDocsPage } from "../lib/preload-docs-page";
 import { iconSet } from "../heyo-docs-icons";
 import { config } from "virtual:heyo-docs-code-audit-config";
 import { pages } from "virtual:heyo-docs-code-audit-content";
@@ -62,6 +64,19 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const endpoint = findOpenApiEndpoint(docs.endpoints, pathname);
   if (!page && !endpoint) throw new Response("Not Found", { status: 404 });
   return {};
+}
+
+/** Loads the page's MDX chunk before the browser displays the new route. */
+export async function clientLoader({
+  params,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
+  const page = findDocsPage(model().pages, pathnameFor(params));
+  const [data] = await Promise.all([
+    serverLoader<Awaited<ReturnType<typeof loader>>>(),
+    preloadDocsPage(page),
+  ]);
+  return data;
 }
 
 export const meta: MetaFunction = ({ params }) => {

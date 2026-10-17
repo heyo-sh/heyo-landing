@@ -1,0 +1,200 @@
+---
+title: Astro
+description: Create an Astro status page with Heyo Status or add a live endpoint and page to an existing site.
+---
+
+# Astro
+
+For a new status page, use `create-heyo-status`. The Astro template includes a
+server-rendered page, a React island for interactive controls, a live API and
+a database adapter. The deployment overlay sets up cron jobs for your platform.
+Astro 7 requires Node.js 22.12+ for local builds and Node deployments.
+
+## Recommended: create a project
+
+Pass `astro` to select the template. Without flags, the creator asks for the
+framework, deployment, database, theme and package manager.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template astro
+cd my-status-page
+bun dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template astro
+cd my-status-page
+npm run dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template astro
+cd my-status-page
+pnpm dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template astro
+cd my-status-page
+yarn dev`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The starter installs the package in the **project**, not globally. To run
+`heyo-status check run` directly in your terminal, install the CLI globally
+(Bun 1.4.3+ required), then run it from the generated project's root:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`# Modern Yarn has no global install; use Bun for the CLI.
+bun add -g @heyo-sh/heyo-status`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+```bash
+cd my-status-page
+# SQLite or Vercel/PostgreSQL only; Cloudflare/D1 uses Worker cron triggers.
+heyo-status check run
+```
+
+If you skipped dependency installation in the creator, install the project's
+dependencies too — the Astro adapter needs them. Replace the example monitors
+in `heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev` starts
+the local scheduler and `bun run check` runs a check without the global CLI.
+On Cloudflare/D1, `bun dev` runs the Worker and cron triggers schedule checks
+instead (no `check` script).
+
+## Manual, minimal integration
+
+Use this path if the status page belongs in an existing Astro project. It
+assumes Astro with the React integration and a server adapter; unlike static
+documentation, the page and API cannot be prerendered. For production cron
+and database bindings, start from a generated project instead.
+
+### 1. Install and configure
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add -g @heyo-sh/heyo-status
+bun add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install -g @heyo-sh/heyo-status
+npm install @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add -g @heyo-sh/heyo-status
+pnpm add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`# Modern Yarn has no global install; use Bun for the CLI.
+bun add -g @heyo-sh/heyo-status
+yarn add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+Install from the project root. The first command exposes `heyo-status` in
+your shell (ensure the global bin directory is on `PATH`); the second adds
+the Astro adapter and dependencies to the app. The CLI needs Bun 1.4.3+
+regardless of package manager.
+
+Create `heyo-status.config.ts` at the project root. SQLite requires a
+persistent disk; choose the creator's D1/Cloudflare or PostgreSQL/Vercel
+overlay for serverless deployments.
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+  title: "Acme Status",
+  monitors: [{ name: "Website", type: "http", url: "https://acme.com" }],
+});
+
+export default statusPage;
+```
+
+From the project root, run `heyo-status check run`. The global CLI reads the
+config and database directly, without a running Astro server. See [CLI
+commands](https://heyo.sh/heyo-status/cli) for more. For
+Cloudflare/D1, checks run through Worker cron triggers; a shell process
+cannot access D1 without its binding.
+
+### 2. Set up server rendering and the API
+
+```js title="astro.config.mjs"
+import node from "@astrojs/node";
+import react from "@astrojs/react";
+import { defineConfig } from "astro/config";
+
+export default defineConfig({
+  output: "server",
+  adapter: node({ mode: "standalone" }),
+  integrations: [react()],
+  security: { checkOrigin: false },
+});
+```
+
+The status API uses bearer authentication rather than cookie sessions. Astro's
+form-origin check rejects legitimate DELETE and unsubscribe requests, so the
+generated template disables it. Do not add cookie-based auth to this app
+without revisiting that security choice.
+
+```ts title="src/pages/api/heyo-status/[...path].ts"
+import { statusHandler } from "@heyo-sh/heyo-status/astro";
+import { statusPage } from "../../../../heyo-status.config";
+
+export const prerender = false;
+export const { GET, POST, PATCH, PUT, DELETE } = statusHandler(statusPage);
+```
+
+The route path must match the config's default `/api/heyo-status` base path.
+
+### 3. Render a live page
+
+```astro title="src/pages/index.astro"
+---
+import { StatusPage } from "@heyo-sh/heyo-status/ui";
+import "@heyo-sh/heyo-status/theme/status.css";
+import { statusPage } from "../../heyo-status.config";
+
+export const prerender = false;
+const snapshot = await statusPage.api.getSnapshot();
+---
+
+<html lang="en">
+  <head>
+    <title>{statusPage.title}</title>
+    <meta name="description" content={statusPage.description} />
+  </head>
+  <body>
+    <StatusPage client:load snapshot={snapshot} theme={statusPage.theme} title={statusPage.title} />
+  </body>
+</html>
+```
+
+Pass branding, metrics, base path, colour mode and subscriber settings if
+configured. `client:load` makes the colour-mode toggle and subscription dialog
+interactive; the initial status is server-rendered. For a flash-free colour
+mode, include `statusThemeBootstrapScript` in the head as the generated page
+does.
+
+### 4. Schedule checks
+
+Production needs a scheduler for checks, summarization and cleanup. Use the
+[Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare) or
+[Vercel](https://heyo.sh/heyo-status/deploying/vercel) overlay, or [run one
+scheduler yourself](https://heyo.sh/heyo-status/deploying/self-hosting).
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="cursor" name="Configure monitors" src="https://heyo.sh/heyo-status/manage-status-page/monitors" />
+  <RelatedTopic icon="globe" name="Deploy to Vercel" src="https://heyo.sh/heyo-status/deploying/vercel" />
+</RelatedTopics>

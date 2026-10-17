@@ -1,0 +1,206 @@
+---
+title: Status endpoints
+description: Snapshots, summaries, monitors and uptime, with full payload shapes.
+---
+
+# Status endpoints
+
+All four are public and unauthenticated. They read the same cached snapshot,
+so a page render and an API call can never disagree about the current state.
+
+## `GET /status`
+
+The full public snapshot — everything the page renders.
+
+```bash
+curl https://status.acme.com/api/heyo-status/status
+```
+
+```json
+{
+  "generatedAt": "2026-01-01T12:00:00.000Z",
+  "retentionDays": 90,
+  "displayDays": 90,
+  "overall": "degraded",
+  "groups": [
+    { "name": "Web", "status": "operational", "monitors": ["Website", "Dashboard"] },
+    { "name": "API", "status": "degraded", "monitors": ["API", "Webhooks"] }
+  ],
+  "monitors": [
+    {
+      "name": "API",
+      "type": "http",
+      "description": "Public REST API.",
+      "group": "API",
+      "latestStatus": false,
+      "latestCheckedAt": "2026-01-01T11:55:00.000Z",
+      "latestLatencyMs": 142,
+      "uptimePercent": 99.82,
+      "uptimePercent24h": 97.2,
+      "uptimePercent7d": 99.6,
+      "uptimePercent30d": 99.8,
+      "uptimePercent90d": 99.82,
+      "avgLatencyMs": 118,
+      "days": [
+        {
+          "key": "2025-10-04",
+          "label": "Oct 4, 2025",
+          "status": "up",
+          "tooltip": "100% uptime — 288 checks",
+          "totalChecks": 288,
+          "downChecks": 0,
+          "downMinutes": 0,
+          "downPercent": 0
+        }
+      ],
+      "latencySeries": [
+        {
+          "key": "2026-01-01T11:00:00.000Z",
+          "label": "Jan 1, 2026, 11:00 UTC",
+          "at": "2026-01-01T11:00:00.000Z",
+          "latencyMs": 121,
+          "totalChecks": 12
+        }
+      ]
+    }
+  ],
+  "activeIncidents": [],
+  "scheduledMaintenances": [],
+  "hasConfig": true,
+  "hasData": true
+}
+```
+
+<Properties>
+  <Property name="overall" type='"operational" | "degraded" | "major-outage" | "maintenance"'>
+    Maintenance wins, then a critical incident, then any incident, then the
+    monitors themselves.
+  </Property>
+  <Property name="days" type="DaySnapshot[]">
+    Exactly `displayDays` entries, oldest first. `status` is `up`, `down`,
+    `degraded` or `empty`.
+  </Property>
+  <Property name="latencySeries" type="LatencySample[]">
+    Hourly averages over the last 24 hours while raw rows exist, otherwise
+    daily averages over 7 days. Empty buckets are omitted.
+  </Property>
+  <Property name="hasConfig / hasData" type="boolean">
+    Whether any public monitor is configured, and whether any check has
+    landed. Themes use them for the onboarding state.
+  </Property>
+</Properties>
+
+Private monitors never appear here.
+
+## `GET /status/summary`
+
+A deliberately small payload for embeds, uptime widgets and dashboards —
+no day grid, no latency series.
+
+```bash
+curl https://status.acme.com/api/heyo-status/status/summary
+```
+
+```json
+{
+  "generatedAt": "2026-01-01T12:00:00.000Z",
+  "overall": "operational",
+  "hasConfig": true,
+  "hasData": true,
+  "activeIncidents": 0,
+  "scheduledMaintenances": 1,
+  "groups": [{ "name": "Web", "status": "operational", "monitors": ["Website"] }],
+  "monitors": [
+    {
+      "name": "Website",
+      "type": "http",
+      "group": "Web",
+      "latestStatus": true,
+      "latestCheckedAt": "2026-01-01T11:55:00.000Z",
+      "latestLatencyMs": 96,
+      "uptimePercent": 99.98
+    }
+  ]
+}
+```
+
+`activeIncidents` and `scheduledMaintenances` are counts here, not arrays.
+
+## `GET /monitors`
+
+The `monitors` array from the snapshot, unchanged.
+
+```bash
+curl https://status.acme.com/api/heyo-status/monitors
+```
+
+## `GET /monitors/:name`
+
+One monitor, or `404 { "error": "Monitor not found." }`. Percent-encode names
+with spaces.
+
+```bash
+curl https://status.acme.com/api/heyo-status/monitors/API
+curl https://status.acme.com/api/heyo-status/monitors/Web%20App
+```
+
+## `GET /monitors/:name/uptime`
+
+Just the numbers, for an SLA report or a dashboard tile.
+
+```bash
+curl https://status.acme.com/api/heyo-status/monitors/API/uptime
+```
+
+```json
+{
+  "name": "API",
+  "24h": 97.2,
+  "7d": 99.6,
+  "30d": 99.8,
+  "90d": 99.82,
+  "window": 99.82,
+  "displayDays": 90,
+  "avgLatencyMs": 118
+}
+```
+
+`window` is uptime across the configured display window, which is not always
+90 days — `displayDays` tells you what it covers. A `null` means no checks
+exist for that period, which is different from `0`.
+
+## `GET /healthz`
+
+```json
+{ "ok": true }
+```
+
+It answers whether the status API itself is serving — it does not read the
+database and does not reflect monitor state. Use it for a load-balancer
+probe; use `/status/summary` for actual service health.
+
+## Caching
+
+Snapshot reads are served from the in-process cache for
+`cache.snapshotTtlMs` (default 30 s). Check runs and admin mutations
+invalidate it. Responses carry no `Cache-Control`, so add your own edge
+caching if you need it — badges are the exception and set
+`public, max-age=60` themselves.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="How uptime is calculated"
+    src="https://heyo.sh/heyo-status/how-it-works/uptime-and-history"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Badges, feeds and metrics"
+    src="https://heyo.sh/heyo-status/http-api/badges-feeds-metrics"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Next.js page rendering"
+    src="https://heyo.sh/heyo-status/frameworks/nextjs"
+  />
+</RelatedTopics>

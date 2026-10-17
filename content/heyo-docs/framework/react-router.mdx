@@ -219,6 +219,46 @@ sidebar and static deployment output.
 Unlisted application routes may still use normal SSR. Heyo Docs itself does not
 depend on that fallback for documentation pages.
 
+### Pages without a loading placeholder
+
+The server imports every MDX page directly, and the documentation body carries
+no Suspense boundary, so prerendered HTML holds the finished page instead of a
+placeholder that the browser replaces a moment later.
+
+In the browser, each MDX page stays a separate chunk. Loaders run on the
+server, so the route adds a `clientLoader` that fetches the chunk of the page a
+reader opened before the new route is displayed. The current page stays on
+screen until the next one can be rendered in full:
+
+```tsx title="app/routes/docs.tsx"
+export async function clientLoader({
+  params,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
+  const model = createDocsModel(config, pages, [], openApiEndpoints);
+  const page = findDocsPage(model.pages, pathnameFor(params));
+  const [data] = await Promise.all([
+    serverLoader<Awaited<ReturnType<typeof loader>>>(),
+    page?.preload?.(),
+  ]);
+  return data;
+}
+```
+
+Re-export `clientLoader` wherever the documentation route is mounted again, as
+`app/routes/page.tsx` does for the catch-all route. React Router only runs it
+when the route module exports it.
+
+<Callout type="warning" title="Keep the streaming server entry">
+  `app/entry.server.tsx` must render with `renderToReadableStream`. React
+  Router carries its hydration data inside a Suspense boundary, and
+  `renderToString` cannot complete one: the document is sent with the boundary
+  marked as failed, and the browser then waits for a stream that never
+  arrives. The page looks right and never hydrates, which costs you
+  table-of-contents tracking, client-side navigation, and syntax highlighting,
+  and resets the sidebar on every link.
+</Callout>
+
 ### OpenAPI data delivery
 
 The client bundle contains only the compact endpoint index needed for
@@ -228,17 +268,21 @@ navigation and search. Rich endpoint data is emitted as a static JSON asset:
 /_heyo-docs/openapi/<group>/<tag>/<operation>.json
 ```
 
-During prerendering, the route loader resolves the active endpoint and
-serialises its detailed payload with that route’s static data. The initial HTML
-and hydration therefore render the final API-reference UI immediately; there
-is no compact-first render followed by a visible replacement.
+The route loader runs on the server, so during prerendering it resolves the
+active endpoint and serialises its detailed payload with that route’s static
+data file. The initial HTML and hydration therefore render the final
+API-reference UI immediately; there is no compact-first render followed by a
+visible replacement.
 
-For client-side navigation, the loader waits for the same-origin JSON shard
-from the CDN before React Router commits the destination route. This preserves
-the same visual guarantee when moving between endpoint pages. The JSON includes
-endpoint-specific schemas, examples, parameters, responses, and security
-information, but only the OpenAPI components reachable from that operation. It
-avoids shipping the complete schema in the shared browser bundle.
+A client-side navigation reads that same data file before React Router displays
+the destination route, which preserves the guarantee when a reader moves
+between endpoint pages. The payload includes endpoint-specific schemas,
+examples, parameters, responses, and security information, but only the OpenAPI
+components reachable from that operation. The complete schema never reaches the
+shared browser bundle.
+
+The JSON shard stays a public build artefact for integrations and tooling that
+start from the compact index.
 
 ### Dynamic boundary: Try it
 
@@ -247,9 +291,9 @@ is the only runtime route involved in OpenAPI: it forwards a documented request
 to an API server selected from the schema. Keeping that work server-side avoids
 browser CORS constraints and lets the handler reject unknown target servers.
 
-The existing Markdown mirror resource route can also run on demand. It is
-separate from HTML documentation rendering and from the static OpenAPI JSON
-assets.
+The Markdown mirror resource route and `POST /heyo-docs-internal/ai-chat` also
+run on demand. The AI route exists only when `ai.chat` is configured. Neither
+is involved in rendering documentation HTML or loading endpoint data.
 
 Cloudflare and Vercel overlays host this route in their respective runtime;
 the static pages and JSON assets are still delivered by the platform CDN. If
