@@ -1,0 +1,102 @@
+---
+title: Uptime and history
+description: How check results become uptime percentages, daily history and the public snapshot.
+---
+
+# Uptime and history
+
+The page shows the latest check and a longer history. Heyo Status stores each
+check in `status_results`; a daily job compacts older checks into
+`status_daily_summaries`. Both feed the same public snapshot. **Nothing is
+compacted or cleaned up unless a scheduler runs those jobs.**
+
+## What does the uptime percentage mean?
+
+Uptime is **the share of successful checks**, not measured minutes online:
+
+```text
+uptime % = successful checks / all checks × 100
+```
+
+If 99 of 100 checks passed, uptime is 99%, regardless of how much time passed
+between them. When there are no checks in a period, the value is `null`, not
+0% downtime. The page also shows a separate, estimated number of downtime
+minutes: each failing raw check is counted until the next observation, the
+end of its UTC day or now, whichever comes first, and the sum is rounded up.
+Checks are samples, so this is an estimate rather than a continuous outage
+measurement.
+
+The page calculates uptime for the displayed window and for 24 hours, 7, 30
+and 90 days. For raw results, period boundaries use exact check timestamps.
+Daily summaries cannot be divided into hours, so a period overlapping a
+compacted day includes that entire UTC day. If `checks.displayDays` is 30,
+a 90-day figure only has those 30 days of history to work with.
+
+## What happens to old results?
+
+| Job | Default UTC schedule | Effect |
+| --- | --- | --- |
+| Check | Every five minutes | Add one raw result per monitor to `status_results`. |
+| Summarize | 00:10 daily | Merge raw results from before today into one row per monitor per UTC day, then remove the raw rows it consumed. |
+| Cleanup | 03:00 daily | Delete data older than `checks.retentionDays` (default 90). |
+
+The summary job upserts rows and can be rerun. If a snapshot sees both a
+daily summary and raw results for the same monitor-day, it uses the summary
+rather than counting that day twice. `checks.displayDays` controls the page's
+history window and must not exceed `retentionDays`, which controls what the
+database keeps. See [Checks and scheduling](https://heyo.sh/heyo-status/manage-status-page/checks)
+for cron expressions and cache settings.
+
+## What appears on the page?
+
+Each monitor gets one grid cell per UTC day in the display window:
+
+| Cell | Meaning |
+| --- | --- |
+| `empty` | No checks for that day; it does **not** mean the monitor was down. |
+| `up` | Every check passed. |
+| `degraded` | Some checks failed. |
+| `down` | Every check failed. |
+
+The latest available observation gives the monitor's current status and
+latency. The sparkline uses hourly latency averages over the last 24 hours
+when raw checks are available; otherwise it falls back to daily averages.
+Empty buckets are omitted, not shown as zero latency.
+
+Incidents and maintenance can override the page-wide status. An in-progress
+maintenance window shows `maintenance`; otherwise a critical incident shows
+`major-outage`, another active incident shows `degraded`, and only then do
+monitor failures decide. Group status follows the monitors in that group.
+Private monitors are checked and stored but excluded from public monitor
+lists, uptime figures and groups. Their automatic incidents can still appear
+in the public snapshot and affect its overall status; see the
+[visibility warning](https://heyo.sh/heyo-status/manage-status-page/monitors).
+A page with no public check data sets `hasData: false` so themes can show an
+onboarding state instead of treating missing checks as an outage.
+
+## Read a snapshot
+
+```ts
+const snapshot = await statusPage.api.getSnapshot();
+const apiMonitor = await statusPage.api.getMonitor("API");
+```
+
+The API and rendered page share a short process-local snapshot cache (30
+seconds by default). Check runs, summaries, cleanup and admin writes
+invalidate it in their own process. Other serverless instances can have their
+own cache until its TTL expires. Pass an explicit date to bypass the cache,
+for example in a test:
+
+```ts
+const snapshot = await statusPage.api.getSnapshot(new Date("2026-01-01T12:00:00Z"));
+statusPage.api.invalidate(); // after a database write outside the status API
+```
+
+A new page has no history until checks run. For a **demo or test database**,
+the generated SQLite/PostgreSQL project can fill the grid with simulated
+results using `bun run db:seed`. Never seed a production database: fabricated
+checks are stored like real ones and cannot be distinguished afterward.
+
+See [Status endpoints](https://heyo.sh/heyo-status/http-api/status) for the
+snapshot payload and [Schema and migrations](https://heyo.sh/heyo-status/databases/schema-and-migrations)
+for the tables.

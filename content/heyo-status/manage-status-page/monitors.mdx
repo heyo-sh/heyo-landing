@@ -1,0 +1,296 @@
+---
+title: Monitors
+description: HTTP, SSL, TCP, DNS and composite checks, their options and defaults.
+---
+
+# Monitors
+
+Start with an HTTP monitor for a public endpoint. Add other types when you
+need to watch a certificate, a port, DNS or the health of several services
+together. Each monitor has a unique `name`; changing it later breaks the link
+to its existing history, incidents and metrics.
+
+```ts
+monitors: [
+  {
+    name: "Website",
+    description: "Public marketing site.",
+    group: "Web",
+    type: "http",
+    url: "https://acme.com",
+  },
+],
+```
+
+## Fields every monitor shares
+
+The fields below also apply to SSL, TCP, DNS and composite monitors.
+
+<Properties>
+  <Property name="name" type="string" required>
+    Unique, non-empty. Used as the history key, the badge path segment, the
+    Prometheus label and the display name.
+  </Property>
+  <Property name="description" type="string">
+    Secondary line shown under the monitor name on the page.
+  </Property>
+  <Property name="group" type="string">
+    Public category, for example `"Web"` or `"API"`. Monitors sharing a group
+    are rendered together, and the group gets its own derived status.
+  </Property>
+  <Property name="private" type="boolean">
+    Defaults to `false`. A private monitor is still checked and still triggers
+    notifications and automatic incidents. Its monitor data is omitted from
+    public monitor lists, badges and per-monitor metrics; see the incident
+    visibility warning below.
+  </Property>
+</Properties>
+
+## `http`
+
+An HTTP monitor requests a URL and checks its response. Use response
+assertions when a `200` alone isn't enough to tell whether the service works.
+
+```ts
+{
+  name: "API",
+  type: "http",
+  url: "https://api.acme.com/health",
+  method: "GET",
+  headers: { authorization: `Bearer ${process.env.HEALTH_TOKEN}` },
+  expectedStatus: [200, 204],
+  expectedResponseHeaders: { "content-type": "application/json" },
+  expectedBodyIncludes: '"ok":true',
+  expectedBodyExcludes: "maintenance",
+  expectedJson: { status: "ok", database: { reachable: true } },
+  timeoutMs: 10_000,
+  softFail: true,
+  softFailMs: 1_000,
+  followRedirects: true,
+}
+```
+
+<Properties>
+  <Property name="url" type="string" required>
+    HTTP(S) only.
+  </Property>
+  <Property name="method" type="string">
+    Defaults to `"GET"`.
+  </Property>
+  <Property name="headers" type="Record<string, string>">
+    Request headers. Values are sent verbatim — keep secrets in environment
+    variables.
+  </Property>
+  <Property name="expectedStatus" type="number[]">
+    Defaults to `[200]`. Any listed status counts as healthy.
+  </Property>
+  <Property name="expectedResponseHeaders" type="Record<string, string>">
+    Exact-match response headers, including any charset in `content-type`.
+    A missing or different value fails the check and names the header in the
+    message.
+  </Property>
+  <Property name="expectedBodyIncludes" type="string">
+    Substring that must appear in the body. Requesting the body is what makes
+    a "200 that renders an error page" detectable.
+  </Property>
+  <Property name="expectedBodyExcludes" type="string">
+    Substring that must **not** appear in the body.
+  </Property>
+  <Property name="expectedJson" type="JsonObject">
+    Deep partial match against the parsed JSON body. Nested objects are
+    matched key by key; arrays must be deeply equal.
+  </Property>
+  <Property name="timeoutMs" type="number">
+    Defaults to `10000`. A timeout is reported as
+    `HTTP timed out after <n>ms`.
+  </Property>
+  <Property name="softFail" type="boolean">
+    Defaults to `false`. When enabled, a first failure is retried once after
+    `softFailMs` before the result is recorded as down.
+  </Property>
+  <Property name="softFailMs" type="number">
+    Defaults to `500`. Delay before the soft retry.
+  </Property>
+  <Property name="followRedirects" type="boolean">
+    Defaults to `true`. Set `false` to assert the redirect itself, usually with
+    `expectedStatus: [301]`.
+  </Property>
+</Properties>
+
+A soft retry that succeeds is still recorded as up, with
+`…; recovered on soft retry` appended to the message. Latency always measures
+the whole check, including the retry window, so a soft-failing monitor reports
+honestly slow numbers.
+
+## `ssl`
+
+Use an SSL monitor to check a host's TLS certificate and warn before it
+expires.
+
+```ts
+{ name: "TLS certificate", type: "ssl", host: "acme.com", port: 443, warnBeforeDays: 21 }
+```
+
+<Properties>
+  <Property name="host" type="string" required>
+    Hostname, also sent as SNI.
+  </Property>
+  <Property name="port" type="number">
+    Defaults to `443`.
+  </Property>
+  <Property name="warnBeforeDays" type="number">
+    Defaults to `14`. A certificate expiring sooner fails the check and is
+    flagged as expiring rather than down.
+  </Property>
+  <Property name="timeoutMs" type="number">
+    Defaults to `10000`.
+  </Property>
+</Properties>
+
+The check fails when the certificate chain is not authorized, when the expiry
+date cannot be read, or when the remaining lifetime is below
+`warnBeforeDays`. Only the last case is flagged `expiring`, which is what
+turns the alert into an `ssl.expiring` event instead of `monitor.down`.
+
+<Callout type="warning" title="Not available on Cloudflare Workers">
+  `ssl` needs <code>node:tls</code>. On Workers the check records
+  <code>TLS monitoring is unavailable in this runtime.</code> and reports down.
+  Run certificate checks from a Node or Bun host, or leave them out of a
+  Workers deployment.
+</Callout>
+
+## `tcp`
+
+Use a TCP monitor when opening a connection is enough to confirm a service
+is reachable.
+
+```ts
+{ name: "Database", type: "tcp", host: "db.internal", port: 5432, private: true }
+```
+
+<Properties>
+  <Property name="host" type="string" required />
+  <Property name="port" type="number" required>
+    1–65535.
+  </Property>
+  <Property name="timeoutMs" type="number">
+    Defaults to `10000`.
+  </Property>
+</Properties>
+
+Like `ssl`, this needs a native runtime — `node:net` — and is unavailable on
+Cloudflare Workers. Use `private: true` to hide the monitor from public
+monitor lists, but see the incident visibility warning below before using
+sensitive hostnames.
+
+## `dns`
+
+DNS monitors resolve a record through Cloudflare DNS-over-HTTPS. They also
+work on Workers, where TCP and SSL checks aren't available.
+
+```ts
+{ name: "DNS", type: "dns", host: "acme.com", recordType: "A" }
+```
+
+<Properties>
+  <Property name="host" type="string" required />
+  <Property name="recordType" type="string">
+    Defaults to `"A"`. Any type the DoH resolver accepts, e.g. `AAAA`, `MX`,
+    `TXT`, `CNAME`, `NS`.
+  </Property>
+  <Property name="timeoutMs" type="number">
+    Defaults to `10000`.
+  </Property>
+</Properties>
+
+The check fails when the HTTP query fails, when the DNS response status is not
+`0`, or when the answer section is empty.
+
+## `composite`
+
+To show whether the product as a whole is usable, combine existing monitors.
+A composite makes no network request: it uses the results from the same check
+run.
+
+```ts
+{
+  name: "Platform",
+  description: "Everything needed to sign in and get work done.",
+  type: "composite",
+  monitors: ["Website", "Dashboard", "API"],
+  strategy: "all",
+}
+```
+
+<Properties>
+  <Property name="monitors" type="string[]" required>
+    Names of configured, non-composite monitors. Duplicates are rejected, and
+    an unknown name fails configuration validation.
+  </Property>
+  <Property name="strategy" type='"all" | "any" | "majority"'>
+    Defaults to `"all"`.
+  </Property>
+</Properties>
+
+| Strategy     | Healthy when                              |
+| ------------ | ----------------------------------------- |
+| `all`        | every component is healthy                |
+| `any`        | at least one component is healthy         |
+| `majority`   | more than half the components are healthy |
+
+A composite reports the **highest** latency among its components, and its
+message states the ratio, for example `2/3 components healthy (strategy: all)`.
+If a component produced no result at all, the composite fails and names it —
+a misconfiguration must never look like a healthy aggregate.
+
+## Grouping and visibility
+
+```ts
+monitors: [
+  { name: "Website", group: "Web", type: "http", url: "https://acme.com" },
+  { name: "Dashboard", group: "Web", type: "http", url: "https://app.acme.com" },
+  { name: "Queue", type: "tcp", host: "queue.internal", port: 5672, private: true },
+],
+```
+
+- Monitors with the same `group` are published as a `MonitorGroup` whose status
+  is `operational`, `degraded` (some failing) or `outage` (all failing).
+- Monitors without a `group` are rendered on their own, after the groups.
+- `private: true` removes the monitor from `/status` monitor lists,
+  `/monitors`, per-monitor badges, Prometheus series and the monitor cards.
+
+<Callout type="warning" title="Private does not hide incidents">
+  A private monitor can still open an automatic incident. Its name and check
+  message can appear in the public incident timeline, RSS/Atom feeds and
+  subscriber notifications. That incident also affects the page-wide status
+  and incident counts (including overall badges and metrics). Do not put
+  secrets in private monitor names or targets;
+  a failed check message may expose the target. To prevent automatic incidents
+  altogether, disable <code>incidents.enabled</code> (which also disables
+  manual incidents and their feeds).
+</Callout>
+
+## Choosing timeouts and intervals
+
+A check run executes every non-composite monitor concurrently, then derives
+composites. The slowest monitor therefore bounds the run, not the sum. Keep
+`timeoutMs` comfortably below `checks.interval` so a stalled endpoint cannot
+overlap the next scheduled run.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="What happens during a check run"
+    src="https://heyo.sh/heyo-status/how-it-works/check-run"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Scheduling and retention"
+    src="https://heyo.sh/heyo-status/manage-status-page/checks"
+  />
+  <RelatedTopic
+    icon="information"
+    name="Notification events"
+    src="https://heyo.sh/heyo-status/manage-status-page/notifications"
+  />
+</RelatedTopics>

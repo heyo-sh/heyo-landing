@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three file trays on a desk</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+  html { background: #f0f0f0; }
+  html.dark { background: #141414; }
+  body { display: grid; place-items: center; }
+  #stage {
+    width: min(100%, 125vh, 540px);
+    transform: translateY(-64px) scale(1.25);
+    --hairline-plate: #f0f0f0;
+    --hairline-hi: #232327;
+    --hairline-edge: #89898f;
+    --hairline-mid: #aaaaaf;
+    --hairline-lo: #ccccd0;
+  }
+  .dark #stage {
+    --hairline-plate: #141414;
+    --hairline-hi: #f4f4f5;
+    --hairline-edge: #a4a4ac;
+    --hairline-mid: #73737b;
+    --hairline-lo: #44444b;
+  }
+  @media (max-width: 600px) {
+    #stage { transform: translateY(-44px) scale(1.25); }
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="/hairline/kernel.js"></script>
+<script>
+  if (new URLSearchParams(location.search).get("theme") === "dark") document.documentElement.classList.add("dark");
+  window.hairline = (figure) => {
+    const stage = document.getElementById("stage");
+    HL.inject(document);
+    stage.setAttribute("data-hairline", figure.name);
+    stage.setAttribute("role", "img");
+    stage.setAttribute("aria-label", figure.means);
+    const svg = HL.mk("svg", { viewBox: "0 0 400 320", "aria-hidden": "true" }, stage);
+    figure.mount({ stage, svg, read: { textContent: "rest" } }, figure.range[1]);
+  };
+</script>
+<script type="module" src="/hairline/workbench.js"></script>
+</body>
+</html>

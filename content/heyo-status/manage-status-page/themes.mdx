@@ -1,0 +1,70 @@
+---
+title: Themes
+description: Choose a status page layout, colour mode and CSS overrides.
+---
+
+# Themes
+
+Choose a layout with `theme` in `heyo-status.config.ts`. The generated
+projects pass it to `<StatusPage />` for you. All five layouts share one
+stylesheet, so switching themes doesn't mean changing imports.
+
+```ts title="heyo-status.config.ts"
+theme: "slate",
+mode: "system",
+```
+
+| Theme | Layout |
+| --- | --- |
+| `slate` | Default grouped cards, uptime bars and latency sparklines. |
+| `fern` | Uptime figures per service over a dense history. |
+| `onyx` | Global banner, flat service list and incident timeline. |
+| `dune` | Service categories with subcomponent status rows. |
+| `reed` | Minimal single column without cards or groups. |
+
+Start with `slate` for grouped services. Use `dune` for subcomponents,
+`onyx` for a flat list, `fern` when history is the focus, or `reed` for a
+simpler page. An unknown theme name fails config validation.
+
+## Colour mode
+
+`mode` sets the initial preference: `"system"` (default), `"light"` or
+`"dark"`. In system mode the page follows the operating system. A visitor's
+choice from the built-in header toggle is stored under `heyo-status-theme` in
+local storage and takes precedence on later visits.
+
+To avoid a flash of the wrong palette, generated layouts run
+`statusThemeBootstrapScript(undefined, statusPage.mode)` in the document head
+before paint. In a manual integration, add it to your root layout. For React,
+also set `suppressHydrationWarning` on `<html>`: the script changes `data-mode`
+before hydration.
+
+## Load styles once
+
+```ts title="root layout"
+import "@heyo-sh/heyo-status/theme/status.css";
+```
+
+The bundled stylesheet includes the tokens for every theme, scoped to the
+page's `data-theme` attribute. Import it once in the root layout; generated
+projects also import their own `styles/status.css` for overrides.
+
+```css title="styles/status.css"
+[data-slot="status-page"] {
+  --status-page-max-width: 56rem;
+}
+
+[data-theme="onyx"] [data-slot="status-header"] {
+  border-bottom: 1px solid var(--color-border);
+}
+```
+
+Target `data-slot` hooks rather than internal Tailwind classes. Check both
+light and dark mode after changing tokens. To adjust accent colours, use
+[Branding](https://heyo.sh/heyo-status/manage-status-page/branding); the semantic
+up/degraded/down colours remain tied to the status palette.
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="cursor" name="Branding" src="https://heyo.sh/heyo-status/manage-status-page/branding" />
+  <RelatedTopic icon="book" name="Configuration" src="https://heyo.sh/heyo-status/manage-status-page/configuration" />
+</RelatedTopics>

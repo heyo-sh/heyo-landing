@@ -1,0 +1,150 @@
+---
+title: API overview
+description: Routing, authentication, error shapes and the full endpoint map.
+---
+
+# API overview
+
+Use the public routes to read status; use `/admin/*` with a bearer token to
+run checks or manage incidents. They all live under one catch-all route,
+`/api/heyo-status` by default. The paths in the table below are relative to
+that base path.
+
+```
+https://status.acme.com/api/heyo-status/status
+└──────── origin ──────┘└── basePath ─┘└ path ┘
+```
+
+For example, read the summary without a token or create an incident with an
+admin token:
+
+```bash
+BASE=https://status.acme.com/api/heyo-status
+
+curl "$BASE/status/summary"
+curl "$BASE/monitors/API/uptime"
+curl "$BASE/incidents?status=investigating&limit=5"
+
+curl -X POST "$BASE/admin/incidents" \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"title":"Degraded API","severity":"major","affectedMonitors":["API"],"message":"Investigating."}'
+```
+
+## Endpoint map
+
+| Method | Path                            | Auth  | Enabled by                 |
+| ------ | ------------------------------- | ----- | -------------------------- |
+| GET    | `/status`                       | —     | always                     |
+| GET    | `/status/summary`               | —     | always                     |
+| GET    | `/monitors`                     | —     | always                     |
+| GET    | `/monitors/:name`               | —     | always                     |
+| GET    | `/monitors/:name/uptime`        | —     | always                     |
+| GET    | `/badge/:name.svg`              | —     | `metrics.badges`           |
+| GET    | `/metrics`                      | —     | `metrics.prometheus`       |
+| GET    | `/rss.xml`                      | —     | `incidents.enabled`        |
+| GET    | `/atom.xml`                     | —     | `incidents.enabled`        |
+| GET    | `/incidents`                    | —     | `incidents.enabled`        |
+| GET    | `/incidents/:id`                | —     | `incidents.enabled`        |
+| GET    | `/maintenance`                  | —     | `maintenance.enabled`      |
+| POST   | `/subscribers`                  | —     | `subscribers.enabled`      |
+| GET    | `/subscribers/confirm`          | —     | `subscribers.enabled`      |
+| DELETE | `/subscribers/:id`              | —     | `subscribers.enabled`      |
+| GET    | `/subscribers/:id/unsubscribe`  | —     | `subscribers.enabled`      |
+| POST   | `/subscribers/:id/unsubscribe`  | —     | `subscribers.enabled`      |
+| GET    | `/healthz`                      | —     | always                     |
+| POST   | `/admin/checks/run`             | token | always                     |
+| POST   | `/admin/incidents`              | token | `incidents.enabled`        |
+| POST   | `/admin/incidents/:id/updates`  | token | `incidents.enabled`        |
+| PATCH  | `/admin/incidents/:id`          | token | `incidents.enabled`        |
+| DELETE | `/admin/incidents/:id`          | token | `incidents.enabled`        |
+| POST   | `/admin/maintenance`            | token | `maintenance.enabled`      |
+| PATCH  | `/admin/maintenance/:id`        | token | `maintenance.enabled`      |
+| DELETE | `/admin/maintenance/:id`        | token | `maintenance.enabled`      |
+| GET    | `/admin/notifications/log`      | token | always                     |
+
+Disabled incident, maintenance, subscriber and badge routes return
+`404 { "error": "This feature is disabled." }`. When
+`metrics.prometheus` is false, `/metrics` is not registered and returns
+the router's ordinary `404` instead.
+
+## Authentication
+
+Everything under `/admin/*` requires:
+
+```http
+Authorization: Bearer <admin-token>
+```
+
+The token comes only from `adminToken` in the configuration. Comparison is
+constant-time.
+
+| Situation             | Response                                                                 |
+| --------------------- | ------------------------------------------------------------------------ |
+| No token configured   | `503 { "error": "The management API is disabled. Set adminToken in heyo-status.config.ts." }` |
+| Wrong or missing header | `401 { "error": "Unauthorized." }`                                     |
+
+Public endpoints are unauthenticated by design — a status page is meant to be
+readable during an outage, including by people who cannot sign in.
+
+## Status codes
+
+| Code  | Meaning                                                           |
+| ----- | ----------------------------------------------------------------- |
+| `200` | Success.                                                           |
+| `201` | Created — an incident, a maintenance window, or a subscription that needs no confirmation. |
+| `202` | Accepted — a subscription awaiting email confirmation.             |
+| `204` | Deleted. No body.                                                  |
+| `400` | Invalid input. The message names the field.                        |
+| `401` | Missing or wrong bearer token.                                     |
+| `404` | Not found, or the feature is disabled.                             |
+| `501` | Manual checks require the status-page runtime.                     |
+| `503` | Management API disabled, or an email delivery dependency failed.   |
+| `500` | Unexpected error, including an unreachable database.               |
+
+Errors from registered API routes are JSON:
+
+```json
+{ "error": "severity must be a valid incident severity." }
+```
+
+If the database is unavailable, read routes return a JSON error too. Check
+the message for an unbound D1 binding or a failed connection instead of
+expecting a plain-text `500`. An unknown path (including `/metrics` when
+Prometheus is disabled) can instead return the router's plain-text `404`.
+
+## Conventions
+
+- Request bodies must be JSON objects; arrays and scalars are rejected.
+- Timestamps in requests and responses are ISO-8601 (`2026-01-01T02:00:00Z`).
+- List filters accept comma-separated values: `?status=investigating,identified`.
+- `limit` and `offset` are non-negative integers.
+- String arrays are trimmed and de-duplicated; empty entries are rejected.
+- Monitor names in a path must be percent-encoded.
+
+## Calling the handler directly
+
+The HTTP surface is available without a framework, which is what the tests
+and the CLI dev server use:
+
+```ts
+const response = await statusPage.handler(
+  new Request("https://status.acme.com/api/heyo-status/status"),
+);
+```
+
+Router-relative paths are passed through unchanged, so
+`new Request("http://localhost/status")` works too.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="code"
+    name="Status endpoints"
+    src="https://heyo.sh/heyo-status/http-api/status"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Admin endpoints"
+    src="https://heyo.sh/heyo-status/http-api/admin"
+  />
+</RelatedTopics>

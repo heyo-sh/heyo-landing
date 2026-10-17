@@ -1,0 +1,166 @@
+---
+title: React Router
+description: Create a React Router status page with Heyo Status or add a live page and API to an existing app.
+---
+
+# React Router
+
+Creating a new React Router status page? The Framework Mode starter gives you
+a live page, API, theme, database and local scheduler. Choose a deployment
+target for production cron setup. If status belongs inside an existing app,
+follow the manual route and page steps below.
+
+## Create a project
+
+Pass `react-router` to select the framework without a prompt. Omit flags to
+choose a deployment, database and theme interactively.
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun create @heyo-sh/heyo-status my-status-page --template react-router
+cd my-status-page
+bun dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template react-router
+cd my-status-page
+npm run dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm create @heyo-sh/heyo-status my-status-page --template react-router
+cd my-status-page
+pnpm dev`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template react-router
+cd my-status-page
+yarn dev`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+If you skipped dependency installation in the creator, install the project's
+dependencies before starting it. Replace the example monitors in
+`heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev` starts
+the local scheduler; `bun run check` runs one check without a global CLI
+install. Cloudflare/D1 uses Worker cron triggers instead and has no `check`
+script. For direct shell commands, see the [CLI guide](https://heyo.sh/heyo-status/cli).
+
+## Add status to an existing app
+
+The route and page below work in an existing React Router Framework Mode app.
+They still need persistent storage and a production scheduler; the starter
+includes the platform-specific deployment setup.
+
+### 1. Install and configure
+
+Install the package in the app's root directory:
+
+<CodeBlockGroup defaultValue="bun" variant="line">
+  <CodeBlock language="bash" title="bun">
+    {`bun add @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="npm">
+    {`npm install @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="pnpm">
+    {`pnpm add @heyo-sh/heyo-status`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="yarn">
+    {`yarn add @heyo-sh/heyo-status`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+You only need a [global CLI install](https://heyo.sh/heyo-status/cli)
+if you want to type `heyo-status …` directly in your shell.
+
+At the project root, add a config (use a persistent SQLite disk when
+self-hosting; Cloudflare uses D1, Vercel PostgreSQL):
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+  title: "Acme Status",
+  monitors: [{ name: "Website", type: "http", url: "https://acme.com" }],
+});
+
+export default statusPage;
+```
+
+To test a monitor before scheduling it, install the global CLI and run
+`heyo-status check run` from the project root. It reads the config and database
+without a running React Router server (and requires Bun 1.4.3+). For
+Cloudflare/D1, use Worker cron triggers instead; a local shell has no D1
+binding.
+
+### 2. Add the API and page routes
+
+The API route must match the default `basePath`, `/api/heyo-status`.
+
+```ts title="src/routes.ts"
+import { index, route, type RouteConfig } from "@react-router/dev/routes";
+
+export default [
+  index("routes/_index.tsx"),
+  route("api/heyo-status/*", "routes/api.heyo-status.$.ts"),
+] satisfies RouteConfig;
+```
+
+```ts title="src/routes/api.heyo-status.$.ts"
+import { statusHandler } from "@heyo-sh/heyo-status/react-router";
+import { statusPage } from "../../heyo-status.config";
+
+export const { loader, action } = statusHandler(statusPage);
+```
+
+The `loader` serves GET; `action` serves POST, PATCH, PUT and DELETE. Keep
+the `basePath` and route path in sync if you change either.
+
+### 3. Render the current snapshot
+
+Load the stylesheet once in `src/root.tsx`:
+
+```tsx title="src/root.tsx"
+import "@heyo-sh/heyo-status/theme/status.css";
+```
+
+Fetch the snapshot in the server loader rather than the component, so the
+rendered page always reflects the most recent checks. A dynamic import keeps
+SQLite out of the browser bundle.
+
+```tsx title="src/routes/_index.tsx"
+import { StatusPage } from "@heyo-sh/heyo-status/ui";
+
+export async function loader() {
+  const { statusPage } = await import("../../heyo-status.config");
+  return {
+    snapshot: await statusPage.api.getSnapshot(),
+    theme: statusPage.theme,
+    title: statusPage.title,
+  };
+}
+
+export default function Index({ loaderData }: { loaderData: Awaited<ReturnType<typeof loader>> }) {
+  return <StatusPage {...loaderData} />;
+}
+```
+
+Pass `basePath`, `branding`, `colors`, `mode`, `metrics` and subscriber settings
+from the config when using those features. For the persisted light/dark toggle,
+include `statusThemeBootstrapScript` in the document head; the generated
+`src/root.tsx` already does so.
+
+### 4. Schedule checks
+
+The API route does not schedule work. Run `statusPage.cron.runChecks`,
+`summarize` and `cleanup` on their configured schedules. Use [Cloudflare
+triggers](https://heyo.sh/heyo-status/deploying/cloudflare), [Vercel
+Cron](https://heyo.sh/heyo-status/deploying/vercel), or [one scheduler on your
+server](https://heyo.sh/heyo-status/deploying/self-hosting).
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="cursor" name="Configure checks" src="https://heyo.sh/heyo-status/manage-status-page/checks" />
+  <RelatedTopic icon="globe" name="Deploy to Cloudflare" src="https://heyo.sh/heyo-status/deploying/cloudflare" />
+</RelatedTopics>

@@ -177,9 +177,10 @@ export async function POST(request: Request) {
 }
 ```
 
-The Astro route must run in a server or hybrid deployment rather than a fully
-static-only output. In a custom `DocsApp` shell, point the client at the same
-route:
+The Astro route needs a deployment adapter. `export const prerender = false`
+keeps it on demand while the rest of the site stays on `output: "static"`, which
+is exactly how the generated template is configured. In a custom `DocsApp`
+shell, point the client at the same route:
 
 ```tsx
 <DocsApp openApiRequestUrl="/heyo-docs-internal/openapi-request" {...props} />

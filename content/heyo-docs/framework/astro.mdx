@@ -132,6 +132,10 @@ export default defineConfig({
 });
 ```
 
+Server rendering imports every MDX page directly, and the documentation body
+carries no Suspense boundary, so each built page holds the finished article.
+Nothing has to run in the browser for a reader to see the text.
+
 ```css title="src/styles/app.css"
 @import "@fontsource-variable/figtree";
 @import "@heyo-sh/heyo-docs/theme/grain.css";
@@ -247,14 +251,19 @@ examples, security metadata, and only the component schemas reachable from that
 endpoint. It intentionally does not duplicate the complete OpenAPI document in
 the shared browser bundle.
 
-### The one dynamic route
+### The dynamic routes
 
-`POST /heyo-docs-internal/openapi-request` remains on demand and is marked with
-`export const prerender = false`. It is used only when a reader selects **Send
-request**. The handler validates that the selected server is declared by the
-OpenAPI document, then performs the request server-side. This avoids browser
-CORS limitations and keeps the documentation site from becoming an unrestricted
-open proxy.
+Two endpoints stay on demand, each marked with `export const prerender = false`:
+`POST /heyo-docs-internal/openapi-request` and `POST /heyo-docs-internal/ai-chat`.
+
+The first runs only when a reader selects **Send request**. The handler
+validates that the selected server is declared by the OpenAPI document, then
+performs the request server-side. This avoids browser CORS limitations and
+keeps the documentation site from becoming an unrestricted open proxy.
+
+The second answers AI chat messages and exists only when `ai.chat` is
+configured; without that configuration it returns a 404 and the provider
+runtime is never loaded.
 
 Astro still needs a deployment adapter for this route. The generated project
 uses the Node adapter by default; the Cloudflare and Vercel deployment overlays
@@ -269,7 +278,7 @@ cacheable assets on all three targets.
 - Build time and output size grow with the number of generated API routes.
   This is deliberate: every route is available as static content immediately
   after deployment.
-- The `Try it` proxy can be removed if interactive requests are not required;
+- The **Try it** proxy can be removed if interactive requests are not required;
   the rest of the documentation remains fully static.
 
 ### What is not dynamic
@@ -277,7 +286,7 @@ cacheable assets on all three targets.
 Theme selection, local search, sidebar navigation, and endpoint rendering are
 browser interactions backed by static page data and assets. They do not require
 Astro SSR. The adapter function is reserved for actions that genuinely need a
-server: currently the optional API request proxy.
+server: the optional API request proxy and AI chat.
 
 <RelatedTopics title="Next steps">
   <RelatedTopic

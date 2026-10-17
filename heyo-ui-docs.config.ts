@@ -1,5 +1,7 @@
 import { heyoDocs } from "@heyo-sh/heyo-docs/config";
 
+import { docsAi } from "./docs-ai.config.ts";
+
 export default heyoDocs({
   siteUrl: "https://heyo.sh/heyo-ui",
   title: "Heyo UI",
@@ -7,9 +9,9 @@ export default heyoDocs({
     "Flat, dense, developer-first React components. Semantic tokens, hairline rings, no dark: variants.",
   content: "content/heyo-ui",
   theme: "heyo",
+  ai: docsAi,
   navigation: [
     { label: "Readme", href: "https://heyo.sh" },
-    { label: "npm", href: "https://www.npmjs.com/package/@heyo-sh/heyo-ui" },
     { label: "GitHub", href: "https://github.com/heyo-sh/heyo-ui" },
   ],
   groups: [

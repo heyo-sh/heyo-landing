@@ -10,8 +10,9 @@ description: Publish a robots.txt file that allows documentation indexing and po
 </Callout>
 
 `robots.txt` tells crawlers that the public documentation may be indexed while
-keeping Heyo Docs' internal Markdown resource route out of search results. A
-new Heyo Docs project already serves this file at `/robots.txt`.
+keeping Heyo Docs' internal routes out of search results: the Markdown resource
+route and the request endpoints below `/heyo-docs-internal/`. A new Heyo Docs
+project already serves this file at `/robots.txt`.
 
 ## Set the sitemap URL
 
@@ -32,6 +33,7 @@ The response has the following shape:
 User-agent: *
 Allow: /
 Disallow: /__heyo-docs/
+Disallow: /heyo-docs-internal/
 
 Sitemap: https://docs.example.com/sitemap.xml
 ```
@@ -75,6 +77,7 @@ export function loader({ request }: Route.LoaderArgs) {
       "User-agent: *",
       "Allow: /",
       "Disallow: /__heyo-docs/",
+      "Disallow: /heyo-docs-internal/",
       "",
       `Sitemap: ${siteUrl}/sitemap.xml`,
       "",
@@ -104,6 +107,7 @@ export const GET: APIRoute = ({ request }) => {
       "User-agent: *",
       "Allow: /",
       "Disallow: /__heyo-docs/",
+      "Disallow: /heyo-docs-internal/",
       "",
       `Sitemap: ${siteUrl}/sitemap.xml`,
       "",
@@ -130,6 +134,7 @@ export function GET(request: Request) {
       "User-agent: *",
       "Allow: /",
       "Disallow: /__heyo-docs/",
+      "Disallow: /heyo-docs-internal/",
       "",
       `Sitemap: ${siteUrl}/sitemap.xml`,
       "",

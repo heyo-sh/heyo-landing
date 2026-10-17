@@ -3,6 +3,7 @@ import { documentationPaths } from "@heyo-sh/heyo-docs/node";
 
 import codeAuditConfig from "./heyo-code-audit-docs.config";
 import config from "./heyo-docs-docs.config";
+import statusConfig from "./heyo-status-docs.config";
 import uiConfig from "./heyo-ui-docs.config";
 
 /** Cloudflare serves prebuilt docs; the Worker is reserved for request actions. */
@@ -14,6 +15,9 @@ export default {
       ...docs.map((path) => `/heyo-docs${path}`),
       ...(await documentationPaths(process.cwd(), codeAuditConfig)).map(
         (path) => `/heyo-code-audit${path}`,
+      ),
+      ...(await documentationPaths(process.cwd(), statusConfig)).map(
+        (path) => `/heyo-status${path}`,
       ),
       ...(await documentationPaths(process.cwd(), uiConfig)).map(
         (path) => `/heyo-ui${path}`,
@@ -27,6 +31,8 @@ export default {
       "/heyo-docs/llms-full.txt",
       "/heyo-code-audit/llms.txt",
       "/heyo-code-audit/llms-full.txt",
+      "/heyo-status/llms.txt",
+      "/heyo-status/llms-full.txt",
       "/heyo-ui/llms.txt",
       "/heyo-ui/llms-full.txt",
     ];

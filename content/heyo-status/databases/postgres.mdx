@@ -1,0 +1,100 @@
+---
+title: PostgreSQL
+description: Connect Heyo Status to PostgreSQL and run migrations before deployment.
+---
+
+# PostgreSQL
+
+Use PostgreSQL for Vercel or when several app instances need to share status
+history. The generated project includes `pg` and `drizzle-orm`, but its
+`heyo-status.config.ts` points at an example **local** connection string.
+Replace that before deploying; Heyo Status does not read `DATABASE_URL`
+implicitly.
+
+## 1. Configure the connection
+
+For example, read `DATABASE_URL` explicitly and create the pool only when the
+database is first used:
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
+import { postgres } from "@heyo-sh/heyo-status/deployments/vercel";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+export const database = lazyStatusDatabase(() => {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("Set DATABASE_URL for Heyo Status.");
+  return postgres(drizzle(new Pool({ connectionString })));
+});
+
+export const statusPage = heyoStatus({ database, title: "Acme Status" });
+```
+
+Set `DATABASE_URL` in the environment that **runs the migration** and in the
+app's deployment environment. For production, use your provider's secret
+store and a pooled connection string (for example, Neon or Supabase's pooler)
+rather than committing credentials. `lazyStatusDatabase()` keeps builds from
+opening a connection just because they import the config.
+
+## 2. Apply migrations
+
+Run this from the generated project's root **before the first deploy**, once
+the database is reachable:
+
+```bash
+bun run db:migrate
+```
+
+The project script runs `heyo-status db migrate`. It loads
+`heyo-status.config.ts`, resolves the PostgreSQL adapter and applies bundled
+migrations. The adapter records applied IDs in `__heyo_status_migrations`;
+repeat the command after upgrading `@heyo-sh/heyo-status` to apply new ones.
+Already applied IDs are skipped. **Deploy only after migration succeeds.**
+
+For a manually integrated app without that script, install the CLI as
+[documented here](https://heyo.sh/heyo-status/cli) and run
+`heyo-status db migrate` from the directory containing your config. You can
+also call `await database.migrate()` in a one-off release job. Do not run
+migrations from every request handler or every serverless instance.
+
+If `psql` is available, you can check the database you just migrated:
+
+```bash
+psql "$DATABASE_URL" -c 'SELECT id FROM __heyo_status_migrations ORDER BY id;'
+```
+
+If the command fails because the connection is missing, check that the
+migration process can reach the database and that
+`heyo-status.config.ts` reads the same credentials as the deployed app.
+If a runtime says a table is missing after deployment, migrate the **same**
+database the app uses; migrating your local PostgreSQL does not migrate Vercel.
+
+## 3. Run and upgrade
+
+Once migrations succeed, start the app or deploy it. On every package upgrade,
+back up your database, run `bun run db:migrate` against that environment,
+then deploy the new app version. In particular,
+`0004_subscriber_uniqueness` removes duplicate subscriber destinations before
+adding a unique index; review existing data before applying it to a live
+installation. Request handlers never migrate automatically.
+
+## Using a different client
+
+`postgres()` accepts a `pg` Pool or Client with `query(text, values)`, or a
+compatible Drizzle client with `execute(query)`. It also works with compatible
+Neon and Supabase PostgreSQL clients. If you don't use Drizzle, for example:
+
+```ts
+import { postgres } from "@heyo-sh/heyo-status/db/postgres";
+import { Pool } from "pg";
+
+const database = postgres(new Pool({ connectionString: process.env.DATABASE_URL }));
+```
+
+The `/db/postgres` and `/deployments/vercel` imports refer to the same
+adapter. `postgres(client, { migrate: true })` runs migrations on construction;
+reserve it for disposable local or test databases, not a shared production
+pool. See [Schema and migrations](https://heyo.sh/heyo-status/databases/schema-and-migrations)
+for the full list.

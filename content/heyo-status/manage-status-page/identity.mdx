@@ -1,0 +1,66 @@
+---
+title: Identity
+description: Set the status page title, description, canonical URL and API base path.
+---
+
+# Identity
+
+Your page has two names: `title` appears in metadata, feeds and notifications;
+`branding.name` appears in the header. Set the page title and public URL in
+`heyo-status.config.ts`, then configure the [header brand](https://heyo.sh/heyo-status/manage-status-page/branding)
+separately.
+
+## Title and description
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+  title: "Acme Status",
+  description: "Real-time status for Acme services.",
+  monitors: [],
+});
+```
+
+If you omit `title`, the page uses `"Heyo Status"`. It appears in page
+metadata, feed titles, notification subjects and subscription email, **not**
+in the header. `description` defaults to `"Real-time service status and uptime."`
+and appears in metadata and feed descriptions. Write it as you would a short
+search-result excerpt.
+
+## Canonical URL
+
+```ts title="heyo-status.config.ts"
+siteUrl: "https://status.acme.com",
+```
+
+Set `siteUrl` to the address visitors will actually use. Feeds and email
+confirmation links fall back to the request origin without it, which can be
+wrong behind a proxy. Scheduled notification emails have no request origin:
+without `siteUrl`, they omit the page and unsubscribe links. Use an HTTP(S)
+URL without a query or fragment; a trailing slash is removed.
+
+## API base path
+
+```ts title="heyo-status.config.ts"
+basePath: "/api/heyo-status",
+```
+
+The default is `/api/heyo-status`. All public and admin endpoints are mounted
+under it. If you change it, change the framework catch-all route at the same
+time (for example, `app/status-api/[...path]/route.ts` for Next.js with
+`basePath: "/status-api"`). The path must start with `/`, must not equal `/`,
+and cannot contain `//`, a query or a fragment.
+
+<Callout type="info" title="Metadata lives in your framework shell">
+  The generated layouts and routes use the config for page metadata. If you
+  integrate Heyo Status manually, set your framework's title, description and
+  document language in its root layout too.
+</Callout>
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="sun" name="Choose a theme" src="https://heyo.sh/heyo-status/manage-status-page/themes" />
+  <RelatedTopic icon="cursor" name="Add your brand" src="https://heyo.sh/heyo-status/manage-status-page/branding" />
+</RelatedTopics>

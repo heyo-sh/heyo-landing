@@ -81,7 +81,7 @@ export default function App() {
   return <Outlet />;
 }
 
-const DOCS_BASE_PATHS = ["/heyo-docs", "/heyo-code-audit"] as const;
+const DOCS_BASE_PATHS = ["/heyo-docs", "/heyo-code-audit", "/heyo-ui"] as const;
 
 /**
  * Markdown resources stay inside the documentation namespace while preserving

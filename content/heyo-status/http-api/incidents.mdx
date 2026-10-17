@@ -1,0 +1,139 @@
+---
+title: Incident endpoints
+description: Read incidents publicly and manage their timelines with an admin token.
+---
+
+# Incident endpoints
+
+Read the incident timeline with `/incidents`; create and update incidents
+through `/admin/incidents` with a bearer token. Public reads need no token.
+If [incidents are disabled](https://heyo.sh/heyo-status/manage-status-page/incidents),
+all these routes return `404 { "error": "This feature is disabled." }`.
+
+## `GET /incidents`
+
+```bash
+curl "https://status.acme.com/api/heyo-status/incidents?status=investigating,identified&limit=10"
+```
+
+| Query | Type | Notes |
+| --- | --- | --- |
+| `status` | `investigating`, `identified`, `monitoring`, `resolved` | Comma-separated. |
+| `severity` | `minor`, `major`, `critical` | Comma-separated. |
+| `from`, `to` | ISO-8601 | Filter by incident creation time: `from` inclusive, `to` exclusive. |
+| `limit`, `offset` | non-negative integer | Pagination. |
+
+```json
+[
+  {
+    "id": "inc_2f8c1d",
+    "title": "Elevated API latency",
+    "status": "monitoring",
+    "severity": "major",
+    "affectedMonitors": ["API"],
+    "auto": false,
+    "createdAt": "2026-01-01T10:02:00.000Z",
+    "updatedAt": "2026-01-01T10:41:00.000Z",
+    "resolvedAt": null,
+    "updates": [
+      {
+        "id": "upd_91ab3c",
+        "status": "investigating",
+        "message": "We are investigating elevated response times.",
+        "createdAt": "2026-01-01T10:02:00.000Z"
+      },
+      {
+        "id": "upd_a04f7d",
+        "status": "monitoring",
+        "message": "A fix is deployed; watching latency.",
+        "createdAt": "2026-01-01T10:41:00.000Z"
+      }
+    ]
+  }
+]
+```
+
+## `GET /incidents/:id`
+
+One incident with its timeline, or `404 { "error": "Incident not found." }`.
+
+## `POST /admin/incidents`
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/incidents \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "title": "Elevated API latency",
+    "severity": "major",
+    "affectedMonitors": ["API"],
+    "message": "We are investigating elevated response times.",
+    "status": "investigating"
+  }'
+```
+
+<Properties>
+  <Property name="title" type="string" required>
+    Non-empty; trimmed.
+  </Property>
+  <Property name="severity" type='"minor" | "major" | "critical"' required />
+  <Property name="affectedMonitors" type="string[]" required>
+    Trimmed and de-duplicated. An empty array means global.
+  </Property>
+  <Property name="message" type="string" required>
+    The first timeline entry.
+  </Property>
+  <Property name="status" type='"investigating" | "identified" | "monitoring"'>
+    Defaults to `investigating`. Creating one as `resolved` is rejected.
+  </Property>
+</Properties>
+
+Returns `201` with the created incident and dispatches `incident.created`.
+
+## `POST /admin/incidents/:id/updates`
+
+Add a timeline entry when there's news to share. Use this route to move an
+incident to monitoring or resolved while explaining what changed.
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/admin/incidents/inc_2f8c1d/updates \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"status":"resolved","message":"Latency is back to normal."}'
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `status` | yes | Any incident status, including `resolved`. |
+| `message` | yes | Timeline text. |
+| `severity` | no | Changes severity with this entry. |
+
+Dispatches `incident.resolved` for `resolved`, otherwise `incident.updated`.
+
+## `PATCH /admin/incidents/:id`
+
+Change the status or severity and append a timeline entry in one request.
+Omitted status and severity keep their current values; `message` defaults to
+`"Incident details updated."`. This also dispatches `incident.updated`, or
+`incident.resolved` when the resulting status is `resolved`. It does not edit
+the incident's title or affected monitors.
+
+```bash
+curl -X PATCH https://status.acme.com/api/heyo-status/admin/incidents/inc_2f8c1d \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"severity":"critical"}'
+```
+
+## `DELETE /admin/incidents/:id`
+
+Returns `204` on success or `404` for an unknown incident. Deletion **soft-deletes**
+the incident: it and its timeline disappear from public results and feeds, but
+the database rows remain. No event is sent. Resolve an incident instead if
+you want it to remain in public history and feeds.
+
+<RelatedTopics title="Related">
+  <RelatedTopic icon="cursor" name="Configure incidents" src="https://heyo.sh/heyo-status/manage-status-page/incidents" />
+  <RelatedTopic icon="lightbulb" name="Automatic incidents" src="https://heyo.sh/heyo-status/how-it-works/automatic-incidents" />
+  <RelatedTopic icon="code" name="Maintenance endpoints" src="https://heyo.sh/heyo-status/http-api/maintenance" />
+</RelatedTopics>

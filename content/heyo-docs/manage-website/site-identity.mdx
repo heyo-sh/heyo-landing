@@ -79,8 +79,8 @@ that should appear in search results, then rebuild after a domain change.
 ## Replace the favicon
 
 The favicon is part of the framework shell rather than the Heyo Docs
-configuration. This project exposes `public/favicon.svg` and links it in
-`app/root.tsx`. Replace that file while retaining the same public path, or
+configuration. The React Router project exposes `public/favicon.svg` and links
+it in `app/root.tsx`. Replace that file while retaining the same public path, or
 change the framework root layout to reference a different asset.
 
 Generated projects make the equivalent link in their root document:
@@ -97,7 +97,7 @@ as well as in a browser tab during development.
 
 ## Set the document language
 
-The supplied React Router shell declares `<html lang="en">`. If the
+The generated React Router shell declares `<html lang="en">`. If the
 documentation is written primarily in another language, update that attribute
 in the application shell. This is separate from MDX content and helps screen
 readers, spelling tools, and search engines interpret the site correctly.

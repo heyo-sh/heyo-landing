@@ -12,9 +12,11 @@ export function loader({ params, request }: LoaderFunctionArgs) {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
 
-  const siteUrl = params.docsSite
-    ? new URL(`${site.basePath}/`, request.url).toString()
-    : (site.config.siteUrl ?? new URL(request.url).origin);
+  const siteUrl =
+    site.config.siteUrl ??
+    (params.docsSite
+      ? new URL(site.basePath, request.url).toString()
+      : new URL(request.url).origin);
   return new Response(llmsFull(site.markdownPages, siteUrl), {
     headers: { "content-type": "text/plain; charset=utf-8" },
   });

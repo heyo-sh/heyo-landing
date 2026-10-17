@@ -1,0 +1,46 @@
+---
+title: Branding
+description: Configure the status page header logo, name and accent colours.
+---
+
+# Branding
+
+Want your logo or company name in the status page header? Set `branding` in
+`heyo-status.config.ts`. The page's `title` is separate: it names the site in
+metadata, feeds and notifications, not in the header.
+
+## Logo and name
+
+```ts title="heyo-status.config.ts"
+branding: { logo: "/logo.svg", name: "Acme" },
+```
+
+| Configuration | Header |
+| --- | --- |
+| `{ logo: "/logo.svg" }` | Logo only. |
+| `{ logo: "/logo.svg", name: "Acme" }` | Logo and label. |
+| `{ name: "Acme" }` | Text only. |
+| `{}` | No brand element. |
+
+The starter points `logo` at `public/heyo.svg`. Replace that file or point
+the option at another asset your app serves. SVG and raster images both work;
+check that yours stays legible at header size.
+
+## Accent colours
+
+```ts title="heyo-status.config.ts"
+colors: { primary: "#0f172a", secondary: "#64748b" },
+```
+
+Both colours are optional. They change accents, not the colours that mean
+up, degraded, down or maintenance. Check contrast in light and dark mode
+before you publish.
+
+For more control, add CSS after the bundled stylesheet in the generated
+`styles/status.css` and use the stable `data-slot` selectors described in
+[Themes](https://heyo.sh/heyo-status/manage-status-page/themes).
+
+<RelatedTopics title="Next steps">
+  <RelatedTopic icon="book" name="Identity" src="https://heyo.sh/heyo-status/manage-status-page/identity" />
+  <RelatedTopic icon="sun" name="Themes" src="https://heyo.sh/heyo-status/manage-status-page/themes" />
+</RelatedTopics>

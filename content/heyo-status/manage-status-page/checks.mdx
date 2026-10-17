@@ -1,0 +1,174 @@
+---
+title: Checks and scheduling
+description: Intervals, retention, the displayed window and the snapshot cache.
+---
+
+# Checks and scheduling
+
+Set `checks.interval` to decide when monitors run, and `displayDays` to
+control how much history visitors see. The summary and cleanup jobs have
+their own schedules. Define all three cron expressions here, then keep your
+platform's triggers in sync with them.
+
+```ts
+checks: {
+  interval: "*/5 * * * *",
+  retentionDays: 90,
+  displayDays: 90,
+  summaryCron: "10 0 * * *",
+  cleanupCron: "0 3 * * *",
+},
+```
+
+<Properties>
+  <Property name="interval" type="string">
+    Defaults to `"*/5 * * * *"`. Five-field cron expression for the check run.
+  </Property>
+  <Property name="retentionDays" type="number">
+    Defaults to `90`. Raw results and daily summaries older than this are
+    deleted by the cleanup job.
+  </Property>
+  <Property name="displayDays" type="number">
+    Defaults to `90`. Width of the uptime grid and the window the snapshot is
+    built from. Must not exceed `retentionDays`.
+  </Property>
+  <Property name="summaryCron" type="string">
+    Defaults to `"10 0 * * *"`. Compacts yesterday's raw results into daily
+    summaries.
+  </Property>
+  <Property name="cleanupCron" type="string">
+    Defaults to `"0 3 * * *"`. Deletes history beyond `retentionDays`.
+  </Property>
+</Properties>
+
+## The three jobs
+
+| Job         | Default cron   | Runtime call               | What it does                                                  |
+| ----------- | -------------- | -------------------------- | ------------------------------------------------------------- |
+| checks      | `*/5 * * * *`  | `statusPage.cron.runChecks()` | Runs monitors, stores results, raises events and incidents. |
+| summarize   | `10 0 * * *`   | `statusPage.cron.summarize()` | Compacts raw rows into one summary row per monitor per day. |
+| cleanup     | `0 3 * * *`    | `statusPage.cron.cleanup()`   | Deletes results and summaries older than `retentionDays`.   |
+
+After a job finishes, it invalidates the snapshot cache. The next render
+reads the updated data.
+
+## Cron syntax
+
+Heyo Status evaluates standard five-field expressions — minute, hour,
+day-of-month, month, day-of-week — in **UTC**. Supported field syntax is
+`*`, a number, a `a-b` range, a `,` list and a `/n` step. Sunday may be `0`
+or `7`. When both day-of-month and day-of-week are explicit, they are
+combined with OR, as in classic cron.
+
+| Expression       | Meaning                       |
+| ---------------- | ----------------------------- |
+| `* * * * *`      | every minute                  |
+| `*/5 * * * *`    | every five minutes            |
+| `0,30 * * * *`   | on the hour and half past     |
+| `15 2 * * *`     | 02:15 UTC daily               |
+| `0 9 * * 1-5`    | 09:00 UTC on weekdays         |
+
+<Callout type="warning" title="Platform minimums apply">
+  Cloudflare and Vercel schedule cron on their own cadence and will not run a
+  trigger more often than their plan allows. A one-minute interval is a local
+  development convenience, not a guarantee in production.
+</Callout>
+
+## Choose how much history to show
+
+`displayDays` and `retentionDays` answer different questions:
+
+- `displayDays` is what a visitor sees. It is the width of the uptime grid and
+  the range the snapshot query reads.
+- `retentionDays` is what the database keeps. Raw rows older than it are
+  deleted, as are daily summaries older than the same boundary.
+
+Validation rejects `displayDays > retentionDays` because the page would ask
+for days the cleanup job already removed.
+
+```ts
+// A 30-day page backed by a year of history for internal analysis.
+checks: { displayDays: 30, retentionDays: 365 }
+```
+
+Storage grows with monitors × checks per day, until compaction turns a day
+into one row per monitor. At a five-minute interval that is 288 raw rows per
+monitor per day, collapsing to one summary row.
+
+## Snapshot cache
+
+Reading the whole history window on every page view is wasteful. The runtime
+keeps a snapshot in memory for a short time instead.
+
+```ts
+cache: { snapshotTtlMs: 30_000 }
+```
+
+- `0` disables caching entirely; every read hits the database.
+- The maximum accepted value is `3600000` (one hour).
+- Concurrent misses are collapsed into a single database read.
+- Passing an explicit clock — `getSnapshot(new Date(...))` — always bypasses
+  the cache, which keeps tests deterministic.
+- `runChecks`, `summarize`, `cleanup` and every admin mutation invalidate it.
+  After an out-of-band write, call `statusPage.api.invalidate()` yourself.
+
+<Callout type="info" title="Serverless caches are per-instance">
+  On Cloudflare Workers and Vercel functions the cache lives inside one
+  isolate or instance. It still removes most repeated reads inside a burst,
+  but it is not a shared cache and does not need to be invalidated across
+  instances.
+</Callout>
+
+## Running the schedule
+
+<CodeBlockGroup defaultValue="heyo-status">
+  <CodeBlock language="bash" title="heyo-status">
+    {`# Runs the framework dev server and all three jobs.
+heyo-status dev -- next dev`}
+  </CodeBlock>
+  <CodeBlock language="jsonc" title="Cloudflare">
+    {`// wrangler.jsonc
+{ "triggers": { "crons": ["*/5 * * * *", "10 0 * * *", "0 3 * * *"] } }`}
+  </CodeBlock>
+  <CodeBlock language="json" title="Vercel">
+    {`{
+  "crons": [
+    { "path": "/api/cron/checks", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/summarize", "schedule": "10 0 * * *" },
+    { "path": "/api/cron/cleanup", "schedule": "0 3 * * *" }
+  ]
+}`}
+  </CodeBlock>
+  <CodeBlock language="ts" title="Self-hosted">
+    {`import { scheduleStatusPage } from "@heyo-sh/heyo-status/deployments/node";
+import cron from "node-cron";
+
+import { statusPage } from "./heyo-status.config";
+
+scheduleStatusPage(statusPage, cron);`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+The platform configuration must match the configuration file. On Cloudflare,
+`cloudflareCronExpressions(statusPage)` returns exactly the list `wrangler`
+needs, and the Worker handler matches an incoming trigger against the three
+expressions — an unknown trigger is deliberately a no-op, so stale cron
+configuration during a deploy is harmless.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="How history is compacted"
+    src="https://heyo.sh/heyo-status/how-it-works/uptime-and-history"
+  />
+  <RelatedTopic
+    icon="globe"
+    name="Deploying to Cloudflare"
+    src="https://heyo.sh/heyo-status/deploying/cloudflare"
+  />
+  <RelatedTopic
+    icon="check"
+    name="CLI commands"
+    src="https://heyo.sh/heyo-status/cli"
+  />
+</RelatedTopics>

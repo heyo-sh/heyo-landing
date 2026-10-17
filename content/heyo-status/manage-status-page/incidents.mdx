@@ -1,0 +1,102 @@
+---
+title: Incidents
+description: Configure incidents, manage their timeline and understand their effect on status.
+---
+
+# Incidents
+
+Use incidents to tell visitors what went wrong and what you're doing about
+it. They appear as a timeline on the page; checks can also open and resolve
+them automatically. Incidents and their RSS/Atom feeds are enabled by default.
+
+```ts title="heyo-status.config.ts"
+incidents: { enabled: true },
+```
+
+Setting `incidents.enabled: false` makes `/incidents`, `/incidents/:id`,
+`/rss.xml`, `/atom.xml` and `/admin/incidents/*` return `404`. No automatic
+incidents are opened, and the snapshot contains no active incidents.
+
+## Incident states and fields
+
+An incident moves through investigating, identified, monitoring and resolved.
+These are timeline states, not an enforced sequence.
+
+```ts
+interface Incident {
+  id: string;
+  title: string;
+  status: "investigating" | "identified" | "monitoring" | "resolved";
+  severity: "minor" | "major" | "critical";
+  affectedMonitors: string[];
+  auto: boolean;
+  updates: IncidentUpdate[];
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt: Date | null;
+}
+```
+
+<Properties>
+  <Property name="status" type="IncidentStatus">
+    The four states form a timeline, not an enforced state machine. A new
+    incident cannot be created as `resolved`.
+  </Property>
+  <Property name="severity" type="IncidentSeverity">
+    `critical` drives the page to `major-outage` and triggers Slack
+    `mentionOnCritical`.
+  </Property>
+  <Property name="affectedMonitors" type="string[]">
+    An empty array means the incident affects every monitor.
+  </Property>
+  <Property name="auto" type="boolean">
+    True when monitoring opened the incident. Only automatic incidents are
+    reconciled and automatically resolved.
+  </Property>
+  <Property name="updates" type="IncidentUpdate[]">
+    Chronological entries with `id`, `status`, `message`, `createdAt` and an
+    optional severity change.
+  </Property>
+</Properties>
+
+## Create and update an incident
+
+Use the CLI locally (it talks to the database directly) or the admin API.
+The HTTP route requires `adminToken` in the configuration; keep the token out
+of version control.
+
+<CodeBlockGroup defaultValue="heyo-status">
+  <CodeBlock language="bash" title="heyo-status">
+    {`heyo-status incident create --title "Elevated API latency" --severity major --monitors "API,Dashboard" --message "We are investigating elevated response times."
+
+heyo-status incident update inc_... --status monitoring --message "A fix is deployed."
+heyo-status incident resolve inc_... --message "Latency is back to normal."
+heyo-status incident list --status investigating`}
+  </CodeBlock>
+  <CodeBlock language="bash" title="curl">
+    {`curl -X POST https://status.acme.com/api/heyo-status/admin/incidents -H "authorization: Bearer $ADMIN_TOKEN" -H "content-type: application/json" -d '{"title":"Elevated API latency","severity":"major","affectedMonitors":["API"],"message":"We are investigating elevated response times."}'`}
+  </CodeBlock>
+</CodeBlockGroup>
+
+## How an incident affects status
+
+An active incident can change the page-wide status even if individual checks
+are passing. The page resolves status in this order:
+
+1. An [in-progress maintenance window](https://heyo.sh/heyo-status/manage-status-page/maintenance) → `maintenance`.
+2. Any active `critical` incident → `major-outage`.
+3. Any other active incident → `degraded`.
+4. Otherwise monitors decide: all failing → `major-outage`, some failing →
+   `degraded`, none → `operational`.
+
+Active incidents appear in the snapshot with their full timeline, anchored at
+`#incident-<id>`. When incidents are enabled, RSS and Atom publish the newest
+50 incidents at `/api/heyo-status/rss.xml` and `/api/heyo-status/atom.xml`.
+Feed entries link to the anchor using `siteUrl` (or the request origin) and
+include the timeline. See [Badges, feeds and metrics](https://heyo.sh/heyo-status/http-api/badges-feeds-metrics).
+
+<RelatedTopics title="Related">
+  <RelatedTopic icon="cursor" name="Maintenance" src="https://heyo.sh/heyo-status/manage-status-page/maintenance" />
+  <RelatedTopic icon="lightbulb" name="Automatic incidents" src="https://heyo.sh/heyo-status/how-it-works/automatic-incidents" />
+  <RelatedTopic icon="code" name="Incident endpoints" src="https://heyo.sh/heyo-status/http-api/incidents" />
+</RelatedTopics>

@@ -1,0 +1,175 @@
+---
+title: Badges, feeds and metrics
+description: Embeddable SVG badges, RSS and Atom feeds, and the Prometheus exposition.
+---
+
+# Badges, feeds and metrics
+
+Embed a live badge in a README, let visitors follow incidents through RSS or
+Atom, or scrape metrics with Prometheus. All three endpoints are public. Badges
+and feeds are on by default; Prometheus must be enabled in the config.
+
+## Embed a badge
+
+Badges are enabled by `metrics.badges` (default `true`).
+
+```
+GET /api/heyo-status/badge/:name.svg
+```
+
+| Query    | Values                        | Default                       |
+| -------- | ----------------------------- | ----------------------------- |
+| `metric` | `status`, `uptime`, `latency` | `status`                      |
+| `period` | `24h`, `7d`, `30d`, `90d`     | `24h` (uptime only)           |
+| `label`  | any string                    | the monitor name, or `status` |
+
+```md
+![API](https://status.acme.com/api/heyo-status/badge/API.svg)
+![Uptime](https://status.acme.com/api/heyo-status/badge/API.svg?metric=uptime&period=30d)
+![Latency](https://status.acme.com/api/heyo-status/badge/API.svg?metric=latency)
+![Overall](https://status.acme.com/api/heyo-status/badge/overall.svg?label=Acme)
+```
+
+`overall` is reserved for the page-level state. Percent-encode names with
+spaces: `/badge/Web%20App.svg`.
+
+| Response | When                                                          |
+| -------- | ------------------------------------------------------------- |
+| `200`    | SVG, `cache-control: public, max-age=60`.                     |
+| `400`    | Unknown `metric` or `period`, or invalid percent-encoding.    |
+| `404`    | Unknown monitor, a path not ending in `.svg`, or badges off.  |
+
+Colours follow the value: green at or above 99.9% uptime (or healthy), amber
+at or above 95% (or degraded), red below, grey when there is no data.
+
+The one-minute HTTP cache limits repeated badge fetches from third-party
+READMEs. The in-process snapshot cache also limits database reads when a
+badge request reaches the app.
+
+## Follow incidents with RSS or Atom
+
+Feeds are enabled by `incidents.enabled` (default `true`).
+
+```
+GET /api/heyo-status/rss.xml
+GET /api/heyo-status/atom.xml
+```
+
+Both publish the newest **50** incidents — feeds are public and
+unauthenticated, so they serve a bounded window rather than a history that
+only grows.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Acme Status incidents</title>
+    <link>https://status.acme.com</link>
+    <atom:link href="https://status.acme.com/api/heyo-status/rss.xml" rel="self" type="application/rss+xml"/>
+    <description>Real-time status for Acme services.</description>
+    <lastBuildDate>Thu, 01 Jan 2026 10:41:00 GMT</lastBuildDate>
+    <item>
+      <title>Elevated API latency (monitoring)</title>
+      <link>https://status.acme.com#incident-inc_2f8c1d</link>
+      <guid isPermaLink="false">heyo-status:incident:inc_2f8c1d</guid>
+      <pubDate>Thu, 01 Jan 2026 10:41:00 GMT</pubDate>
+      <description>…the incident timeline…</description>
+    </item>
+  </channel>
+</rss>
+```
+
+Entries link to the `#incident-<id>` anchor that every bundled theme renders,
+so a reader lands on the incident itself. Absolute URLs come from `siteUrl`,
+falling back to the request origin — set `siteUrl` before publishing, or a
+feed behind a proxy will advertise the wrong host.
+
+Build the same XML yourself from any incident list:
+
+```ts
+import { createAtomFeed, createRssFeed } from "@heyo-sh/heyo-status/feeds";
+
+const incidents = await statusPage.database.listIncidents({ limit: 50 });
+const xml = createRssFeed(statusPage, incidents, "https://status.acme.com");
+```
+
+## Scrape Prometheus metrics
+
+Enable this endpoint with `metrics.prometheus` (default `false`).
+
+```
+GET /api/heyo-status/metrics
+```
+
+Served as `text/plain; version=0.0.4; charset=utf-8`.
+
+```text
+# HELP heyo_status_up Current monitor status (1 = operational, 0 = failing).
+# TYPE heyo_status_up gauge
+heyo_status_up{monitor="API",type="http",group="API"} 0
+heyo_status_up{monitor="Website",type="http",group="Web"} 1
+
+# HELP heyo_status_uptime_ratio Uptime ratio per reporting period (0-1).
+# TYPE heyo_status_uptime_ratio gauge
+heyo_status_uptime_ratio{monitor="API",period="24h"} 0.972
+
+# HELP heyo_status_overall Overall status page state.
+# TYPE heyo_status_overall gauge
+heyo_status_overall{state="operational"} 0
+heyo_status_overall{state="degraded"} 1
+```
+
+| Metric                                     | Labels                      |
+| ------------------------------------------ | --------------------------- |
+| `heyo_status_up`                           | `monitor`, `type`, `group`  |
+| `heyo_status_latency_milliseconds`         | `monitor`, `type`, `group`  |
+| `heyo_status_uptime_ratio`                 | `monitor`, `period`         |
+| `heyo_status_last_check_timestamp_seconds` | `monitor`                   |
+| `heyo_status_overall`                      | `state`                     |
+| `heyo_status_monitors`                     | —                           |
+| `heyo_status_active_incidents`             | —                           |
+| `heyo_status_scheduled_maintenances`       | —                           |
+| `heyo_status_snapshot_timestamp_seconds`   | —                           |
+
+```yaml title="prometheus.yml"
+scrape_configs:
+  - job_name: heyo-status
+    metrics_path: /api/heyo-status/metrics
+    scheme: https
+    static_configs:
+      - targets: ["status.acme.com"]
+```
+
+The exposition contains no incident text or monitor targets and omits
+per-monitor series for private monitors. Overall status and incident counts
+can still be affected by their automatic incidents. Feeds publish those
+incidents too; see the [private monitor warning](https://heyo.sh/heyo-status/manage-status-page/monitors).
+
+<Callout type="warning" title="/metrics is not behind the admin token">
+  If a scrape endpoint should not be world-readable, leave
+  <code>prometheus: false</code> and expose the same numbers behind your own
+  gateway with <code>createPrometheusMetrics()</code>, or restrict the path at
+  the edge.
+</Callout>
+
+## Health
+
+```
+GET /api/heyo-status/healthz  →  { "ok": true }
+```
+
+Answers whether the status API is serving. It does not read the database and
+does not reflect monitor state.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Metrics configuration"
+    src="https://heyo.sh/heyo-status/manage-status-page/metrics"
+  />
+  <RelatedTopic
+    icon="code"
+    name="Status endpoints"
+    src="https://heyo.sh/heyo-status/http-api/status"
+  />
+</RelatedTopics>

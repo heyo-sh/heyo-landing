@@ -152,9 +152,15 @@ import { DocsApp } from "@heyo-sh/heyo-docs";
 import { docsConfig, pages } from "../_heyo-docs/content";
 
 export function NextDocsApp({ pathname }: { pathname: string }) {
-  return <DocsApp config={docsConfig} pages={pages} pathname={pathname} />;
+  return (
+    <DocsApp config={docsConfig} pages={pages} pathname={pathname} />
+  );
 }
 ```
+
+The generated registry imports every MDX page directly, and the documentation
+body carries no Suspense boundary, so a statically generated page contains the
+finished article instead of a placeholder that the browser replaces.
 
 Then add the optional catch-all route. `generateStaticParams()` makes every
 MDX URL a static page at build time.

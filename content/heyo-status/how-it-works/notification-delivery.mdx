@@ -1,0 +1,95 @@
+---
+title: Notification delivery
+description: When alerts fire, how channels receive them and where failures are recorded.
+---
+
+# Notification delivery
+
+A failing monitor doesn't send an alert on every run. Heyo Status detects
+transitions, sends each event to the channels configured for it, and records
+the outcome. A broken Slack or webhook integration won't stop checks or an
+incident update.
+
+## When does an alert fire?
+
+With the default `notifications.failureThreshold: 3`:
+
+| Check | Previous consecutive failures | Event |
+| --- | --- | --- |
+| First failure | 0 | None |
+| Second failure | 1 | None |
+| Third failure | 2 | `monitor.down` (or `ssl.expiring` for an expiring certificate) |
+| More failures | 3 or more | None; don't page again for the same outage |
+| First success after reaching threshold | 3 or more | `monitor.recovered` |
+
+The check run reads prior history **before** saving the new batch. This is
+why the third failure alerts once, while a recovery after only one or two
+failed checks does not. Planned maintenance suppresses these monitor events
+for the covered monitors. Incident and maintenance changes also generate
+`incident.*` and `maintenance.*` events; see the
+[event list](https://heyo.sh/heyo-status/manage-status-page/notifications).
+
+## What happens to an event?
+
+1. Heyo Status attaches the page title and public URL, plus the monitor's
+   group and target when applicable.
+2. It tries configured channels in their listed order. A channel's `events`
+   filter decides whether it receives the event; wildcards such as
+   `"incident.*"` are expanded when the channel is created.
+3. It writes a `sent` or `failed` row for each attempted channel delivery.
+   After configured channels, eligible **confirmed public subscribers**
+   receive incident and maintenance events, but never monitor-level alerts.
+
+Delivery is awaited, not queued for a background worker. A slow webhook can
+make the **whole check run** take longer, even though the check results have
+already been saved. A thrown delivery error is caught so subsequent channels
+are still tried. Failure to write the delivery log is also contained; don't
+treat an empty log as proof that no delivery was attempted.
+
+## Retries and failures
+
+Only the built-in generic `webhook` channel retries automatically. Its
+`retries` option is the **total** number of attempts (default 3), with
+exponential backoff starting at `retryDelayMs` (default 250 ms). Slack,
+Discord, email and public subscriber deliveries report a failure on their
+first unsuccessful attempt. For provider-specific retries, wrap a custom
+channel or handle them outside Heyo Status.
+
+A delivery failure doesn't undo the check result or incident update. A
+**database** error while collecting history or saving results is different:
+that can fail the check run before delivery starts.
+
+## Inspect the log
+
+Enable the management API with `adminToken`, then filter for failed
+attempts:
+
+```bash
+curl -H "authorization: Bearer $ADMIN_TOKEN" \
+  "https://status.acme.com/api/heyo-status/admin/notifications/log?status=failed&limit=20"
+```
+
+You can also filter by `channelId` or `eventType` and page through results
+with `limit` and `offset`. Each row includes the channel, event, status,
+attempt count and error. The log doesn't store credentials, webhook URLs,
+recipients or the full payload, and it isn't a replay queue. Subscriber
+attempts use a `subscriber:<id>` channel ID.
+
+For custom dispatch from your own code, use the same dispatcher:
+
+```ts
+import { dispatchNotifications } from "@heyo-sh/heyo-status";
+
+const deliveries = await dispatchNotifications(statusPage, {
+  type: "incident.updated",
+  occurredAt: new Date(),
+  incident,
+});
+```
+
+`deliveries` contains one result per matching configured channel; subscriber
+deliveries are logged separately, not returned in that array. See
+[Notifications](https://heyo.sh/heyo-status/manage-status-page/notifications)
+for channel setup and
+[Public subscriptions](https://heyo.sh/heyo-status/how-it-works/public-subscriptions)
+for visitor-facing delivery.

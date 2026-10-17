@@ -1,0 +1,83 @@
+---
+title: The check run
+description: What a scheduled check stores, when it alerts and what happens if it fails.
+---
+
+# The check run
+
+Adding a monitor to `heyo-status.config.ts` doesn't start it. A scheduler or
+manual trigger must call `statusPage.cron.runChecks()`. The local dev script,
+Cloudflare and Vercel cron, `node-cron`, CLI and admin endpoint all use this
+same operation.
+
+## Run one check batch
+
+In a generated SQLite or PostgreSQL project, run one batch with:
+
+```bash
+bun run check
+```
+
+That script uses the project-local CLI and requires Bun 1.4.3+. To run the CLI
+directly, install it globally and use `heyo-status check run`. Cloudflare/D1
+projects have no `check` script: use Worker cron, or the authenticated admin
+endpoint if you've enabled `adminToken`.
+
+You can also call the runtime directly, for example from your own scheduler:
+
+```ts
+const results = await statusPage.cron.runChecks();
+```
+
+## What happens during a run?
+
+1. **Check monitors.** HTTP, DNS, SSL and TCP checks run concurrently.
+   Composite monitors then combine the results from this same batch. The
+   check phase is bounded roughly by the slowest check, but database writes
+   and notification delivery take additional time.
+2. **Detect transitions.** Before writing new results, Heyo Status reads
+   previous check history. At the default `failureThreshold: 3`, a down
+   event fires on the third consecutive failure, not on every failed run.
+   A successful check after that outage fires one recovery event.
+3. **Save and reconcile.** One row per monitor is inserted into
+   `status_results`. Failing monitors can open automatic incidents;
+   recovering monitors can move them toward resolution.
+4. **Refresh and notify.** The process-local snapshot cache is invalidated,
+   then events are sent to configured channels and eligible subscribers.
+
+The results keep the order of monitors in your config, even though network
+checks run concurrently. A composite doesn't send its own network request;
+it depends on the results of its named component monitors.
+
+## What does a failed check mean?
+
+A timeout or exception from an individual monitor becomes a failed
+`CheckResult` with a message. It doesn't abort the other checks. Each result
+contains `name`, `type`, `status`, `message`, `latencyMs` and `checkedAt`.
+`latencyMs` measures the whole check, including any HTTP soft-retry delay.
+The database stores those six fields; HTTP and SSL diagnostics on the
+in-memory result aren't separate history columns.
+
+```text
+UP   Website (http) 128ms — HTTP 200
+DOWN API (http) 10002ms — HTTP timed out after 10000ms
+Stored 2 check result(s); 1 failed.
+```
+
+The CLI exits with code `1` when any check fails, which is useful in CI.
+A **database** error is different: the run cannot save the results and
+rejects instead of returning a normal failed check. Notification delivery
+failures are isolated and logged; they don't undo saved results or make the
+run fail.
+
+## What about maintenance?
+
+A monitor covered by an in-progress maintenance window is still checked and
+stored. It still appears in uptime history, but it doesn't produce monitor
+alerts or automatic incident changes during that window. An empty list of
+affected monitors on a window covers all monitors.
+
+For scheduling, see [Checks and scheduling](https://heyo.sh/heyo-status/manage-status-page/checks).
+For what happens after a failed run, see
+[Automatic incidents](https://heyo.sh/heyo-status/how-it-works/automatic-incidents)
+and [Notification delivery](https://heyo.sh/heyo-status/how-it-works/notification-delivery).

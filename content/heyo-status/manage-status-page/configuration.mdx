@@ -1,0 +1,226 @@
+---
+title: Configuration
+description: Every setting accepted by heyoStatus(), its default and where it is read.
+---
+
+# Configuration
+
+Put `heyo-status.config.ts` at the project root. The CLI, page, API and
+scheduler all read it, so a change to monitors or scheduling takes effect
+across the app. You don't need a separate build-time config.
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+  title: "Acme Status",
+  description: "Real-time status for Acme services.",
+  siteUrl: "https://status.acme.com",
+  theme: "slate",
+  monitors: [{ name: "Website", type: "http", url: "https://acme.com" }],
+  // adminToken: "your-private-token", // enables /admin/*
+});
+
+export default statusPage;
+```
+
+`heyoStatus()` applies defaults and validates the file when it is imported.
+A typo in a key or a wrongly shaped value fails immediately instead of being
+ignored; the result is a `StatusPage`.
+
+<Callout type="info" title="Export it as default or as `statusPage`">
+  The CLI accepts either. Generated templates export both so that
+  `import { statusPage }` and `heyo-status check run` work from the same file.
+</Callout>
+
+## Choose what to configure
+
+| Setting         | Type                                        | Default                              | Purpose                                                            |
+| --------------- | ------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| `database`      | `StatusDatabaseAdapter`                     | **required**                         | Persistence. SQLite, D1, PostgreSQL or your own implementation.    |
+| `title`         | `string`                                    | `"Heyo Status"`                      | Metadata, feed and notification name. Not header text.             |
+| `description`   | `string`                                    | `"Real-time service status and uptime."` | Page and feed description.                                     |
+| `siteUrl`       | `string`                                    | —                                    | Canonical HTTP(S) base URL. No query string or fragment.           |
+| `basePath`      | `string`                                    | `"/api/heyo-status"`                 | Mount point of the catch-all route; stripped before routing.       |
+| `adminToken`    | `string`                                    | —                                    | Bearer token for `/admin/*`; omitted means disabled.               |
+| `cronSecret`    | `string`                                    | —                                    | Bearer secret for Vercel cron routes; omitted means disabled.       |
+| `theme`         | `"slate" \| "fern" \| "onyx" \| "dune" \| "reed"` | `"slate"`                      | Bundled layout and its tokens.                                     |
+| `colors`        | `{ primary?, secondary? }`                  | `{}`                                 | CSS colour overrides applied as tokens.                            |
+| `mode`          | `"system" \| "light" \| "dark"`             | `"system"`                           | Initial colour mode.                                               |
+| `branding`      | `{ name?, logo? }`                          | `{}`                                 | Header logo and optional label beside it.                          |
+| `monitors`      | `StatusMonitorConfig[]`                     | `[]`                                 | What to check. Names must be unique.                               |
+| `checks`        | `object`                                    | see below                            | Schedule, retention and the displayed window.                      |
+| `notifications` | `object`                                    | see below                            | Failure threshold and channels.                                    |
+| `incidents`     | `{ enabled }`                               | `{ enabled: true }`                  | Incident API, feeds and automatic incidents.                       |
+| `maintenance`   | `{ enabled }`                               | `{ enabled: true }`                  | Maintenance API and alert suppression.                             |
+| `metrics`       | `object`                                    | see below                            | What the UI shows, plus badges and Prometheus.                     |
+| `subscribers`   | `object`                                    | `{ enabled: false, … }`              | Public subscriptions.                                              |
+| `cache`         | `{ snapshotTtlMs }`                         | `{ snapshotTtlMs: 30000 }`           | In-process snapshot cache lifetime.                                |
+
+## Change only the defaults you need
+
+You don't have to copy every nested option into the config. Unspecified values
+keep their defaults:
+
+<Properties>
+  <Property name="checks" type="StatusChecksConfig">
+    `interval` `"*/5 * * * *"` · `retentionDays` `90` · `displayDays` `90` ·
+    `summaryCron` `"10 0 * * *"` · `cleanupCron` `"0 3 * * *"`.
+    `displayDays` may not exceed `retentionDays`.
+    See [Checks and scheduling](https://heyo.sh/heyo-status/manage-status-page/checks).
+  </Property>
+  <Property name="notifications" type="StatusNotificationsConfig">
+    `failureThreshold` `3` · `channels` `[]`. Channel ids must be unique.
+    See [Notifications](https://heyo.sh/heyo-status/manage-status-page/notifications).
+  </Property>
+  <Property name="metrics" type="StatusMetricsConfig">
+    `showLatency` `true` · `showLatencyChart` `true` · `showUptimePercent`
+    `true` · `uptimePeriods` `["24h","7d","30d","90d"]` · `badges` `true` ·
+    `prometheus` `false`.
+    See [Metrics and badges](https://heyo.sh/heyo-status/manage-status-page/metrics).
+  </Property>
+  <Property name="subscribers" type="StatusSubscribersConfig">
+    `enabled` `false` · `methods` `["email","rss"]` · `requireConfirmation`
+    `true`. `webhook` is never enabled implicitly.
+    See [Subscribers](https://heyo.sh/heyo-status/manage-status-page/subscribers).
+  </Property>
+  <Property name="cache" type="StatusCacheConfig">
+    `snapshotTtlMs` `30000`, between `0` (disabled) and `3600000`.
+  </Property>
+</Properties>
+
+## A complete example
+
+```ts title="heyo-status.config.ts"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
+import { sqlite } from "@heyo-sh/heyo-status/db";
+import { email, slack, webhook } from "@heyo-sh/heyo-status/notifications";
+
+export const statusPage = heyoStatus({
+  database: sqlite("status.sqlite"),
+
+  title: "Acme Status",
+  description: "Real-time status for Acme services.",
+  siteUrl: "https://status.acme.com",
+  basePath: "/api/heyo-status",
+  // adminToken: "your-private-token",
+  // cronSecret: "match-the-CRON_SECRET-configured-on-Vercel",
+
+  theme: "slate",
+  mode: "system",
+  colors: { primary: "#0f172a" },
+  branding: { logo: "/logo.svg", name: "Acme" },
+
+  monitors: [
+    { name: "Website", group: "Web", type: "http", url: "https://acme.com" },
+    { name: "API", group: "API", type: "http", url: "https://api.acme.com/health" },
+    { name: "DNS", group: "Infrastructure", type: "dns", host: "acme.com" },
+    { name: "Platform", type: "composite", monitors: ["Website", "API"], strategy: "all" },
+  ],
+
+  checks: {
+    interval: "*/5 * * * *",
+    retentionDays: 90,
+    displayDays: 90,
+    summaryCron: "10 0 * * *",
+    cleanupCron: "0 3 * * *",
+  },
+
+  notifications: {
+    failureThreshold: 3,
+    channels: [
+      slack({ webhookUrl: process.env.SLACK_WEBHOOK_URL!, events: ["monitor.*", "incident.*"] }),
+      webhook({ url: "https://ops.acme.com/hooks/status", secret: process.env.HOOK_SECRET! }),
+      email({
+        transport: "resend",
+        apiKey: process.env.RESEND_API_KEY!,
+        from: "status@acme.com",
+        to: ["oncall@acme.com"],
+      }),
+    ],
+  },
+
+  incidents: { enabled: true },
+  maintenance: { enabled: true },
+  metrics: { badges: true, prometheus: true, uptimePeriods: ["24h", "30d"] },
+  subscribers: { enabled: true, methods: ["email", "rss"], requireConfirmation: true },
+  cache: { snapshotTtlMs: 30_000 },
+});
+
+export default statusPage;
+```
+
+Set the webhook, Slack and Resend credentials in your deployment environment
+before using this example. Email subscriptions need the configured email
+channel to send confirmation and update messages.
+
+## What `heyoStatus()` returns
+
+The returned object is the validated configuration with three non-enumerable
+runtime properties attached, so it still serialises cleanly:
+
+<Properties>
+  <Property name="handler" type="(request: Request) => Promise<Response>">
+    The whole HTTP surface. It strips `basePath` from the incoming URL, so one
+    catch-all route serves every endpoint.
+  </Property>
+  <Property name="api" type="StatusPageApi">
+    `getSnapshot(now?)`, `listMonitors(now?)`, `getMonitor(name, now?)` and
+    `invalidate()`. Reads share the snapshot cache with the HTTP routes.
+  </Property>
+  <Property name="cron" type="StatusPageCron">
+    `runChecks(now?)`, `summarize(now?)` and `cleanup(now?)` — the three jobs a
+    scheduler calls.
+  </Property>
+</Properties>
+
+```ts
+const snapshot = await statusPage.api.getSnapshot();
+const api = await statusPage.api.getMonitor("API");
+await statusPage.cron.runChecks();
+```
+
+## Configuration sources
+
+Heyo Status does not read environment variables as implicit defaults. Set
+`adminToken` and (on Vercel) `cronSecret` explicitly in the config; leave them
+out to keep the corresponding routes closed. Configure the database path or
+connection string in `heyo-status.config.ts` too. Never commit production
+credentials: load them from a private secret source in your config if needed. The CLI uses `heyo-status.config.ts` by default; pass
+`--config` for another file or `dev --port` to change the standalone port
+(default `3000`). Vercel's own `CRON_SECRET` is a platform requirement: its
+value must match `cronSecret` in the config, but the handler does not read it
+from the environment.
+
+## Common validation errors
+
+- `basePath` must start with `/`, must not be `"/"`, must not contain `//`,
+  a query string or a fragment. Trailing slashes are trimmed.
+- `siteUrl` must be HTTP(S) with no query string or fragment. A trailing slash
+  is removed.
+- `checks.displayDays` cannot exceed `checks.retentionDays`: the page cannot
+  display history the cleanup job has already deleted.
+- Monitor names must be unique, and a `composite` monitor may only reference
+  monitors that actually perform a check.
+- `notifications.channels` cannot contain two channels with the same `id`.
+- `metrics.uptimePeriods` and `subscribers.methods` cannot contain duplicates.
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="cursor"
+    name="Monitors"
+    src="https://heyo.sh/heyo-status/manage-status-page/monitors"
+  />
+  <RelatedTopic
+    icon="folder"
+    name="Database adapters"
+    src="https://heyo.sh/heyo-status/databases/sqlite"
+  />
+  <RelatedTopic
+    icon="sun"
+    name="Themes"
+    src="https://heyo.sh/heyo-status/manage-status-page/themes"
+  />
+</RelatedTopics>

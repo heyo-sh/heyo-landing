@@ -1,0 +1,158 @@
+---
+title: Subscriber endpoints
+description: Create, confirm and remove public subscriptions.
+---
+
+# Subscriber endpoints
+
+Visitors can subscribe, confirm an email address and unsubscribe without
+creating an account. Enable `subscribers.enabled` first; otherwise these
+routes return `404 { "error": "This feature is disabled." }`. Because the
+routes are public, responses avoid revealing whether an address is already
+subscribed. See the [subscription flow](https://heyo.sh/heyo-status/how-it-works/public-subscriptions)
+for the safeguards.
+
+## `POST /subscribers`
+
+```bash
+curl -X POST https://status.acme.com/api/heyo-status/subscribers \
+  -H "content-type: application/json" \
+  -d '{"type":"email","target":"person@example.com"}'
+```
+
+<Properties>
+  <Property name="type" type='"email" | "webhook"' required>
+    Must be listed in `subscribers.methods`, otherwise
+    `400 { "error": "The webhook subscription method is disabled." }`.
+    `rss` is not a stored subscription.
+  </Property>
+  <Property name="target" type="string" required>
+    An email address, or an HTTP(S) URL for webhooks.
+  </Property>
+  <Property name="monitors" type="string[] | null">
+    Optional filter. `null`, `[]` or omitted means every monitor.
+  </Property>
+</Properties>
+
+| Response | Body                          | When                                     |
+| -------- | ----------------------------- | ---------------------------------------- |
+| `202`    | `{ "status": "pending" }`     | Email, confirmation required.            |
+| `201`    | `{ "status": "subscribed" }`  | Confirmation not required.               |
+| `400`    | `{ "error": "…" }`            | Invalid type, target or method disabled. |
+| `503`    | `{ "error": "…" }`            | Email confirmation could not be sent.    |
+
+The response is identical whether the destination was new or already
+subscribed. Anyone can submit someone else's address, so the subscription id
+— an unsubscribe capability — and the confirmation state are not revealed by
+this sign-up response.
+
+### Which destinations are accepted?
+
+Email targets must match a basic address shape. Webhook targets must be
+HTTP(S), carry no credentials, and resolve to a publicly routable literal —
+loopback, private ranges, link-local and cloud metadata, carrier-grade NAT,
+multicast, IPv4-mapped IPv6 and reserved suffixes such as `.local` and
+`.internal` are all rejected:
+
+```json
+{
+  "error": "target must be a public host. Loopback, private and link-local addresses are rejected."
+}
+```
+
+### Idempotency
+
+A subscription is identified by its destination. Repeating the request
+returns the same public response without sending another email. A pending
+confirmation is reused for 15 minutes; after that the pending row is replaced
+so the new token is valid.
+
+Concurrent requests for the same destination are settled by a unique index:
+the loser reports the winner's subscription instead of an error.
+
+## `GET /subscribers/confirm`
+
+```bash
+curl "https://status.acme.com/api/heyo-status/subscribers/confirm?token=9f8e…"
+```
+
+| Response | Body                                                    |
+| -------- | ------------------------------------------------------- |
+| `200`    | the subscriber record                                   |
+| `400`    | `{ "error": "token is required." }`                     |
+| `404`    | `{ "error": "Confirmation token is invalid or expired." }` |
+
+```json
+{
+  "id": "sub_5d31ae",
+  "type": "email",
+  "target": "person@example.com",
+  "confirmed": true,
+  "monitors": null,
+  "createdAt": "2026-01-01T09:00:00.000Z"
+}
+```
+
+Tokens are single use. The response sets `Cache-Control: no-store` and
+`Referrer-Policy: no-referrer` so the token is not leaked onwards.
+
+## `GET /subscribers/:id/unsubscribe`
+
+Returns a small, self-contained HTML page with a confirm button. It is
+`noindex`, `no-store` and depends on none of the application's assets, so it
+still works when the rest of the deployment does not.
+
+A link that unsubscribed on `GET` would fire whenever a mail scanner
+prefetched it, which is why the destructive step is a `POST`.
+
+## `POST /subscribers/:id/unsubscribe`
+
+The form target of that page. Returns HTML: `200` when removed, `404` when
+the subscription is already gone.
+
+## `DELETE /subscribers/:id`
+
+The programmatic equivalent.
+
+```bash
+curl -X DELETE https://status.acme.com/api/heyo-status/subscribers/sub_5d31ae
+```
+
+| Response | Meaning             |
+| -------- | ------------------- |
+| `204`    | Removed.            |
+| `404`    | Unknown id.         |
+
+<Callout type="warning" title="The id is a capability">
+  Knowing a subscription id is enough to remove it. That is intentional —
+  unsubscribing must never require an account — so treat the id as a secret
+  and do not publish it. The admin-only notification log can contain
+  <code>subscriber:&lt;id&gt;</code> as a channel ID.
+</Callout>
+
+## Listing subscribers
+
+There is no public or admin HTTP route to list visitors' destinations. If you
+need the list for an internal task, read it directly from the database:
+
+```ts
+const subscribers = await statusPage.database.listSubscribers({ confirmed: true });
+```
+
+<RelatedTopics title="Related">
+  <RelatedTopic
+    icon="lightbulb"
+    name="Double opt-in and SSRF protections"
+    src="https://heyo.sh/heyo-status/how-it-works/public-subscriptions"
+  />
+  <RelatedTopic
+    icon="cursor"
+    name="Enabling subscriptions"
+    src="https://heyo.sh/heyo-status/manage-status-page/subscribers"
+  />
+  <RelatedTopic
+    icon="chat"
+    name="Email channels"
+    src="https://heyo.sh/heyo-status/manage-status-page/notifications"
+  />
+</RelatedTopics>

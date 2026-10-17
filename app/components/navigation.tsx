@@ -6,6 +6,7 @@ import {
   RiCpuLine,
   RiGitRepositoryLine,
   RiGlobalLine,
+  RiPulseLine,
 } from "@remixicon/react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
@@ -112,6 +113,12 @@ const products = [
     icon: RiBookOpenLine,
     label: "heyo-docs",
     to: "/heyo-docs/introduction",
+  },
+  {
+    activePath: "/heyo-status",
+    icon: RiPulseLine,
+    label: "heyo-status",
+    to: "/heyo-status/introduction",
   },
   {
     activePath: "/heyo-code-audit",
