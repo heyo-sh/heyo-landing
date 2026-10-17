@@ -5,8 +5,10 @@ description: Authentication, running checks on demand and reading the notificati
 
 # Admin endpoints
 
-Every mutation lives behind one authenticated prefix, so a public status page
-can never be edited by its visitors.
+The public page can be read without a token. To trigger checks or change
+incidents and maintenance through HTTP, configure `adminToken` and send it
+with requests under `/admin/*`. Without a token configured, those routes
+stay closed.
 
 ## Authentication
 
@@ -25,9 +27,9 @@ environment-variable fallback; omitting it keeps the management API closed.
 Comparison is constant time, and the header is matched case-insensitively
 against `Bearer <token>`.
 
-<Callout type="warning" title="Closed by default is the point">
-  A freshly deployed status page is not writable by anyone. Setting the token
-  is a deliberate act, not something you can forget into being insecure.
+<Callout type="warning" title="No token, no management API">
+  Until you configure <code>adminToken</code>, management routes return
+  <code>503</code>. Keep the token out of source control when enabling them.
 </Callout>
 
 ```ts
@@ -71,8 +73,9 @@ curl -X POST https://status.acme.com/api/heyo-status/admin/checks/run \
 | `200`    | Results array.                                                       |
 | `501`    | `{ "error": "Manual checks require the status-page runtime." }` — the app was built with `createStatusApp()` without a `runChecks` option. |
 
-Useful as an external trigger for a platform without cron, as a deploy-time
-warm-up so the page is never empty, and when verifying a monitor change.
+Call it from an external scheduler if your platform has no cron, or run it
+after deployment to verify a monitor change. It runs checks, but not the
+summary or cleanup jobs.
 
 <Callout type="info" title="Only checks have an HTTP trigger">
   Summarize and cleanup have no route. Run them with `heyo-status`, with

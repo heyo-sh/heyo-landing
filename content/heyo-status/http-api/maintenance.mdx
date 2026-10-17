@@ -5,13 +5,15 @@ description: Read scheduled maintenance publicly and manage windows with an admi
 
 # Maintenance endpoints
 
-Reads are public. Mutations live behind `/admin/*` and require `adminToken`.
-With [maintenance disabled](https://heyo.sh/heyo-status/manage-status-page/maintenance),
-these routes return `404 { "error": "This feature is disabled." }`.
+Visitors can read upcoming maintenance at `/maintenance`. To schedule or
+change a window over HTTP, send an admin bearer token to `/admin/maintenance`.
+If [maintenance is disabled](https://heyo.sh/heyo-status/manage-status-page/maintenance),
+all these routes return `404 { "error": "This feature is disabled." }`.
 
 ## `GET /maintenance`
 
-Upcoming and in-progress windows. Completed ones are not published.
+Returns upcoming and in-progress windows. Completed work doesn't appear in
+this public list.
 
 ```bash
 curl https://status.acme.com/api/heyo-status/maintenance
@@ -32,7 +34,11 @@ curl https://status.acme.com/api/heyo-status/maintenance
 ]
 ```
 
-`status` is derived from the clock each time the list is read.
+The returned `status` follows the clock when you read the list; you don't
+need to update a window just because its start time has passed. This automatic
+status refresh does **not** send `maintenance.starting` or
+`maintenance.completed` notifications. Those are sent on admin create or
+PATCH requests according to the resulting status.
 
 ## `POST /admin/maintenance`
 

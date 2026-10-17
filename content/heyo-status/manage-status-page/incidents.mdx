@@ -5,8 +5,9 @@ description: Configure incidents, manage their timeline and understand their eff
 
 # Incidents
 
-Incidents are enabled by default. Turn them off only if you do not want an
-incident timeline, automatic incidents or incident feeds.
+Use incidents to tell visitors what went wrong and what you're doing about
+it. They appear as a timeline on the page; checks can also open and resolve
+them automatically. Incidents and their RSS/Atom feeds are enabled by default.
 
 ```ts title="heyo-status.config.ts"
 incidents: { enabled: true },
@@ -16,7 +17,10 @@ Setting `incidents.enabled: false` makes `/incidents`, `/incidents/:id`,
 `/rss.xml`, `/atom.xml` and `/admin/incidents/*` return `404`. No automatic
 incidents are opened, and the snapshot contains no active incidents.
 
-## The incident model
+## Incident states and fields
+
+An incident moves through investigating, identified, monitoring and resolved.
+These are timeline states, not an enforced sequence.
 
 ```ts
 interface Incident {
@@ -74,9 +78,10 @@ heyo-status incident list --status investigating`}
   </CodeBlock>
 </CodeBlockGroup>
 
-## How incidents change the page
+## How an incident affects status
 
-The overall status is computed in this order:
+An active incident can change the page-wide status even if individual checks
+are passing. The page resolves status in this order:
 
 1. An [in-progress maintenance window](https://heyo.sh/heyo-status/manage-status-page/maintenance) → `maintenance`.
 2. Any active `critical` incident → `major-outage`.

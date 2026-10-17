@@ -5,10 +5,10 @@ description: Intervals, retention, the displayed window and the snapshot cache.
 
 # Checks and scheduling
 
-`checks` describes when monitors run and how much history survives. The same
-three cron expressions drive the local dev scheduler, Cloudflare triggers,
-Vercel Cron and `node-cron`, so a schedule is declared once and honoured
-everywhere.
+Set `checks.interval` to decide when monitors run, and `displayDays` to
+control how much history visitors see. The summary and cleanup jobs have
+their own schedules. Define all three cron expressions here, then keep your
+platform's triggers in sync with them.
 
 ```ts
 checks: {
@@ -49,8 +49,8 @@ checks: {
 | summarize   | `10 0 * * *`   | `statusPage.cron.summarize()` | Compacts raw rows into one summary row per monitor per day. |
 | cleanup     | `0 3 * * *`    | `statusPage.cron.cleanup()`   | Deletes results and summaries older than `retentionDays`.   |
 
-Each job invalidates the snapshot cache when it finishes, so the next page
-render reflects it.
+After a job finishes, it invalidates the snapshot cache. The next render
+reads the updated data.
 
 ## Cron syntax
 
@@ -74,9 +74,9 @@ combined with OR, as in classic cron.
   development convenience, not a guarantee in production.
 </Callout>
 
-## Retention and the displayed window
+## Choose how much history to show
 
-Two numbers, two different jobs:
+`displayDays` and `retentionDays` answer different questions:
 
 - `displayDays` is what a visitor sees. It is the width of the uptime grid and
   the range the snapshot query reads.
@@ -97,9 +97,8 @@ monitor per day, collapsing to one summary row.
 
 ## Snapshot cache
 
-Status pages are read-heavy and each snapshot is derived from the whole
-displayed window, so the runtime keeps one in-process snapshot and serves it
-for a short time.
+Reading the whole history window on every page view is wasteful. The runtime
+keeps a snapshot in memory for a short time instead.
 
 ```ts
 cache: { snapshotTtlMs: 30_000 }

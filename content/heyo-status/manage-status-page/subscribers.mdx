@@ -5,10 +5,10 @@ description: Enable public subscriptions over email, feeds and webhooks, safely.
 
 # Subscribers
 
-Public subscriptions let visitors receive incident and maintenance updates.
-They are **disabled by default**, because enabling them turns a read-only page
-into something that stores visitor-supplied destinations and sends outbound
-requests on their behalf.
+Let visitors subscribe to incident and maintenance updates by email, RSS or
+webhook. Subscriptions are **off by default**: email and webhook sign-ups store
+visitor-supplied destinations, and webhooks make outbound requests from your
+deployment.
 
 ```ts
 subscribers: {
@@ -31,7 +31,7 @@ subscribers: {
   </Property>
 </Properties>
 
-## The three methods
+## Choose a subscription method
 
 | Method    | Storage                  | Notes                                                                 |
 | --------- | ------------------------ | --------------------------------------------------------------------- |
@@ -51,11 +51,12 @@ database and nothing to send.
   with an egress policy if you enable it.
 </Callout>
 
-## Email requires an email channel
+## Set up email delivery
 
-Confirmation and incident mail are sent through the **first configured email
-notification channel**, reusing its transport and `from` address. Without one,
-`POST /subscribers` with `type: "email"` answers `503` and explains why.
+Before enabling email sign-ups, configure an email notification channel.
+Confirmation and incident mail use the **first configured email channel**,
+including its transport and `from` address. Without one, an email subscription
+request returns `503`.
 
 ```ts
 import { email } from "@heyo-sh/heyo-status/notifications";
@@ -78,7 +79,7 @@ mail is addressed only to the subscription.
 
 ## What subscribers receive
 
-Only public, already-published lifecycle events:
+Incident and maintenance lifecycle events:
 
 - `incident.created`, `incident.updated`, `incident.resolved`
 - `maintenance.scheduled`, `maintenance.starting`, `maintenance.completed`
@@ -90,13 +91,16 @@ own channels.
 A subscription may optionally name monitors through the API. A subscription
 with `monitors: null` (the default) receives everything; one with a list only
 receives events affecting those monitors, and global events — an incident with
-an empty `affectedMonitors` — always go to everyone.
+an empty `affectedMonitors` — always go to everyone. Automatic incidents for
+`private` monitors can also reach subscribers, including unfiltered ones.
+[Private monitor visibility](https://heyo.sh/heyo-status/manage-status-page/monitors)
+does not apply to incidents.
 
-## The subscribe dialog
+## Show the Subscribe button
 
-When `subscribers.enabled` is true and no `subscribeHref` or `onSubscribe`
-override is passed, `<StatusPage />` renders a **Subscribe** button that opens
-the bundled dialog lazily on first use:
+With `subscribers.enabled: true`, `<StatusPage />` shows a **Subscribe** button
+unless you pass `subscribeHref` or `onSubscribe`. It loads the bundled dialog
+when a visitor first opens it:
 
 ```tsx
 <StatusPage
@@ -138,7 +142,8 @@ the privacy reasoning behind the responses is in
 ## Operational notes
 
 - Subscriptions are identified by destination, so repeating a request is
-  idempotent and cannot mail an address twice.
+  idempotent and does not send another confirmation during the 15-minute
+  cooldown. After the cooldown, a pending sign-up can receive a new link.
 - A pending confirmation is reused for 15 minutes before a new token is issued.
 - Deliveries are isolated per destination and written to the notification log.
 - A failure to list subscribers never fails an incident update.

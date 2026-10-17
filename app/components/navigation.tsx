@@ -115,16 +115,16 @@ const products = [
     to: "/heyo-docs/introduction",
   },
   {
-    activePath: "/heyo-code-audit",
-    icon: RiGitRepositoryLine,
-    label: "heyo-code-audit",
-    to: "/heyo-code-audit/introduction",
-  },
-  {
     activePath: "/heyo-status",
     icon: RiPulseLine,
     label: "heyo-status",
     to: "/heyo-status/introduction",
+  },
+  {
+    activePath: "/heyo-code-audit",
+    icon: RiGitRepositoryLine,
+    label: "heyo-code-audit",
+    to: "/heyo-code-audit/introduction",
   },
   {
     activePath: "/heyo-ui",

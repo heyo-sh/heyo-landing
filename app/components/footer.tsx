@@ -3,8 +3,8 @@ const footerGroups = [
     heading: "Product",
     links: [
       ["heyo-docs", "/heyo-docs/introduction"],
-      ["heyo-code-audit", "/heyo-code-audit/introduction"],
       ["heyo-status", "/heyo-status/introduction"],
+      ["heyo-code-audit", "/heyo-code-audit/introduction"],
       ["heyo-ui", "/heyo-ui/introduction"],
     ],
   },

@@ -1,154 +1,115 @@
 ---
 title: Cloudflare D1
-description: Bind D1, resolve it lazily and apply migrations with wrangler.
+description: Create a D1 database, apply local and remote migrations, and bind it to a Worker.
 ---
 
 # Cloudflare D1
 
-D1 is the database for Cloudflare Workers deployments. A binding only exists
-inside a Worker request, so the adapter is always wrapped in
-`lazyStatusDatabase()` — the configuration module must stay importable in a
-build step, a CLI command and a test.
+Use D1 when deploying Heyo Status to Cloudflare Workers. A project created
+with `--deployment cloudflare --database d1` already has a `migrations/`
+folder, a Worker and a D1 binding declaration. You still need to create the
+remote database and replace its placeholder ID.
 
-```ts title="heyo-status.database.ts"
+## 1. Create and bind the database
+
+From the generated project's root, run (replace `my-status-page` with your
+project's database name):
+
+```bash
+bunx wrangler login # if you haven't logged in yet
+bunx wrangler d1 create my-status-page
+```
+
+Copy the returned `database_id` into `wrangler.jsonc`. Keep `binding: "DB"`
+and `migrations_dir: "migrations"`: the generated Worker reads `env.DB`, and
+Wrangler reads numbered SQL files from `migrations/`.
+
+```jsonc title="wrangler.jsonc (relevant section)"
+"d1_databases": [{
+  "binding": "DB",
+  "database_name": "my-status-page",
+  "database_id": "<id returned by wrangler>",
+  "migrations_dir": "migrations"
+}]
+```
+
+The creator copies `0000_initial.sql` through
+`0004_subscriber_uniqueness.sql` into that folder. You don't need to write
+the first migration yourself.
+
+## 2. Migrate the local database
+
+```bash
+bun run db:migrate
+```
+
+This generated script calls `wrangler d1 migrations apply my-status-page
+--local`. `bun dev` runs the same script before starting the Worker, so you
+can skip the separate command if you're going straight into development.
+Local D1 data is separate from the remote database; this step does **not**
+prepare production.
+
+If you integrated D1 by hand and don't have the script, use:
+
+```bash
+bunx wrangler d1 migrations apply my-status-page --local
+```
+
+## 3. Migrate the remote database before deploying
+
+```bash
+bunx wrangler d1 migrations apply my-status-page --remote
+bun run deploy
+```
+
+Run the remote migration again whenever you add a numbered SQL file. Wrangler
+skips migrations it has already applied. To check that the schema exists in
+the **remote** database, for example:
+
+```bash
+bunx wrangler d1 execute my-status-page --remote --command "SELECT name FROM sqlite_master WHERE name = 'status_results';"
+```
+
+<Callout type="warning" title="Upgrades do not copy new SQL files">
+  Updating <code>@heyo-sh/heyo-status</code> does not update the generated
+  project's <code>migrations/</code> directory. When a release adds migrations,
+  bring the new numbered SQL files from the matching generator release into
+  your project, review them, and apply them to local and remote D1 before
+  deploying the new runtime.
+</Callout>
+
+Wrangler tracks SQL files applied with `wrangler d1 migrations apply` in its
+own migration history. The adapter's `database.migrate()` method uses
+`__heyo_status_migrations` instead. Choose **one** approach for a database;
+the generated Worker uses Wrangler, and request handlers do not migrate
+on their own. Don't run `heyo-status db migrate` in a local shell for D1:
+that shell has no Worker binding.
+
+## How the Worker gets `env.DB`
+
+A D1 binding exists during a Worker request, not while your config is being
+imported by build tools. The generated `heyo-status.config.ts` wraps
+`d1(binding)` in `lazyStatusDatabase()`, and the Worker sets the binding before
+serving requests and scheduled events. Keep both pieces if you change the
+Worker. A standalone framework dev server cannot connect to D1 through this
+binding; use the generated Worker (`bun dev` or `bun run start`).
+
+```ts title="heyo-status.config.ts (binding resolution)"
+import { heyoStatus } from "@heyo-sh/heyo-status/config";
 import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
 import { d1, type D1Database } from "@heyo-sh/heyo-status/deployments/cloudflare";
 
 export const database = lazyStatusDatabase(() => {
   const binding = (globalThis as typeof globalThis & { HEYO_STATUS_D1?: D1Database })
     .HEYO_STATUS_D1;
-
-  if (!binding) {
-    throw new Error(
-      "Cloudflare D1 is not bound. Run this project with wrangler; a standalone dev server has no Cloudflare binding.",
-    );
-  }
+  if (!binding) throw new Error("Cloudflare D1 is not bound. Run with Wrangler.");
   return d1(binding);
 });
+
+export const statusPage = heyoStatus({ database, title: "Acme Status" });
 ```
 
-The Worker publishes the binding before the framework handles the request:
-
-```ts title="src/status-worker.ts"
-export default {
-  fetch(request: Request, env: Env, context: ExecutionContext) {
-    (globalThis as typeof globalThis & { HEYO_STATUS_D1?: D1Database }).HEYO_STATUS_D1 = env.DB;
-    return fetchHandler({ request, env, /* … */ });
-  },
-  async scheduled(event, env, context) {
-    (globalThis as typeof globalThis & { HEYO_STATUS_D1?: D1Database }).HEYO_STATUS_D1 = env.DB;
-    const { statusPage } = await import("../heyo-status.config");
-    return cloudflareWorker(statusPage).scheduled(event, env, context);
-  },
-};
-```
-
-<Callout type="info" title="There is no local fallback on purpose">
-  A standalone dev server cannot manufacture a Cloudflare binding, and
-  silently writing somewhere else would hide the fact that the deployed
-  database was never touched. Use <code>wrangler dev</code> for a local D1.
-</Callout>
-
-## Why lazy
-
-Status configuration is a module-level value. Without deferral, a missing
-binding throws while the module is being imported, which takes down the whole
-framework process — including pages that never touch the database — and makes
-every template import order-sensitive. `lazyStatusDatabase()` moves the
-failure to the request that actually needs persistence, where it is reported
-as a normal API error.
-
-A failed resolution is not cached: a missing binding fixed by a redeploy
-works on the next request, without a restart.
-
-## Binding it
-
-```jsonc title="wrangler.jsonc"
-{
-  "name": "my-status-page",
-  "main": "src/status-worker.ts",
-  "compatibility_date": "2026-01-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": { "directory": "build/client", "binding": "ASSETS" },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "my-status-page",
-      "database_id": "replace-me",
-      "migrations_dir": "migrations",
-    },
-  ],
-  "triggers": { "crons": ["*/5 * * * *", "10 0 * * *", "0 3 * * *"] },
-}
-```
-
-```bash
-wrangler d1 create my-status-page   # copy the id into wrangler.jsonc
-```
-
-## Migrations
-
-The generated project copies the bundled SQL into `migrations/` and points
-`migrations_dir` at it, so `wrangler` owns the migration state:
-
-```bash
-wrangler d1 migrations apply my-status-page --local
-wrangler d1 migrations apply my-status-page --remote
-```
-
-`D1StatusDatabase` can also migrate itself, which is what a one-off
-deployment job would use:
-
-```ts
-await database.migrate();
-```
-
-Request handlers never migrate automatically. `d1(binding, { migrate: true })`
-exists for local and test databases; leave it off for a remote one.
-
-## Options
-
-```ts
-d1(env.DB);
-d1(env.DB, { migrate: true });
-```
-
-<Properties>
-  <Property name="binding" type="D1Database" required>
-    A structural type — importing Heyo Status does not require Workers types.
-  </Property>
-  <Property name="migrate" type="boolean">
-    Defaults to `false`. Applies the bundled migrations on construction.
-  </Property>
-</Properties>
-
-Inserts use `binding.batch()` when it is available, falling back to parallel
-statements otherwise.
-
-## Limitations on Workers
-
-- `node:net` and `node:tls` are unavailable, so `tcp` and `ssl` monitors
-  record `… monitoring is unavailable in this runtime.` and report down.
-  Use `http` and `dns`, which work everywhere.
-- The snapshot cache is per-isolate. That is fine — it still absorbs bursts —
-  but it is not a shared cache.
-- D1 has per-query and per-invocation limits; the default 90-day window with
-  compaction keeps the snapshot query well inside them.
-
-<RelatedTopics title="Related">
-  <RelatedTopic
-    icon="globe"
-    name="Deploying to Cloudflare"
-    src="https://heyo.sh/heyo-status/deploying/cloudflare"
-  />
-  <RelatedTopic
-    icon="folder"
-    name="Schema and migrations"
-    src="https://heyo.sh/heyo-status/databases/schema-and-migrations"
-  />
-  <RelatedTopic
-    icon="information"
-    name="Deploy to Cloudflare"
-    src="https://heyo.sh/heyo-status/deploying/cloudflare"
-  />
-</RelatedTopics>
+On Workers, use HTTP or DNS monitors. TCP and TLS checks require `node:net`
+or `node:tls`, which Workers do not provide. See
+[Deploy to Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare) for
+the full Worker setup.

@@ -1,120 +1,68 @@
 ---
 title: Automatic incidents
-description: When the runtime opens an incident by itself, and how it closes one.
+description: When failed checks open an incident and when recovery closes it.
 ---
 
 # Automatic incidents
 
-With `incidents.enabled`, a check run can open, progress and resolve
-incidents on its own. Automatic incidents are marked `auto: true`, and only
-those are reconciled — an incident you opened by hand is never touched by the
-monitoring loop.
+One failed check doesn't have to become a public incident. With incidents
+enabled, Heyo Status opens one when a monitor reaches
+`notifications.failureThreshold` consecutive failures (default: **3**).
+It marks the incident `auto: true` so later check runs can update it. An
+incident you create manually is never automatically resolved.
 
-<Mermaid chart={`stateDiagram-v2
-  [*] --> investigating: failures reach failureThreshold
-  investigating --> monitoring: a check succeeds
-  monitoring --> investigating: it fails again
-  monitoring --> resolved: five minutes of stability
-  resolved --> [*]
-`} />
+For example, with checks every five minutes and the default threshold,
+failures at 12:00 and 12:05 are recorded but don't open an incident. If the
+12:10 check fails too, it opens an `investigating` incident for that monitor.
+The corresponding `monitor.down` alert also fires on that run.
 
-## Opening
+## From outage to recovery
 
-On each run, for every failing monitor not covered by an `in-progress`
-maintenance window:
+| Check result | Automatic incident | Event |
+| --- | --- | --- |
+| Failure reaches the threshold | Opens as `investigating`, severity `major`. | `incident.created` |
+| A later check succeeds | Moves to `monitoring`. | `incident.updated` |
+| A check fails again during monitoring | Returns to `investigating`. | `incident.updated` |
+| A check succeeds at least five minutes after monitoring began | Resolves. | `incident.resolved` |
 
-1. Trailing consecutive failures are counted from persisted history, once for
-   the whole batch.
-2. If no active automatic incident already covers the monitor, and the count
-   has reached `notifications.failureThreshold`, an incident is created.
+The five minutes are measured from the `monitoring` timeline entry stored in
+the database, not a timer in the app process. Resolution happens on a
+**subsequent successful check** after that time; it may take longer than five
+minutes if your check interval is longer or the scheduler is not running.
+A failure during monitoring resets the progression, so a flapping service
+doesn't immediately resolve.
 
-The generated incident is:
+The incident is named `<monitor> is unavailable`, uses the monitor's failure
+message and lists that monitor in `affectedMonitors`. An empty
+`affectedMonitors` list on an existing incident means it covers all monitors.
+Automatically opened incidents always start at `major`; Heyo Status doesn't
+guess when to escalate to `critical`.
 
-```ts
-{
-  title: "API is unavailable",
-  severity: "major",
-  affectedMonitors: ["API"],
-  status: "investigating",
-  auto: true,
-  // message: the monitor's own failure message
-}
-```
+## How does this interact with manual work?
 
-An incident covers a monitor when its `affectedMonitors` contains the name —
-or is empty, which means global.
+- **Maintenance:** Checks for a monitor covered by an in-progress maintenance
+  window still run and are stored, but don't open or reconcile automatic
+  incidents while the window applies.
+- **Manual incidents:** Check runs don't update or resolve incidents with
+  `auto: false`. A manual incident for a monitor does not prevent a separate
+  automatic one from opening when that monitor reaches the threshold.
+- **Manual edits to an automatic incident:** Changing its severity or timeline
+  doesn't change `auto: true`. Future checks may still move or resolve it.
+  Resolve it yourself to stop reconciliation of that incident; continued
+  failures can still open a new automatic incident later.
 
-## Recovering
+## Adjust the behavior
 
-When a monitor that has an open automatic incident succeeds:
+Raise `notifications.failureThreshold` or enable an HTTP monitor's `softFail`
+retry to reduce incidents caused by brief failures. Shortening
+`checks.interval` gets you to the threshold sooner. The threshold also
+controls `monitor.down` notifications, so changing it affects both features.
 
-- the incident moves to `monitoring` with
-  `"<monitor> has recovered. Monitoring stability."`, and
-- once it has been `monitoring` for **five minutes**, it is resolved with
-  `"<monitor> has remained operational for five minutes. Resolved."`.
+There is no separate switch for **only** automatic incidents. Setting
+`incidents: { enabled: false }` also removes manual incident routes, the
+public timeline and incident feeds. Planned maintenance is the way to
+suppress automatic incident changes during known work.
 
-The five-minute timer is the timestamp of the `monitoring` timeline entry, not
-a process timer, so it survives restarts, redeploys and serverless invocations
-that share nothing.
-
-If the monitor fails again while the incident is `monitoring`, the incident
-returns to `investigating` with
-`"<monitor> is failing again. Continuing investigation."` — a single flapping
-check can never resolve an outage early.
-
-## Events
-
-| Transition               | Event               |
-| ------------------------ | ------------------- |
-| Incident opened          | `incident.created`  |
-| Moved to `monitoring`    | `incident.updated`  |
-| Back to `investigating`  | `incident.updated`  |
-| Resolved after stability | `incident.resolved` |
-
-These are dispatched together with the monitor events from the same run, so a
-channel sees `monitor.down` and `incident.created` in one batch.
-
-## Tuning
-
-| Goal                              | Change                                                               |
-| --------------------------------- | -------------------------------------------------------------------- |
-| Fewer incidents from flaky checks | Raise `notifications.failureThreshold` or enable `softFail` on HTTP. |
-| Faster paging                     | Lower `failureThreshold`, or shorten `checks.interval`.              |
-| No automatic incidents at all     | `incidents: { enabled: false }`, or keep incidents manual by raising the threshold out of reach. |
-| Silence during planned work       | Schedule a maintenance window covering the monitors.                 |
-
-`failureThreshold` is shared with notifications on purpose: the moment a
-monitor is considered down is one decision, not two that can drift apart.
-
-## Interaction with manual incidents
-
-- Manual incidents (`auto: false`) are never auto-updated or auto-resolved.
-- An automatic incident can be edited by hand through
-  `PATCH /admin/incidents/:id`; it keeps `auto: true` and remains eligible for
-  automatic resolution.
-- To stop reconciliation on one incident, resolve it — reconciliation only
-  looks at `investigating`, `identified` and `monitoring`.
-
-<Callout type="info" title="Severity is always `major`">
-  Automatically opened incidents use `major`. Promote one to `critical` by
-  hand when it warrants an outage banner and a Slack mention — the runtime
-  will not guess that from a failing check.
-</Callout>
-
-<RelatedTopics title="Related">
-  <RelatedTopic
-    icon="lightbulb"
-    name="The check run"
-    src="https://heyo.sh/heyo-status/how-it-works/check-run"
-  />
-  <RelatedTopic
-    icon="cursor"
-    name="Configure incidents"
-    src="https://heyo.sh/heyo-status/manage-status-page/incidents"
-  />
-  <RelatedTopic
-    icon="code"
-    name="Incident endpoints"
-    src="https://heyo.sh/heyo-status/http-api/incidents"
-  />
-</RelatedTopics>
+See [Incidents](https://heyo.sh/heyo-status/manage-status-page/incidents) for
+manual management and [The check run](https://heyo.sh/heyo-status/how-it-works/check-run)
+for the order in which results and events are stored.

@@ -5,12 +5,14 @@ description: Snapshots, summaries, monitors and uptime, with full payload shapes
 
 # Status endpoints
 
-All four are public and unauthenticated. They read the same cached snapshot,
-so a page render and an API call can never disagree about the current state.
+Use `/status/summary` for a compact dashboard response or `/status` for the
+full page snapshot. Monitor routes let you read one service and its uptime.
+These read endpoints are public and use the same snapshot cache as the page.
 
 ## `GET /status`
 
-The full public snapshot — everything the page renders.
+The full public snapshot contains the monitors, daily history, incidents and
+maintenance shown on the page.
 
 ```bash
 curl https://status.acme.com/api/heyo-status/status
@@ -21,10 +23,9 @@ curl https://status.acme.com/api/heyo-status/status
   "generatedAt": "2026-01-01T12:00:00.000Z",
   "retentionDays": 90,
   "displayDays": 90,
-  "overall": "degraded",
+  "overall": "major-outage",
   "groups": [
-    { "name": "Web", "status": "operational", "monitors": ["Website", "Dashboard"] },
-    { "name": "API", "status": "degraded", "monitors": ["API", "Webhooks"] }
+    { "name": "API", "status": "outage", "monitors": ["API"] }
   ],
   "monitors": [
     {
@@ -71,6 +72,9 @@ curl https://status.acme.com/api/heyo-status/status
 }
 ```
 
+The `days` array is shortened here for readability. A real monitor response
+includes `displayDays` daily entries, oldest first.
+
 <Properties>
   <Property name="overall" type='"operational" | "degraded" | "major-outage" | "maintenance"'>
     Maintenance wins, then a critical incident, then any incident, then the
@@ -90,7 +94,9 @@ curl https://status.acme.com/api/heyo-status/status
   </Property>
 </Properties>
 
-Private monitors never appear here.
+Private monitors are excluded from the `monitors` and `groups` arrays, but
+incidents caused by them can still appear in `activeIncidents` and affect
+`overall`. See the [private monitor warning](https://heyo.sh/heyo-status/manage-status-page/monitors).
 
 ## `GET /status/summary`
 
@@ -175,9 +181,9 @@ exist for that period, which is different from `0`.
 { "ok": true }
 ```
 
-It answers whether the status API itself is serving — it does not read the
-database and does not reflect monitor state. Use it for a load-balancer
-probe; use `/status/summary` for actual service health.
+Use this for a load-balancer probe, not service health. It only confirms that
+the API is serving; it doesn't query the database or check your monitors.
+Use `/status/summary` to read the actual status.
 
 ## Caching
 

@@ -1,5 +1,5 @@
 import { RiArrowRightLine } from "@remixicon/react";
-import { Keyboard, Rebuild, Riffle } from "@lucasmarkes/hairline/react";
+import { Format, Keyboard, Plot, Riffle } from "@lucasmarkes/hairline/react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -9,7 +9,7 @@ type Project = {
   description: string;
   href: string;
   cta: string;
-  illustration: "docs" | "audit" | "ui";
+  illustration: "docs" | "status" | "audit" | "ui";
 };
 
 const projects: Project[] = [
@@ -20,6 +20,14 @@ const projects: Project[] = [
     href: "https://heyo.sh",
     cta: "Explore docs",
     illustration: "docs",
+  },
+  {
+    title: "heyo status",
+    description:
+      "A TypeScript-first status page with monitors, uptime history, incidents, and subscriber notifications you host yourself.",
+    href: "https://heyo.sh/heyo-status/introduction",
+    cta: "Explore status",
+    illustration: "status",
   },
   {
     title: "heyo code audit",
@@ -48,10 +56,18 @@ function ProjectIllustration({ illustration }: Pick<Project, "illustration">) {
       />
     );
   }
+  if (illustration === "status") {
+    return (
+      <Plot
+        aria-label="Uptime bars lifting across a status chart"
+        intensity={0.65}
+      />
+    );
+  }
   if (illustration === "audit") {
     return (
-      <Rebuild
-        aria-label="A dependency tree responding to changes in code"
+      <Format
+        aria-label="A review running down the lines of a file"
         intensity={0.65}
       />
     );
@@ -79,11 +95,13 @@ function ShippedProject({
   onHoverStart: () => void;
   onHoverEnd: () => void;
 }) {
-  const isDocs = project.illustration === "docs";
+  // heyo-docs and heyo-status each own a full row; the remaining two share one.
+  const wide =
+    project.illustration === "docs" || project.illustration === "status";
 
   return (
     <li
-      className={`shipped-project flex flex-col items-stretch gap-4 transition-opacity duration-500 sm:grid sm:grid-cols-2 lg:grid lg:gap-x-4 ${isDocs ? "lg:col-span-2 lg:grid-cols-8" : "lg:col-span-1 lg:grid-cols-2"} ${faded ? "opacity-50" : ""}`}
+      className={`shipped-project flex flex-col items-stretch gap-4 transition-opacity duration-500 sm:grid sm:grid-cols-2 lg:grid lg:gap-x-4 ${wide ? "lg:col-span-2 lg:grid-cols-8" : "lg:col-span-1 lg:grid-cols-2"} ${faded ? "opacity-50" : ""}`}
       data-active={active ? "true" : "false"}
       onPointerEnter={(event) => {
         if (event.pointerType === "mouse") onHoverStart();
@@ -93,7 +111,7 @@ function ShippedProject({
       }}
     >
       <div
-        className={`hairline-tinted flex aspect-[3/2] w-full items-center justify-center overflow-hidden bg-input/30 p-4 sm:aspect-[9/6] sm:p-5 lg:order-none lg:p-6 ${isDocs ? "sm:order-2 lg:col-span-4 lg:aspect-[7/3]" : "sm:order-1 lg:col-span-1 lg:aspect-[9/8]"}`}
+        className={`hairline-tinted flex aspect-[3/2] w-full items-center justify-center overflow-hidden bg-input/30 p-4 sm:aspect-[9/6] sm:p-5 lg:order-none lg:p-6 ${wide ? "sm:order-2 lg:col-span-4 lg:aspect-[7/3]" : "sm:order-1 lg:col-span-1 lg:aspect-[9/8]"}`}
       >
         <div className="w-full max-w-[420px]">
           <ProjectIllustration illustration={project.illustration} />
@@ -101,7 +119,7 @@ function ShippedProject({
       </div>
 
       <article
-        className={`flex min-w-0 flex-col items-start justify-between gap-3 self-stretch text-sm sm:gap-0 lg:order-none ${isDocs ? "sm:order-1 lg:col-span-2 lg:pr-px" : "sm:order-2 lg:col-span-1"}`}
+        className={`flex min-w-0 flex-col items-start justify-between gap-3 self-stretch text-sm sm:gap-0 lg:order-none ${wide ? "sm:order-1 lg:col-span-2 lg:pr-px" : "sm:order-2 lg:col-span-1"}`}
       >
         <span className="text-xs text-muted-foreground">
           {String(index + 1).padStart(2, "0")}

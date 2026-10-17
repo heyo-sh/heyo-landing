@@ -1,95 +1,94 @@
 ---
 title: Cloudflare
-description: Deploy Heyo Status to Cloudflare Workers with D1 and scheduled checks.
+description: Deploy a Worker with D1, apply remote migrations and schedule checks.
 ---
 
 # Deploy to Cloudflare
 
-Choose Cloudflare in `create-heyo-status` to get a Worker, D1 binding,
-migrations and cron triggers for your framework. The Worker serves live status
-pages and runs checks, daily summaries and cleanup. Cloudflare supports React
-Router, Next.js (OpenNext) and Astro.
+The Cloudflare starter serves the page and API from a Worker, stores check
+history in D1 and uses cron triggers for checks, daily summaries and cleanup.
+It supports React Router, Next.js (OpenNext) and Astro. Workers cannot run
+TCP or TLS monitors; use HTTP and DNS checks here.
 
-## Create a Cloudflare project
+## Create the project and D1 database
 
-Pass the deployment target to the creator. Replace `react-router` with `next`
-or `astro` if needed. Cloudflare always uses D1; SQLite cannot run on Workers.
+This example uses React Router. Change `react-router` to `next` or `astro` for
+a different framework. The [Quickstart](https://heyo.sh/heyo-status/quickstart)
+shows creator commands for other package managers; the generated scripts still
+require Bun 1.4.3+.
 
-<CodeBlockGroup defaultValue="bun" variant="line">
-  <CodeBlock language="bash" title="bun">
-    {`bun create @heyo-sh/heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="npm">
-    {`npm create @heyo-sh/heyo-status@latest my-status-page -- --template react-router --deployment cloudflare --database d1`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="pnpm">
-    {`pnpm create @heyo-sh/heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="yarn">
-    {`yarn dlx @heyo-sh/create-heyo-status my-status-page --template react-router --deployment cloudflare --database d1`}
-  </CodeBlock>
-</CodeBlockGroup>
+```bash
+bun create @heyo-sh/heyo-status my-status-page --template react-router --deployment cloudflare --database d1
+cd my-status-page
+bunx wrangler login # only if you are not logged in
+bunx wrangler d1 create my-status-page
+```
 
-The generated overlay sets the D1 binding before framework requests and
-scheduled events. It includes `wrangler.jsonc` with three triggers. Keep them
-aligned with `checks.interval`, `checks.summaryCron` and `checks.cleanupCron`
-in `heyo-status.config.ts` when changing schedules.
+Copy the `database_id` printed by Wrangler into `wrangler.jsonc` in place of
+`"replace-me"`. Keep the generated `DB` binding and `migrations_dir`:
+`heyo-status.config.ts` reads that binding, and Wrangler reads SQL files
+from `migrations/`. There is no SQLite fallback if the binding is missing.
 
-## Set the public URL and database
+## Try the Worker locally
 
-Set `siteUrl` to the canonical HTTPS address so feeds, notifications and
-subscription emails link to the correct host:
+```bash
+bun dev
+```
+
+The generated `dev` script applies **local** D1 migrations, builds the app and
+starts the Worker with Wrangler. Restart it after changing application code;
+it does not hot-reload the framework. Local D1 is separate from your remote
+database. The public page may have no check history until a check is triggered;
+starting a Worker does not itself run a scheduled check.
+
+Replace the example `example.com` monitors with your own HTTP or DNS targets.
+In `heyo-status.config.ts`, set the public URL used in feeds and emails:
 
 ```ts title="heyo-status.config.ts"
 siteUrl: "https://status.acme.com",
 ```
 
-Create the D1 database and put its returned `database_id` in `wrangler.jsonc`:
+## Migrate remote D1, then deploy
+
+Running `bun dev` does **not** migrate the remote database. Apply its SQL
+migrations before the first release and whenever new migration files are
+added, then deploy the Worker:
 
 ```bash
-bunx wrangler login
-bunx wrangler d1 create my-status-page
-bunx wrangler d1 migrations apply my-status-page --local
 bunx wrangler d1 migrations apply my-status-page --remote
-```
-
-The local migration command is also part of the generated `bun dev` script.
-Apply remote migrations before publishing and after schema upgrades. Change
-`wrangler.jsonc`'s Worker name to a unique project name for shared releases.
-
-## Deploy
-
-```bash
 bun run deploy
 ```
 
-The generated `deploy` script builds the appropriate framework output and
-publishes it with Wrangler. Use it instead of uploading a static page: status
-snapshots and the API need a Worker on every request. Verify the live API:
+The project name in the migration command must match `database_name` in
+`wrangler.jsonc`. Updating the package alone does not add new SQL files to an
+existing generated project's `migrations/` folder; see the
+[D1 migration guide](https://heyo.sh/heyo-status/databases/d1) before
+upgrading.
+
+Keep the three expressions in `wrangler.jsonc` aligned with
+`checks.interval`, `checks.summaryCron` and `checks.cleanupCron` in the
+config. The Worker matches the **exact** incoming cron expression to a job;
+a trigger changed in only one file runs no matching job. Cron triggers run in
+Cloudflare after deployment, not as part of `bun run deploy`.
+
+## Check the deployment
 
 ```bash
 curl https://status.acme.com/api/heyo-status/healthz
 curl https://status.acme.com/api/heyo-status/status/summary
 ```
 
-Cloudflare `bun dev` builds and runs the real Worker rather than hot-reloading
-a framework proxy; restart it after changing application code.
+`/healthz` only confirms that the API responds. `/status/summary` also needs
+the database; check `hasConfig` and `hasData` in its response. If `hasData` is
+false immediately after deployment, wait for the first scheduled run (or use
+the [admin check endpoint](https://heyo.sh/heyo-status/http-api/admin) if you
+have enabled it). An unbound D1 or missing migrations will not be caught by
+`/healthz` alone.
 
-## Secrets and runtime limits
+The management API stays closed until you set `adminToken`. If you enable it,
+load the token from a private Worker secret **explicitly** in your integration:
+`heyoStatus()` does not read Wrangler secrets automatically. Public reads do
+not require an admin token.
 
-Management endpoints are closed (`503`) until you explicitly set `adminToken`
-in the config. If you need them, source the token from a private secret and
-pass the binding into your Worker configuration; a Wrangler secret is **not**
-automatically read by `heyoStatus()`. Never commit production tokens. Keep
-the public page and read-only endpoints available without a token.
-
-<Callout type="warning" title="TCP and TLS checks are not available on Workers">
-  Workers do not expose <code>node:net</code> or <code>node:tls</code>.
-  <code>tcp</code> and <code>ssl</code> monitors report unavailable. Use HTTP
-  and DNS checks here, or run those checks from a Node host.
-</Callout>
-
-<RelatedTopics title="Continue deploying">
-  <RelatedTopic icon="folder" name="Cloudflare D1" src="https://heyo.sh/heyo-status/databases/d1" />
-  <RelatedTopic icon="cursor" name="Checks and scheduling" src="https://heyo.sh/heyo-status/manage-status-page/checks" />
-</RelatedTopics>
+See [Checks and scheduling](https://heyo.sh/heyo-status/manage-status-page/checks)
+for the three jobs and platform frequency limits.

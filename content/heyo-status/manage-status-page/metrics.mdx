@@ -5,9 +5,9 @@ description: Control what the page shows, and expose badges and Prometheus metri
 
 # Metrics and badges
 
-`metrics` does two jobs: it decides which numbers the UI renders, and it
-enables the two machine-readable surfaces — SVG badges and a Prometheus
-exposition.
+Choose which uptime and latency figures visitors see on the page. You can
+also publish SVG badges for READMEs or enable a Prometheus endpoint for
+scraping. All of these options live under `metrics`.
 
 ```ts
 metrics: {
@@ -41,9 +41,8 @@ metrics: {
   </Property>
 </Properties>
 
-The first four options are presentation only — the data is always computed and
-always available over the API. They are forwarded to the UI through the
-`metrics` prop:
+Hiding a figure on the page doesn't stop Heyo Status from calculating it:
+the API still returns the data. Pass the `metrics` settings to the UI:
 
 ```tsx
 <StatusPage snapshot={snapshot} metrics={statusPage.metrics} />
@@ -55,7 +54,7 @@ always available over the API. They are forwarded to the UI through the
   history, because nothing older is read.
 </Callout>
 
-## Badges
+## Add a badge to a README
 
 ```
 GET /api/heyo-status/badge/API.svg
@@ -75,8 +74,8 @@ containing spaces: `/badge/Web%20App.svg`.
 
 Badges are SVG, served with `cache-control: public, max-age=60`, which keeps
 an embedded badge fresh without turning every README view into a database
-read. Colours follow the value: green above 99.9% uptime or healthy, amber
-above 95% or degraded, red below, grey when there is no data.
+read. Colours follow the value: green at or above 99.9% uptime or healthy,
+amber at or above 95% or degraded, red below, grey when there is no data.
 
 ```md
 ![API](https://status.acme.com/api/heyo-status/badge/API.svg)
@@ -85,9 +84,9 @@ above 95% or degraded, red below, grey when there is no data.
 
 With `badges: false`, the route answers `404`.
 
-## Prometheus
+## Scrape with Prometheus
 
-Set `prometheus: true` to register `/metrics`, served as
+Set `prometheus: true` to serve `/metrics` as
 `text/plain; version=0.0.4`.
 
 | Metric                                   | Labels              | Meaning                                       |
@@ -111,8 +110,9 @@ scrape_configs:
       - targets: ["status.acme.com"]
 ```
 
-Only aggregate, already-public data is exposed: no incident text, no monitor
-targets, and nothing from a `private` monitor.
+The endpoint does not expose incident text or monitor targets, and it omits
+per-monitor series for private monitors. Its overall status and active
+incident count can still reflect an incident opened by a private monitor.
 
 <Callout type="warning" title="/metrics is public">
   The exposition is not behind the admin token. If a scrape endpoint should

@@ -5,13 +5,30 @@ description: Routing, authentication, error shapes and the full endpoint map.
 
 # API overview
 
-Every endpoint is served by one catch-all route. `statusPage.handler` strips
-`basePath` from the incoming URL, so a path below is always reached at
-`basePath + path` — by default `/api/heyo-status`.
+Use the public routes to read status; use `/admin/*` with a bearer token to
+run checks or manage incidents. They all live under one catch-all route,
+`/api/heyo-status` by default. The paths in the table below are relative to
+that base path.
 
 ```
 https://status.acme.com/api/heyo-status/status
 └──────── origin ──────┘└── basePath ─┘└ path ┘
+```
+
+For example, read the summary without a token or create an incident with an
+admin token:
+
+```bash
+BASE=https://status.acme.com/api/heyo-status
+
+curl "$BASE/status/summary"
+curl "$BASE/monitors/API/uptime"
+curl "$BASE/incidents?status=investigating&limit=5"
+
+curl -X POST "$BASE/admin/incidents" \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"title":"Degraded API","severity":"major","affectedMonitors":["API"],"message":"Investigating."}'
 ```
 
 ## Endpoint map
@@ -46,8 +63,10 @@ https://status.acme.com/api/heyo-status/status
 | DELETE | `/admin/maintenance/:id`        | token | `maintenance.enabled`      |
 | GET    | `/admin/notifications/log`      | token | always                     |
 
-A disabled feature answers `404 { "error": "This feature is disabled." }`,
-which is deliberate — it does not reveal whether the route exists.
+Disabled incident, maintenance, subscriber and badge routes return
+`404 { "error": "This feature is disabled." }`. When
+`metrics.prometheus` is false, `/metrics` is not registered and returns
+the router's ordinary `404` instead.
 
 ## Authentication
 
@@ -73,7 +92,7 @@ readable during an outage, including by people who cannot sign in.
 | Code  | Meaning                                                           |
 | ----- | ----------------------------------------------------------------- |
 | `200` | Success.                                                           |
-| `201` | Created — an incident, a maintenance window, a confirmed subscription. |
+| `201` | Created — an incident, a maintenance window, or a subscription that needs no confirmation. |
 | `202` | Accepted — a subscription awaiting email confirmation.             |
 | `204` | Deleted. No body.                                                  |
 | `400` | Invalid input. The message names the field.                        |
@@ -83,15 +102,16 @@ readable during an outage, including by people who cannot sign in.
 | `503` | Management API disabled, or an email delivery dependency failed.   |
 | `500` | Unexpected error, including an unreachable database.               |
 
-Errors are always JSON:
+Errors from registered API routes are JSON:
 
 ```json
 { "error": "severity must be a valid incident severity." }
 ```
 
-Read routes have nothing to recover from, so a database that is unreachable —
-an unbound D1 binding or an unavailable database connection — is reported with the same
-shape and the actionable message, rather than a plain-text `500`.
+If the database is unavailable, read routes return a JSON error too. Check
+the message for an unbound D1 binding or a failed connection instead of
+expecting a plain-text `500`. An unknown path (including `/metrics` when
+Prometheus is disabled) can instead return the router's plain-text `404`.
 
 ## Conventions
 
@@ -101,21 +121,6 @@ shape and the actionable message, rather than a plain-text `500`.
 - `limit` and `offset` are non-negative integers.
 - String arrays are trimmed and de-duplicated; empty entries are rejected.
 - Monitor names in a path must be percent-encoded.
-
-## Quick examples
-
-```bash
-BASE=https://status.acme.com/api/heyo-status
-
-curl "$BASE/status/summary"
-curl "$BASE/monitors/API/uptime"
-curl "$BASE/incidents?status=investigating&limit=5"
-
-curl -X POST "$BASE/admin/incidents" \
-  -H "authorization: Bearer $ADMIN_TOKEN" \
-  -H "content-type: application/json" \
-  -d '{"title":"Degraded API","severity":"major","affectedMonitors":["API"],"message":"Investigating."}'
-```
 
 ## Calling the handler directly
 
@@ -140,11 +145,6 @@ Router-relative paths are passed through unchanged, so
   <RelatedTopic
     icon="cursor"
     name="Admin endpoints"
-    src="https://heyo.sh/heyo-status/http-api/admin"
-  />
-  <RelatedTopic
-    icon="information"
-    name="Admin API"
     src="https://heyo.sh/heyo-status/http-api/admin"
   />
 </RelatedTopics>

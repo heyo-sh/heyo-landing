@@ -15,11 +15,6 @@ html::-webkit-scrollbar {
   display: none;
 }
 
-/* Shiki's newline is already represented by block spans. */
-.heyo-docs-code .shiki code {
-  white-space: normal;
-}
-
 /* Avoid double-inverting if the installed docs theme already does it. */
 .dark img[src="/logo.svg"]:not([class~="dark:invert"]) {
   filter: invert(1);

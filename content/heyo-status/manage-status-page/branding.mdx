@@ -5,9 +5,9 @@ description: Configure the status page header logo, name and accent colours.
 
 # Branding
 
-The header brand is separate from the page's `title`: `title` identifies the
-site in metadata, feeds and notifications, while `branding` controls what
-visitors see in the header. Configure both in `heyo-status.config.ts`.
+Want your logo or company name in the status page header? Set `branding` in
+`heyo-status.config.ts`. The page's `title` is separate: it names the site in
+metadata, feeds and notifications, not in the header.
 
 ## Logo and name
 
@@ -22,10 +22,9 @@ branding: { logo: "/logo.svg", name: "Acme" },
 | `{ name: "Acme" }` | Text only. |
 | `{}` | No brand element. |
 
-Generated projects ship a replaceable mark at `public/heyo.svg` and set
-`branding: { logo: "/heyo.svg" }`. Replace that file, or point `logo` to an
-asset served by your application. The logo renders as an image, so SVG and
-raster formats both work. Keep it legible at header size.
+The starter points `logo` at `public/heyo.svg`. Replace that file or point
+the option at another asset your app serves. SVG and raster images both work;
+check that yours stays legible at header size.
 
 ## Accent colours
 
@@ -33,10 +32,9 @@ raster formats both work. Keep it legible at header size.
 colors: { primary: "#0f172a", secondary: "#64748b" },
 ```
 
-Both values are optional CSS colours applied as tokens to the status page.
-They change accents, not the semantic colours for up, degraded, down and
-maintenance states. Check legibility in light and dark modes when choosing
-brand colours.
+Both colours are optional. They change accents, not the colours that mean
+up, degraded, down or maintenance. Check contrast in light and dark mode
+before you publish.
 
 For more control, add CSS after the bundled stylesheet in the generated
 `styles/status.css` and use the stable `data-slot` selectors described in

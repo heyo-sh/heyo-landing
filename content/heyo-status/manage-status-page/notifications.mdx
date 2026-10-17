@@ -5,9 +5,10 @@ description: Slack, Discord, signed webhooks and email channels, and the events 
 
 # Notifications
 
-A notification channel is an object with an `id`, a `type`, an optional
-`events` filter and a `send()` method. Four builders ship with the package,
-and anything matching the contract can be added to `notifications.channels`.
+Send monitoring and incident updates to Slack, Discord, email or your own
+webhook. Add channels under `notifications` and use `events` to choose what
+each one receives. The default `failureThreshold` of 3 means a monitor alerts
+on its third consecutive failed check, not on every failure.
 
 ```ts
 import { discord, email, slack, webhook } from "@heyo-sh/heyo-status/notifications";
@@ -39,7 +40,7 @@ notifications: {
   </Property>
 </Properties>
 
-## Event catalogue
+## Choose which events to send
 
 | Event                    | Raised when                                                          |
 | ------------------------ | -------------------------------------------------------------------- |
@@ -49,9 +50,14 @@ notifications: {
 | `incident.created`       | An incident is opened manually or automatically.                     |
 | `incident.updated`       | A timeline entry is added, or the incident is edited.                |
 | `incident.resolved`      | An incident reaches `resolved`.                                      |
-| `maintenance.scheduled`  | A window is created or edited while `scheduled`.                     |
-| `maintenance.starting`   | A window becomes `in-progress`.                                      |
-| `maintenance.completed`  | A window becomes `completed`.                                        |
+| `maintenance.scheduled`  | A window is created or edited with status `scheduled`.               |
+| `maintenance.starting`   | A window is created or edited with status `in-progress`.             |
+| `maintenance.completed`  | A window is created or edited with status `completed`.               |
+
+The maintenance events above are sent on admin API writes, **not** when the
+clock alone advances a scheduled window. See
+[Maintenance](https://heyo.sh/heyo-status/manage-status-page/maintenance) if
+you need alerts at the exact start or end time.
 
 Every builder accepts an `events` array of selectors. Wildcards are expanded
 once, at construction, so the dispatcher only compares exact names:
@@ -99,9 +105,9 @@ slack({
   </Property>
 </Properties>
 
-Messages are Block Kit: a coloured header, the check message, detail fields
-(type, target, status, latency, consecutive failures) and a **View Status
-Page** button when `siteUrl` is configured.
+For monitor events, Slack messages include the check message, target,
+status, latency and consecutive-failure count. With `siteUrl` set, they also
+link back to the status page.
 
 ## Discord
 
@@ -261,7 +267,7 @@ const pagerduty: NotificationChannel = {
 the row written to the notification log. Returning
 `{ attempts }` records how many tries the delivery took.
 
-## Delivery guarantees
+## What happens when delivery fails
 
 - Channel failures are isolated. A broken webhook never fails a check run, an
   incident update or an HTTP request.

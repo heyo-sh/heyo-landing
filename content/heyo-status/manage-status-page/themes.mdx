@@ -5,10 +5,9 @@ description: Choose a status page layout, colour mode and CSS overrides.
 
 # Themes
 
-Heyo Status ships five layouts. Set `theme` in `heyo-status.config.ts` and
-pass it to `<StatusPage />`; the generated framework projects already do both.
-One stylesheet contains all five themes, so changing the theme does not
-require a different import.
+Choose a layout with `theme` in `heyo-status.config.ts`. The generated
+projects pass it to `<StatusPage />` for you. All five layouts share one
+stylesheet, so switching themes doesn't mean changing imports.
 
 ```ts title="heyo-status.config.ts"
 theme: "slate",
@@ -23,9 +22,9 @@ mode: "system",
 | `dune` | Service categories with subcomponent status rows. |
 | `reed` | Minimal single column without cards or groups. |
 
-Choose `slate` or `dune` for grouped services, `onyx` for a flat list, `fern`
-for a history-led page or `reed` for a quieter layout. The config validates
-theme names rather than silently choosing another layout.
+Start with `slate` for grouped services. Use `dune` for subcomponents,
+`onyx` for a flat list, `fern` when history is the focus, or `reed` for a
+simpler page. An unknown theme name fails config validation.
 
 ## Colour mode
 
@@ -34,11 +33,11 @@ theme names rather than silently choosing another layout.
 choice from the built-in header toggle is stored under `heyo-status-theme` in
 local storage and takes precedence on later visits.
 
-The generated layouts render `statusThemeBootstrapScript(undefined,
-statusPage.mode)` in the document head before paint, preventing a flash of the
-wrong palette. If integrating manually, include it in your root layout and
-use `suppressHydrationWarning` on React's `<html>` element: the script updates
-its `data-mode` attribute before hydration.
+To avoid a flash of the wrong palette, generated layouts run
+`statusThemeBootstrapScript(undefined, statusPage.mode)` in the document head
+before paint. In a manual integration, add it to your root layout. For React,
+also set `suppressHydrationWarning` on `<html>`: the script changes `data-mode`
+before hydration.
 
 ## Load styles once
 

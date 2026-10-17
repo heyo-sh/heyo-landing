@@ -5,16 +5,15 @@ description: Create a status page with create-heyo-status and run your first che
 
 # Quickstart
 
-The fastest way to start with Heyo Status is `create-heyo-status`. It creates a
-standalone framework application, a database adapter, example monitors and an
-optional deployment overlay. Install Bun 1.4.3+ first: the generated `dev` and
-CLI scripts use Bun even when you install dependencies with npm, pnpm or Yarn.
+Run the creator, start the generated app, then check its public API. You'll
+need Bun 1.4.3+ for the generated `dev` and CLI scripts, even if you install
+packages with npm, pnpm or Yarn.
 
 ## Create a project
 
-Run the creator and choose a framework, theme, deployment target, database and
-package manager. Cloudflare uses D1, Vercel uses PostgreSQL, and **Configure
-later** supports SQLite or PostgreSQL.
+Choose a framework, theme, deployment target, database and package manager when
+prompted. Cloudflare uses D1, Vercel uses PostgreSQL, and **Configure later**
+supports SQLite or PostgreSQL.
 
 <CodeBlockGroup defaultValue="bun" variant="line">
   <CodeBlock language="bash" title="bun">
@@ -31,93 +30,68 @@ later** supports SQLite or PostgreSQL.
   </CodeBlock>
 </CodeBlockGroup>
 
-## Install the CLI for direct commands
+## Start the page
 
-The creator adds `@heyo-sh/heyo-status` to the project's dependencies, but
-**does not install `heyo-status` globally**. If you want to type commands such
-as `heyo-status check run` directly in a terminal, install it globally first:
-
-<CodeBlockGroup defaultValue="bun" variant="line">
-  <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-</CodeBlockGroup>
-
-Make sure `bun` and your package manager's global bin directory are on `PATH`. If you opted out of
-installing project dependencies, run your chosen package manager's `install`
-command inside the generated project too. The project dependency is still
-needed by the framework, even with a global CLI.
-
-Follow the commands printed by the creator. For example, with Bun:
+Follow the commands printed by the creator. With Bun, for example:
 
 ```bash
 cd my-status-page
 bun dev
-# For SQLite or Vercel/PostgreSQL, to run a check manually:
-heyo-status check run
 ```
 
-Run CLI commands from the directory containing `heyo-status.config.ts`.
-For SQLite or Vercel/PostgreSQL, `bun dev` starts the framework and a local
-scheduler, and runs an initial check. The generated `bun run check` script
-also works **without** a global install because package scripts find the
-project-local binary; the global install is for direct shell commands.
-Cloudflare/D1 projects instead run a Worker with cron triggers and do not
-have `check` or `db:seed` scripts. Replace the starter's `example.com`
-monitors before publishing.
+If you skipped dependency installation in the creator, install the project's
+dependencies first. For SQLite and Vercel/PostgreSQL, `bun dev` starts a local
+scheduler and runs the first check. Cloudflare/D1 projects run a Worker with
+cron triggers instead; they have no `check` or `db:seed` scripts.
+
+Open the page, then replace the starter's `example.com` monitors before you
+publish it. You don't need a global CLI install to start the generated app.
 
 <Callout type="info" title="The config is the source of truth">
-  The routes, scheduler and CLI use <code>heyo-status.config.ts</code>. The
-  generated <code>heyo-status.database.ts</code> contains the database path or
-  connection string. Do not commit production tokens or credentials; configure
-  them from a private secret source.
+  The routes, scheduler and CLI use <code>heyo-status.config.ts</code>, which
+  also contains the database path or connection string. Do not commit production
+  tokens or credentials; configure them from a private secret source.
 </Callout>
+
+## Check that it works
+
+With the project running, try its public endpoints (adjust the port for your
+framework):
+
+```bash
+curl http://localhost:3000/api/heyo-status/healthz
+curl http://localhost:3000/api/heyo-status/status/summary
+```
+
+For SQLite and Vercel/PostgreSQL starters, `bun run check` also runs a check
+manually without a global CLI install. Apply PostgreSQL migrations with
+`bun run db:migrate` before publishing. For Cloudflare/D1, follow the
+[Worker and Wrangler instructions](https://heyo.sh/heyo-status/deploying/cloudflare)
+instead of using the local check script.
 
 ## Add it to an existing application
 
-For an existing app, install both the CLI globally (for direct terminal
-commands) and the package locally (for the framework integration):
+If you already have an app, install the package in its project root:
 
 <CodeBlockGroup defaultValue="bun" variant="line">
   <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status
-cd my-app
-bun add @heyo-sh/heyo-status`}
+    {`bun add @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status
-cd my-app
-npm install @heyo-sh/heyo-status`}
+    {`npm install @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status
-cd my-app
-pnpm add @heyo-sh/heyo-status`}
+    {`pnpm add @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status
-cd my-app
-yarn add @heyo-sh/heyo-status`}
+    {`yarn add @heyo-sh/heyo-status`}
   </CodeBlock>
 </CodeBlockGroup>
 
-The CLI still runs on Bun 1.4.3+ with any package manager.
-Create `heyo-status.config.ts` at the application root, then run
-`heyo-status check run` from that directory. Mount a catch-all route at
-`/api/heyo-status`, render a fresh snapshot with `<StatusPage />`, and
+Create `heyo-status.config.ts` at the application root. Then mount a catch-all
+route at `/api/heyo-status`, render a fresh snapshot with `<StatusPage />`, and
 schedule the checks. Follow the guide for your framework for the route and
-layout files, or see all [CLI commands](https://heyo.sh/heyo-status/cli):
+layout files:
 
 <Columns columns={3}>
   <Column
@@ -155,21 +129,10 @@ layout files, or see all [CLI commands](https://heyo.sh/heyo-status/cli):
   </Column>
 </Columns>
 
-## Verify the install
-
-Once the project is running, check the public endpoints (adjust the port for
-your framework):
-
-```bash
-curl http://localhost:3000/api/heyo-status/healthz
-curl http://localhost:3000/api/heyo-status/status/summary
-```
-
-In a local SQLite or Vercel/PostgreSQL starter, the scheduler handles checks
-during development; `bun run check` runs one manually. For PostgreSQL, apply
-migrations with `bun run db:migrate` before publishing. For Cloudflare/D1,
-follow the [Worker and Wrangler instructions](https://heyo.sh/heyo-status/deploying/cloudflare)
-instead of using the local check script.
+For a full command list, global CLI installation and exit codes, see the
+[CLI guide](https://heyo.sh/heyo-status/cli). A generated project's package
+scripts can use the project-local binary; direct `heyo-status …` commands in
+your shell need a global install and Bun 1.4.3+.
 
 When you're ready, deploy to [Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare),
 [Vercel](https://heyo.sh/heyo-status/deploying/vercel) or

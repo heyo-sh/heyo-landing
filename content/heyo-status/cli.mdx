@@ -5,18 +5,16 @@ description: dev, check, db, incident and maintenance — every command, flag an
 
 # CLI
 
-The `heyo-status` CLI is the executable included in
-`@heyo-sh/heyo-status`. It is **not** a separate package or the
-`create-heyo-status` project generator. It reads the project's configuration
-and database directly; it does not need a running server or an API token.
+Use `heyo-status` to run checks, apply migrations or manage incidents from
+your terminal. It comes with `@heyo-sh/heyo-status` — the project generator
+is a different command. The CLI reads your config and database directly, so
+it needs database access but no running web server or admin token.
 
-## Install the CLI globally
+## Run commands directly from your shell
 
-To run the commands below as `heyo-status ...` **directly in your terminal**,
-install Bun 1.4.3+ and the CLI globally. Make sure both `bun` and your
-package manager's global bin directory are on `PATH`, then run commands from
-the directory containing
-`heyo-status.config.ts`:
+To type `heyo-status ...` directly, install Bun 1.4.3+ and the CLI globally.
+Ensure `bun` and your package manager's global bin directory are on `PATH`.
+Run commands from the directory containing `heyo-status.config.ts`:
 
 <CodeBlockGroup defaultValue="bun" variant="line">
   <CodeBlock language="bash" title="bun">
@@ -89,7 +87,7 @@ result as `statusPage` or as the default export.
 
 ## `dev`
 
-Starts the local cron scheduler and, optionally, a framework dev server.
+`dev` runs the local scheduler, with an optional framework dev server:
 
 ```bash
 heyo-status dev -- next dev
@@ -112,8 +110,8 @@ minute, and the minute of the initial check is marked consumed so
 
 ## `check run`
 
-Runs every monitor once, stores the results, reconciles automatic incidents
-and dispatches notifications.
+This command checks every monitor, stores the results, reconciles automatic
+incidents and sends notifications:
 
 ```bash
 heyo-status check run
@@ -157,7 +155,8 @@ heyo-status db seed --uptime 99.95 --days 90
 | `--days`   | yes      | Positive integer.             |
 
 It writes 100 evenly distributed checks per monitor per day, with failures
-spread to match the requested uptime exactly, then compacts everything before
+spread to approximate the requested uptime (rounded to a whole number of
+failed checks across the seeded period). It then compacts everything before
 today into daily summaries:
 
 ```text
@@ -236,9 +235,9 @@ Failures print `heyo-status failed: <message>` and exit `1`.
 | Migrate                  | `db migrate`                     | —                               |
 | Seed                     | `db seed`                        | —                               |
 
-The CLI talks to the database directly, so it needs database access but no
-admin token. The HTTP API needs a token but no database access. Use the CLI
-locally and in CI; use the API from a deployed environment.
+The CLI needs direct database access but no admin token. An HTTP caller needs
+the admin token instead; the deployed API handler still needs access to its
+database. Use the CLI locally or in CI, and the API from another service.
 
 <RelatedTopics title="Related">
   <RelatedTopic

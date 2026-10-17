@@ -5,11 +5,12 @@ description: Create a React Router status page with Heyo Status or add a live pa
 
 # React Router
 
-For a new status page, use `create-heyo-status`. The React Router Framework
-Mode template includes the status page, API route, theme, database adapter and
-local scheduler. Choose a deployment target to add the matching cron setup.
+Creating a new React Router status page? The Framework Mode starter gives you
+a live page, API, theme, database and local scheduler. Choose a deployment
+target for production cron setup. If status belongs inside an existing app,
+follow the manual route and page steps below.
 
-## Recommended: create a project
+## Create a project
 
 Pass `react-router` to select the framework without a prompt. Omit flags to
 choose a deployment, database and theme interactively.
@@ -37,71 +38,40 @@ yarn dev`}
   </CodeBlock>
 </CodeBlockGroup>
 
-The starter installs the package in the **project**, not globally. To run
-`heyo-status check run` directly in your terminal, install the CLI globally
-(Bun 1.4.3+ required), then run it from the generated project's root:
-
-<CodeBlockGroup defaultValue="bun" variant="line">
-  <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-</CodeBlockGroup>
-
-```bash
-cd my-status-page
-# SQLite or Vercel/PostgreSQL only; Cloudflare/D1 uses Worker cron triggers.
-heyo-status check run
-```
-
 If you skipped dependency installation in the creator, install the project's
-dependencies too — the React Router adapter needs them. Replace the example
-monitors in `heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev`
-starts the local scheduler and `bun run check` runs a check without the global
-CLI. On Cloudflare/D1, `bun dev` runs the Worker and cron triggers schedule
-checks instead (no `check` script).
+dependencies before starting it. Replace the example monitors in
+`heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev` starts
+the local scheduler; `bun run check` runs one check without a global CLI
+install. Cloudflare/D1 uses Worker cron triggers instead and has no `check`
+script. For direct shell commands, see the [CLI guide](https://heyo.sh/heyo-status/cli).
 
-## Manual, minimal integration
+## Add status to an existing app
 
-Use this path only when the status page belongs inside an existing React Router
-Framework Mode app. The route and page below need persistent storage and a
-production scheduler; the creator handles both deployment overlays for you.
+The route and page below work in an existing React Router Framework Mode app.
+They still need persistent storage and a production scheduler; the starter
+includes the platform-specific deployment setup.
 
 ### 1. Install and configure
 
+Install the package in the app's root directory:
+
 <CodeBlockGroup defaultValue="bun" variant="line">
   <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status
-bun add @heyo-sh/heyo-status`}
+    {`bun add @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status
-npm install @heyo-sh/heyo-status`}
+    {`npm install @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status
-pnpm add @heyo-sh/heyo-status`}
+    {`pnpm add @heyo-sh/heyo-status`}
   </CodeBlock>
   <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status
-yarn add @heyo-sh/heyo-status`}
+    {`yarn add @heyo-sh/heyo-status`}
   </CodeBlock>
 </CodeBlockGroup>
 
-Install from the project root. The first command exposes `heyo-status` in
-your shell (ensure the global bin directory is on `PATH`); the second adds the
-React Router adapter and config to the app. The CLI needs Bun 1.4.3+
-regardless of package manager.
+You only need a [global CLI install](https://heyo.sh/heyo-status/cli)
+if you want to type `heyo-status …` directly in your shell.
 
 At the project root, add a config (use a persistent SQLite disk when
 self-hosting; Cloudflare uses D1, Vercel PostgreSQL):
@@ -119,10 +89,10 @@ export const statusPage = heyoStatus({
 export default statusPage;
 ```
 
-From the project root, run `heyo-status check run`. The global CLI reads the
-config and database directly, without a running React Router server. See
-[CLI commands](https://heyo.sh/heyo-status/cli) for more. On
-Cloudflare/D1, use Worker cron triggers rather than a shell without the D1
+To test a monitor before scheduling it, install the global CLI and run
+`heyo-status check run` from the project root. It reads the config and database
+without a running React Router server (and requires Bun 1.4.3+). For
+Cloudflare/D1, use Worker cron triggers instead; a local shell has no D1
 binding.
 
 ### 2. Add the API and page routes

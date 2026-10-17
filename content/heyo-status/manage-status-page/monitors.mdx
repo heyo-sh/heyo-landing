@@ -5,10 +5,10 @@ description: HTTP, SSL, TCP, DNS and composite checks, their options and default
 
 # Monitors
 
-A monitor describes one thing to check. Every monitor shares a small set of
-public fields, and each `type` adds its own. Names identify a monitor
-everywhere — in history rows, incidents, badges, metrics and notifications —
-so they must be unique and are expensive to rename.
+Start with an HTTP monitor for a public endpoint. Add other types when you
+need to watch a certificate, a port, DNS or the health of several services
+together. Each monitor has a unique `name`; changing it later breaks the link
+to its existing history, incidents and metrics.
 
 ```ts
 monitors: [
@@ -22,7 +22,9 @@ monitors: [
 ],
 ```
 
-## Shared fields
+## Fields every monitor shares
+
+The fields below also apply to SSL, TCP, DNS and composite monitors.
 
 <Properties>
   <Property name="name" type="string" required>
@@ -38,14 +40,16 @@ monitors: [
   </Property>
   <Property name="private" type="boolean">
     Defaults to `false`. A private monitor is still checked and still triggers
-    notifications and automatic incidents, but is omitted from public
-    snapshots, badges, metrics and the page.
+    notifications and automatic incidents. Its monitor data is omitted from
+    public monitor lists, badges and per-monitor metrics; see the incident
+    visibility warning below.
   </Property>
 </Properties>
 
 ## `http`
 
-The common case: request a URL and assert the response.
+An HTTP monitor requests a URL and checks its response. Use response
+assertions when a `200` alone isn't enough to tell whether the service works.
 
 ```ts
 {
@@ -53,7 +57,7 @@ The common case: request a URL and assert the response.
   type: "http",
   url: "https://api.acme.com/health",
   method: "GET",
-  headers: { authorization: "Bearer ${process.env.HEALTH_TOKEN}" },
+  headers: { authorization: `Bearer ${process.env.HEALTH_TOKEN}` },
   expectedStatus: [200, 204],
   expectedResponseHeaders: { "content-type": "application/json" },
   expectedBodyIncludes: '"ok":true',
@@ -81,8 +85,9 @@ The common case: request a URL and assert the response.
     Defaults to `[200]`. Any listed status counts as healthy.
   </Property>
   <Property name="expectedResponseHeaders" type="Record<string, string>">
-    Exact-match response headers. A missing or different value fails the check
-    and names the header in the message.
+    Exact-match response headers, including any charset in `content-type`.
+    A missing or different value fails the check and names the header in the
+    message.
   </Property>
   <Property name="expectedBodyIncludes" type="string">
     Substring that must appear in the body. Requesting the body is what makes
@@ -119,7 +124,8 @@ honestly slow numbers.
 
 ## `ssl`
 
-Opens a TLS connection and inspects the peer certificate.
+Use an SSL monitor to check a host's TLS certificate and warn before it
+expires.
 
 ```ts
 { name: "TLS certificate", type: "ssl", host: "acme.com", port: 443, warnBeforeDays: 21 }
@@ -155,7 +161,8 @@ turns the alert into an `ssl.expiring` event instead of `monitor.down`.
 
 ## `tcp`
 
-Opens a socket and treats a successful connection as healthy.
+Use a TCP monitor when opening a connection is enough to confirm a service
+is reachable.
 
 ```ts
 { name: "Database", type: "tcp", host: "db.internal", port: 5432, private: true }
@@ -172,13 +179,14 @@ Opens a socket and treats a successful connection as healthy.
 </Properties>
 
 Like `ssl`, this needs a native runtime — `node:net` — and is unavailable on
-Cloudflare Workers. Internal hosts are usually paired with `private: true` so
-the hostname never reaches the public page.
+Cloudflare Workers. Use `private: true` to hide the monitor from public
+monitor lists, but see the incident visibility warning below before using
+sensitive hostnames.
 
 ## `dns`
 
-Resolves a record through Cloudflare DNS-over-HTTPS, so it works in every
-runtime including Workers.
+DNS monitors resolve a record through Cloudflare DNS-over-HTTPS. They also
+work on Workers, where TCP and SSL checks aren't available.
 
 ```ts
 { name: "DNS", type: "dns", host: "acme.com", recordType: "A" }
@@ -200,9 +208,9 @@ The check fails when the HTTP query fails, when the DNS response status is not
 
 ## `composite`
 
-A composite monitor performs no I/O. It aggregates other monitors from the
-same check run, which makes it the right tool for "is the product usable",
-rather than "is this one endpoint reachable".
+To show whether the product as a whole is usable, combine existing monitors.
+A composite makes no network request: it uses the results from the same check
+run.
 
 ```ts
 {
@@ -248,8 +256,19 @@ monitors: [
 - Monitors with the same `group` are published as a `MonitorGroup` whose status
   is `operational`, `degraded` (some failing) or `outage` (all failing).
 - Monitors without a `group` are rendered on their own, after the groups.
-- `private: true` removes a monitor from the public snapshot entirely, so it
-  never appears in `/status`, `/monitors`, badges, Prometheus or the page.
+- `private: true` removes the monitor from `/status` monitor lists,
+  `/monitors`, per-monitor badges, Prometheus series and the monitor cards.
+
+<Callout type="warning" title="Private does not hide incidents">
+  A private monitor can still open an automatic incident. Its name and check
+  message can appear in the public incident timeline, RSS/Atom feeds and
+  subscriber notifications. That incident also affects the page-wide status
+  and incident counts (including overall badges and metrics). Do not put
+  secrets in private monitor names or targets;
+  a failed check message may expose the target. To prevent automatic incidents
+  altogether, disable <code>incidents.enabled</code> (which also disables
+  manual incidents and their feeds).
+</Callout>
 
 ## Choosing timeouts and intervals
 

@@ -5,10 +5,9 @@ description: Every setting accepted by heyoStatus(), its default and where it is
 
 # Configuration
 
-`heyo-status.config.ts` in the project root is the single source of truth. The
-CLI loads it from that path, the framework routes import it, the deployment
-overlays reference it, and the scheduler reads its cron expressions. Keep one
-file; do not maintain a second configuration for the build.
+Put `heyo-status.config.ts` at the project root. The CLI, page, API and
+scheduler all read it, so a change to monitors or scheduling takes effect
+across the app. You don't need a separate build-time config.
 
 ```ts title="heyo-status.config.ts"
 import { heyoStatus } from "@heyo-sh/heyo-status/config";
@@ -27,17 +26,16 @@ export const statusPage = heyoStatus({
 export default statusPage;
 ```
 
-`heyoStatus()` validates the object as the module loads, applies defaults and
-returns a `StatusPage`. Misspelled keys and wrongly shaped values throw
-immediately rather than being silently ignored — every section of the schema
-is `strict()`.
+`heyoStatus()` applies defaults and validates the file when it is imported.
+A typo in a key or a wrongly shaped value fails immediately instead of being
+ignored; the result is a `StatusPage`.
 
 <Callout type="info" title="Export it as default or as `statusPage`">
   The CLI accepts either. Generated templates export both so that
   `import { statusPage }` and `heyo-status check run` work from the same file.
 </Callout>
 
-## Top-level settings
+## Choose what to configure
 
 | Setting         | Type                                        | Default                              | Purpose                                                            |
 | --------------- | ------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
@@ -61,9 +59,10 @@ is `strict()`.
 | `subscribers`   | `object`                                    | `{ enabled: false, … }`              | Public subscriptions.                                              |
 | `cache`         | `{ snapshotTtlMs }`                         | `{ snapshotTtlMs: 30000 }`           | In-process snapshot cache lifetime.                                |
 
-## Nested defaults
+## Change only the defaults you need
 
-Each nested object is merged with its defaults, so you only set what differs.
+You don't have to copy every nested option into the config. Unspecified values
+keep their defaults:
 
 <Properties>
   <Property name="checks" type="StatusChecksConfig">
@@ -97,7 +96,7 @@ Each nested object is merged with its defaults, so you only set what differs.
 ```ts title="heyo-status.config.ts"
 import { heyoStatus } from "@heyo-sh/heyo-status/config";
 import { sqlite } from "@heyo-sh/heyo-status/db";
-import { slack, webhook } from "@heyo-sh/heyo-status/notifications";
+import { email, slack, webhook } from "@heyo-sh/heyo-status/notifications";
 
 export const statusPage = heyoStatus({
   database: sqlite("status.sqlite"),
@@ -134,6 +133,12 @@ export const statusPage = heyoStatus({
     channels: [
       slack({ webhookUrl: process.env.SLACK_WEBHOOK_URL!, events: ["monitor.*", "incident.*"] }),
       webhook({ url: "https://ops.acme.com/hooks/status", secret: process.env.HOOK_SECRET! }),
+      email({
+        transport: "resend",
+        apiKey: process.env.RESEND_API_KEY!,
+        from: "status@acme.com",
+        to: ["oncall@acme.com"],
+      }),
     ],
   },
 
@@ -146,6 +151,10 @@ export const statusPage = heyoStatus({
 
 export default statusPage;
 ```
+
+Set the webhook, Slack and Resend credentials in your deployment environment
+before using this example. Email subscriptions need the configured email
+channel to send confirmation and update messages.
 
 ## What `heyoStatus()` returns
 
@@ -178,15 +187,14 @@ await statusPage.cron.runChecks();
 Heyo Status does not read environment variables as implicit defaults. Set
 `adminToken` and (on Vercel) `cronSecret` explicitly in the config; leave them
 out to keep the corresponding routes closed. Configure the database path or
-connection string in `heyo-status.database.ts` for generated projects. Never
-commit production credentials: load them from a private secret source in your
-config if needed. The CLI uses `heyo-status.config.ts` by default; pass
+connection string in `heyo-status.config.ts` too. Never commit production
+credentials: load them from a private secret source in your config if needed. The CLI uses `heyo-status.config.ts` by default; pass
 `--config` for another file or `dev --port` to change the standalone port
 (default `3000`). Vercel's own `CRON_SECRET` is a platform requirement: its
 value must match `cronSecret` in the config, but the handler does not read it
 from the environment.
 
-## Validation rules that surprise people
+## Common validation errors
 
 - `basePath` must start with `/`, must not be `"/"`, must not contain `//`,
   a query string or a fragment. Trailing slashes are trimmed.

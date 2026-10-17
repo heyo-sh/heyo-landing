@@ -5,23 +5,23 @@ description: Heyo Status is a themeable, TypeScript-first status page for React 
 
 # Heyo Status
 
-Heyo Status is a status page you own. It checks your services on a schedule,
-keeps uptime history, publishes incidents and maintenance windows, and can
-notify your team and subscribers. A single `heyo-status.config.ts` powers the
-page, HTTP API, scheduler and CLI.
+Heyo Status gives you a status page in your own app. It checks your services,
+keeps uptime history and publishes incidents and planned maintenance. You can
+also send updates to your team and subscribers. The page, API and scheduler
+share one `heyo-status.config.ts` file.
 
-Start with the [Quickstart](https://heyo.sh/heyo-status/quickstart), then set up
-[monitors](https://heyo.sh/heyo-status/manage-status-page/monitors) and choose a
-[theme](https://heyo.sh/heyo-status/manage-status-page/themes). The generated project
-includes a database adapter and deployment files for your platform; the status
-page is rendered on the server so visitors can still read it without JavaScript.
+To get a page running, start with the [Quickstart](https://heyo.sh/heyo-status/quickstart).
+Then replace the example [monitors](https://heyo.sh/heyo-status/manage-status-page/monitors)
+and choose a [theme](https://heyo.sh/heyo-status/manage-status-page/themes).
+The generated project includes a database adapter and deployment files for
+your platform. Visitors can read the server-rendered page without JavaScript.
 
 <GitHub repo="heyo-sh/heyo-status" />
 
 ## Choose a framework
 
-Each starter uses the same configuration and status API. Choose the framework
-your application uses for its installation and integration guide.
+Pick the framework you use. Each starter exposes the same status API and
+reads the same configuration file.
 
 <Columns columns={3}>
   <Column
@@ -59,7 +59,7 @@ your application uses for its installation and integration guide.
   </Column>
 </Columns>
 
-After installation, configure [checks and scheduling](https://heyo.sh/heyo-status/manage-status-page/checks),
-then deploy to [Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare),
+Once the page is running, set your [check schedule](https://heyo.sh/heyo-status/manage-status-page/checks)
+and deploy to [Cloudflare](https://heyo.sh/heyo-status/deploying/cloudflare),
 [Vercel](https://heyo.sh/heyo-status/deploying/vercel), or
 [your own server](https://heyo.sh/heyo-status/deploying/self-hosting).

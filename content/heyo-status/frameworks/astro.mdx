@@ -5,12 +5,13 @@ description: Create an Astro status page with Heyo Status or add a live endpoint
 
 # Astro
 
-For a new status page, use `create-heyo-status`. The Astro template includes a
-server-rendered page, a React island for interactive controls, a live API and
-a database adapter. The deployment overlay sets up cron jobs for your platform.
-Astro 7 requires Node.js 22.12+ for local builds and Node deployments.
+Creating a new Astro status page? The starter sets up server rendering, a
+React island for the interactive controls, the API and a database. Choose a
+deployment overlay for production cron jobs. For an existing site, use the
+manual steps below. Astro 7 requires Node.js 22.12+ for local builds and Node
+deployments.
 
-## Recommended: create a project
+## Create a project
 
 Pass `astro` to select the template. Without flags, the creator asks for the
 framework, deployment, database, theme and package manager.
@@ -38,72 +39,41 @@ yarn dev`}
   </CodeBlock>
 </CodeBlockGroup>
 
-The starter installs the package in the **project**, not globally. To run
-`heyo-status check run` directly in your terminal, install the CLI globally
-(Bun 1.4.3+ required), then run it from the generated project's root:
-
-<CodeBlockGroup defaultValue="bun" variant="line">
-  <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-  <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status`}
-  </CodeBlock>
-</CodeBlockGroup>
-
-```bash
-cd my-status-page
-# SQLite or Vercel/PostgreSQL only; Cloudflare/D1 uses Worker cron triggers.
-heyo-status check run
-```
-
 If you skipped dependency installation in the creator, install the project's
-dependencies too — the Astro adapter needs them. Replace the example monitors
-in `heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev` starts
-the local scheduler and `bun run check` runs a check without the global CLI.
-On Cloudflare/D1, `bun dev` runs the Worker and cron triggers schedule checks
-instead (no `check` script).
+dependencies before starting it. Replace the example monitors in
+`heyo-status.config.ts`. For SQLite or Vercel/PostgreSQL, `bun dev` starts
+the local scheduler; `bun run check` runs one check without a global CLI
+install. Cloudflare/D1 uses Worker cron triggers instead and has no `check`
+script. For direct shell commands, see the [CLI guide](https://heyo.sh/heyo-status/cli).
 
-## Manual, minimal integration
+## Add status to an existing app
 
-Use this path if the status page belongs in an existing Astro project. It
-assumes Astro with the React integration and a server adapter; unlike static
-documentation, the page and API cannot be prerendered. For production cron
-and database bindings, start from a generated project instead.
+You'll need Astro's React integration and a server adapter: neither the page
+nor its API can be prerendered. The steps below set up the app, but not the
+production cron jobs or database bindings. For those, start from the generated
+project.
 
 ### 1. Install and configure
 
+Install the package and the Astro integrations in the app's root directory:
+
 <CodeBlockGroup defaultValue="bun" variant="line">
   <CodeBlock language="bash" title="bun">
-    {`bun add -g @heyo-sh/heyo-status
-bun add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+    {`bun add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
   </CodeBlock>
   <CodeBlock language="bash" title="npm">
-    {`npm install -g @heyo-sh/heyo-status
-npm install @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+    {`npm install @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
   </CodeBlock>
   <CodeBlock language="bash" title="pnpm">
-    {`pnpm add -g @heyo-sh/heyo-status
-pnpm add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+    {`pnpm add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
   </CodeBlock>
   <CodeBlock language="bash" title="yarn">
-    {`# Modern Yarn has no global install; use Bun for the CLI.
-bun add -g @heyo-sh/heyo-status
-yarn add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
+    {`yarn add @heyo-sh/heyo-status @astrojs/react @astrojs/node`}
   </CodeBlock>
 </CodeBlockGroup>
 
-Install from the project root. The first command exposes `heyo-status` in
-your shell (ensure the global bin directory is on `PATH`); the second adds
-the Astro adapter and dependencies to the app. The CLI needs Bun 1.4.3+
-regardless of package manager.
+You only need a [global CLI install](https://heyo.sh/heyo-status/cli)
+if you want to type `heyo-status …` directly in your shell.
 
 Create `heyo-status.config.ts` at the project root. SQLite requires a
 persistent disk; choose the creator's D1/Cloudflare or PostgreSQL/Vercel
@@ -122,11 +92,10 @@ export const statusPage = heyoStatus({
 export default statusPage;
 ```
 
-From the project root, run `heyo-status check run`. The global CLI reads the
-config and database directly, without a running Astro server. See [CLI
-commands](https://heyo.sh/heyo-status/cli) for more. For
-Cloudflare/D1, checks run through Worker cron triggers; a shell process
-cannot access D1 without its binding.
+To test a monitor before scheduling it, install the global CLI and run
+`heyo-status check run` from the project root. It reads the config and database
+without a running Astro server (and requires Bun 1.4.3+). For Cloudflare/D1,
+use Worker cron triggers instead; a local shell has no D1 binding.
 
 ### 2. Set up server rendering and the API
 

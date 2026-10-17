@@ -5,8 +5,10 @@ description: Schedule maintenance windows, suppress alerts and publish upcoming 
 
 # Maintenance
 
-Maintenance windows are enabled by default. They appear on the status page
-and suppress alerts for affected monitors while in progress.
+Schedule a maintenance window before planned work so visitors know when to
+expect disruption. While the window is in progress, checks still run, but
+alerts and automatic incident updates for affected monitors are suppressed.
+Maintenance windows are enabled by default.
 
 ```ts title="heyo-status.config.ts"
 maintenance: { enabled: true },
@@ -16,7 +18,10 @@ Setting `maintenance.enabled: false` makes `/maintenance` and
 `/admin/maintenance/*` return `404`. Windows no longer suppress alerts, and
 the snapshot contains no upcoming or in-progress maintenance.
 
-## The maintenance model
+## Window fields and states
+
+A window can be scheduled, in progress or completed. Its status follows the
+clock rather than a separate job you have to run.
 
 ```ts
 interface Maintenance {
@@ -35,6 +40,15 @@ The status is derived from the clock: reading upcoming windows refreshes
 `scheduled` → `in-progress` → `completed` against the current time.
 `scheduledEnd` must be after `scheduledStart`.
 
+<Callout type="warning" title="Time changes status, not notifications">
+  Reading a window after its start or end updates its stored status, but does
+  not dispatch a <code>maintenance.starting</code> or
+  <code>maintenance.completed</code> event. Lifecycle events are dispatched
+  when a window is created or edited through the admin API, according to its
+  resulting status. If you need an alert at the scheduled start or end,
+  arrange an authenticated update at that time.
+</Callout>
+
 ## Schedule a window
 
 Create a window locally with the CLI, which talks directly to the database,
@@ -52,7 +66,7 @@ heyo-status maintenance list`}
   </CodeBlock>
 </CodeBlockGroup>
 
-## Alert suppression
+## What happens to alerts
 
 While a window is `in-progress`, the monitors it names are excluded from
 `monitor.down`, `monitor.recovered` and `ssl.expiring` events, as well as
