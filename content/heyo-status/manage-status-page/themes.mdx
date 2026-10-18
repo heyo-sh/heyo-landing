@@ -7,7 +7,10 @@ description: Choose a status page layout, colour mode and CSS overrides.
 
 Choose a layout with `theme` in `heyo-status.config.ts`. The generated
 projects pass it to `<StatusPage />` for you. All five layouts share one
-stylesheet, so switching themes doesn't mean changing imports.
+stylesheet, so switching themes doesn't mean changing imports. In a newly
+generated Cloudflare project, `bun dev` watches the config: editing `theme`
+updates the open page without restarting the server. `bun run start` serves a
+built Worker instead and needs a restart after code changes.
 
 ```ts title="heyo-status.config.ts"
 theme: "slate",

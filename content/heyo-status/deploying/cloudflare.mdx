@@ -29,17 +29,25 @@ Copy the `database_id` printed by Wrangler into `wrangler.jsonc` in place of
 `heyo-status.config.ts` reads that binding, and Wrangler reads SQL files
 from `migrations/`. There is no SQLite fallback if the binding is missing.
 
-## Try the Worker locally
+## Develop locally with D1
 
 ```bash
 bun dev
 ```
 
-The generated `dev` script applies **local** D1 migrations, builds the app and
-starts the Worker with Wrangler. Restart it after changing application code;
-it does not hot-reload the framework. Local D1 is separate from your remote
-database. The public page may have no check history until a check is triggered;
-starting a Worker does not itself run a scheduled check.
+The generated `dev` script applies **local** D1 migrations and starts the
+framework development server with a local D1 binding. Edit `theme` in
+`heyo-status.config.ts` and the open page updates without restarting `bun dev`.
+Local D1 is separate from your remote database. The public page may have no
+check history until a check is triggered; the development server does not run
+Worker cron triggers.
+
+To test the **built Worker** locally instead, run `bun run start`. It builds
+the app and serves it with Wrangler; restart this command after code changes.
+Updating `@heyo-sh/create-heyo-status` does not rewrite existing generated
+projects. If your project's `dev` script still builds and runs `wrangler dev`,
+it will continue to require a restart until you adopt the updated Cloudflare
+starter files, not just a newer generator package.
 
 Replace the example `example.com` monitors with your own HTTP or DNS targets.
 In `heyo-status.config.ts`, set the public URL used in feeds and emails:

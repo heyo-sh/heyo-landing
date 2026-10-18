@@ -41,8 +41,9 @@ bun dev
 
 If you skipped dependency installation in the creator, install the project's
 dependencies first. For SQLite and Vercel/PostgreSQL, `bun dev` starts a local
-scheduler and runs the first check. Cloudflare/D1 projects run a Worker with
-cron triggers instead; they have no `check` or `db:seed` scripts.
+scheduler and runs the first check. Cloudflare/D1 projects migrate local D1 and
+start the framework dev server instead; their deployed Workers use cron
+triggers, so they have no `check` or `db:seed` scripts.
 
 Open the page, then replace the starter's `example.com` monitors before you
 publish it. You don't need a global CLI install to start the generated app.
