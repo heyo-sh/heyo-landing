@@ -44,10 +44,10 @@ bun run db:migrate
 ```
 
 This generated script calls `wrangler d1 migrations apply my-status-page
---local`. `bun dev` runs the same script before starting the Worker, so you
-can skip the separate command if you're going straight into development.
-Local D1 data is separate from the remote database; this step does **not**
-prepare production.
+--local`. `bun dev` runs the same script before starting the framework
+development server with a local D1 binding, so you can skip the separate
+command if you're going straight into development. Local D1 data is separate
+from the remote database; this step does **not** prepare production.
 
 If you integrated D1 by hand and don't have the script, use:
 
@@ -89,10 +89,12 @@ that shell has no Worker binding.
 
 A D1 binding exists during a Worker request, not while your config is being
 imported by build tools. The generated `heyo-status.config.ts` wraps
-`d1(binding)` in `lazyStatusDatabase()`, and the Worker sets the binding before
-serving requests and scheduled events. Keep both pieces if you change the
-Worker. A standalone framework dev server cannot connect to D1 through this
-binding; use the generated Worker (`bun dev` or `bun run start`).
+`d1(binding)` in `lazyStatusDatabase()`. The Worker supplies the binding before
+serving production requests and scheduled events; the generated framework dev
+routes supply the local binding in `bun dev`. Keep both paths if you change
+the integration. `bun run start` builds and serves the actual Worker locally.
+Running an unconfigured, standalone framework server without these bindings
+cannot access D1.
 
 ```ts title="heyo-status.config.ts (binding resolution)"
 import { heyoStatus } from "@heyo-sh/heyo-status/config";
