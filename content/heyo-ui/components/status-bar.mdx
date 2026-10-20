@@ -40,7 +40,8 @@ time, oldest on the left, coloured by what happened.
 The columns **flex** rather than sitting at a fixed width, so ninety days fit a
 sidebar and a phone without a horizontal scrollbar or a media query. The gaps
 stay 2px, which is what keeps it readable as ninety things rather than one
-smear.
+smear. A tick with a `label` or `tooltip` opens an **instant tooltip** on hover
+or keyboard focus; without either it remains decorative.
 
 ## Usage
 
@@ -103,6 +104,48 @@ import { StatusBar } from "@heyo-sh/heyo-ui";
   </div>
 </CodeSnippet>
 
+## Daily history: a short outage
+
+For daily slices, use `segments` so a short incident does not make the whole
+day look down. Segments stack **top to bottom**; their `percent` values are
+relative shares (normally adding up to 100). Each nonzero slice has a 2px
+minimum height so even a brief outage remains visible. For hourly
+or minute-by-minute history, omit `segments` and keep the solid `status` colour.
+
+```tsx
+import { StatusBar, type StatusTick } from "@heyo-sh/heyo-ui";
+
+const downMinutes = 15;
+const downPercent = (downMinutes / (24 * 60)) * 100;
+
+const history: StatusTick[] = [
+  { status: "operational", label: "Oct 19 · 100% uptime" },
+  {
+    status: "down", // Overall state, for data-status and the accessible fallback.
+    label: "Oct 20 · 15 minutes of downtime", // Accessible button name.
+    tooltip: (
+      <div className="space-y-1">
+        <strong className="block">Oct 20</strong>
+        <span className="block">99% uptime · 15 minutes down</span>
+        <span className="block">API incident, 14:00–14:15 UTC</span>
+      </div>
+    ),
+    segments: [
+      { status: "operational", percent: 100 - downPercent }, // Top: green.
+      { status: "down", percent: downPercent }, // Bottom: red.
+    ],
+  },
+  { status: "operational", label: "Oct 21 · 100% uptime" },
+];
+
+<StatusBar ticks={history} label="API" legend={["Oct 19", "Oct 21"]} />;
+```
+
+Each tick can contain more than two segments, with any `StatusLevel` colour
+(e.g. green, yellow and red). The tooltip accepts React content; give it a
+plain `label` as well for screen readers. `label` alone also shows a tooltip
+instead of the browser's delayed native `title`.
+
 ## The live dot
 
 `StatusBar.Dot` is the current state, on its own. `pulse` adds a slow halo —
@@ -127,7 +170,10 @@ suggests something is still happening.
 <Properties>
   <Property name="ticks" required type="StatusTick[]">
     Oldest first, newest last — the same direction as the time axis. Each tick
-    is `{ status, label? }`, where `label` becomes the native tooltip.
+    is `{ status, label?, tooltip?, segments? }`. `label` is the accessible
+    name and instant tooltip fallback; `tooltip` accepts React content.
+    `segments` is an optional array of `{ status, percent }`, top to bottom.
+    Without segments the entire column uses the overall `status` colour.
   </Property>
   <Property name="label" type="ReactNode">
     The row above the bar.
