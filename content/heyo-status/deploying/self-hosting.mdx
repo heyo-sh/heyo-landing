@@ -5,10 +5,11 @@ description: Run the status page with persistent storage and one production sche
 
 # Self-host Heyo Status
 
-Run the framework server and the check scheduler as **two processes** that
-share a database. Keep exactly one scheduler per deployment, even if you run
-several web-server replicas. A static build alone cannot serve current
-snapshots or the status API.
+Start with a project generated with **Configure later**. Run its framework
+server and a check scheduler as **two processes** that share a database. Keep
+exactly one scheduler per deployment, even if you run several web-server
+replicas. A static build alone cannot serve current snapshots or the status
+API.
 
 ## Create a project
 

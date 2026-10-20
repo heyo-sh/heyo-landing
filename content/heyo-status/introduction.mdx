@@ -10,11 +10,13 @@ keeps uptime history and publishes incidents and planned maintenance. You can
 also send updates to your team and subscribers. The page, API and scheduler
 share one `heyo-status.config.ts` file.
 
-To get a page running, start with the [Quickstart](https://heyo.sh/heyo-status/quickstart).
-Then replace the example [monitors](https://heyo.sh/heyo-status/manage-status-page/monitors)
-and choose a [theme](https://heyo.sh/heyo-status/manage-status-page/themes).
-The generated project includes a database adapter and deployment files for
-your platform. Visitors can read the server-rendered page without JavaScript.
+To get a page running, use [create-heyo-status](https://heyo.sh/heyo-status/quickstart).
+The generator supplies the framework routes, database adapter and deployment
+scheduler together; installing the runtime package alone does not produce a
+working status page. Then replace the example
+[monitors](https://heyo.sh/heyo-status/manage-status-page/monitors) and choose
+a [theme](https://heyo.sh/heyo-status/manage-status-page/themes). Visitors
+can read the server-rendered page without JavaScript.
 
 <GitHub repo="heyo-sh/heyo-status" />
 

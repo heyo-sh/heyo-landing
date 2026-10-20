@@ -37,13 +37,12 @@ cd my-status-page
 heyo-status check run
 ```
 
-`create-heyo-status` creates a project; it does **not** install the CLI
-globally. It adds `@heyo-sh/heyo-status` as a **project dependency** for the
+`create-heyo-status` creates a complete project; it does **not** install the
+CLI globally. It adds `@heyo-sh/heyo-status` as a **project dependency** for the
 framework adapters, config and UI. If you opted out of installing dependencies
 in the creator, run the package manager's `install` command in the project.
-When integrating manually, install the project dependency too (for example,
-`bun add @heyo-sh/heyo-status`). Global and project installations serve
-different purposes; keep their versions compatible.
+Global installation is optional for direct shell commands; keep its version
+compatible with the generated project's dependency.
 
 <Callout type="info" title="Global install is for direct shell commands">
   A project's <code>package.json</code> scripts can run the local binary

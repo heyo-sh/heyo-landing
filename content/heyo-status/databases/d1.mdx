@@ -5,10 +5,13 @@ description: Create a D1 database, apply local and remote migrations, and bind i
 
 # Cloudflare D1
 
-Use D1 when deploying Heyo Status to Cloudflare Workers. A project created
-with `--deployment cloudflare --database d1` already has a `migrations/`
-folder, a Worker and a D1 binding declaration. You still need to create the
-remote database and replace its placeholder ID.
+Use D1 when deploying Heyo Status to Cloudflare Workers. Start with
+`create-heyo-status --deployment cloudflare --database d1`. The generated
+project includes a `migrations/` folder, a Worker, framework routes and a D1
+binding declaration. You still need to create the remote database and replace
+its placeholder ID. This page covers D1; follow the
+[Cloudflare deployment guide](https://heyo.sh/heyo-status/deploying/cloudflare)
+for the complete setup.
 
 ## 1. Create and bind the database
 
@@ -48,12 +51,6 @@ This generated script calls `wrangler d1 migrations apply my-status-page
 development server with a local D1 binding, so you can skip the separate
 command if you're going straight into development. Local D1 data is separate
 from the remote database; this step does **not** prepare production.
-
-If you integrated D1 by hand and don't have the script, use:
-
-```bash
-bunx wrangler d1 migrations apply my-status-page --local
-```
 
 ## 3. Migrate the remote database before deploying
 
@@ -96,8 +93,9 @@ the integration. `bun run start` builds and serves the actual Worker locally.
 Running an unconfigured, standalone framework server without these bindings
 cannot access D1.
 
-```ts title="heyo-status.config.ts (binding resolution)"
-import { heyoStatus } from "@heyo-sh/heyo-status/config";
+For reference, the generated config resolves the binding lazily:
+
+```ts title="heyo-status.config.ts (generated binding resolution)"
 import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
 import { d1, type D1Database } from "@heyo-sh/heyo-status/deployments/cloudflare";
 
@@ -108,7 +106,7 @@ export const database = lazyStatusDatabase(() => {
   return d1(binding);
 });
 
-export const statusPage = heyoStatus({ database, title: "Acme Status" });
+// The generated heyoStatus({ database, ... }) config uses this adapter.
 ```
 
 On Workers, use HTTP or DNS monitors. TCP and TLS checks require `node:net`

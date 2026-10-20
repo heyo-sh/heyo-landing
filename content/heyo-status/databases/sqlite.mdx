@@ -6,21 +6,12 @@ description: Configure a SQLite file, run automatic migrations and check what wa
 # SQLite
 
 Use SQLite for local development or a self-hosted server with a persistent disk.
-The starter configures SQLite in `heyo-status.config.ts`. In an existing app,
-add it to the same file:
+Create a project with `--deployment later --database sqlite`; the generator
+configures SQLite in `heyo-status.config.ts` along with the page and API.
+To change the database path, edit its `database: sqlite("status.sqlite")`
+setting. The relative filename uses the process's working directory.
 
-```ts title="heyo-status.config.ts"
-import { heyoStatus } from "@heyo-sh/heyo-status/config";
-import { sqlite } from "@heyo-sh/heyo-status/db";
-
-export const statusPage = heyoStatus({
-  database: sqlite("status.sqlite"),
-  title: "Acme Status",
-});
-```
-
-The relative filename uses the process's working directory. For a deployed
-container or VM, use a writable, persistent path such as
+For a deployed container or VM, use a writable, persistent path such as
 `sqlite("/data/status.sqlite")` and mount `/data` as a volume. A database in an
 ephemeral container filesystem disappears on redeploy.
 
@@ -40,10 +31,9 @@ bun run db:migrate
 ```
 
 For SQLite, that command loads the config and reports that embedded migrations
-were applied. It isn't an extra prerequisite before `bun dev`. If you're
-running the CLI directly rather than through a project script, use
-`heyo-status db migrate` from the directory containing
-`heyo-status.config.ts` (see [CLI setup](https://heyo.sh/heyo-status/cli)).
+were applied. It isn't an extra prerequisite before `bun dev`. You can also
+run the CLI directly from the project root after a
+[global install](https://heyo.sh/heyo-status/cli).
 
 To check the file after startup, use the SQLite CLI if you have it installed:
 

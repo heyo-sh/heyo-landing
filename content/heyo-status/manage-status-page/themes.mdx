@@ -38,9 +38,9 @@ local storage and takes precedence on later visits.
 
 To avoid a flash of the wrong palette, generated layouts run
 `statusThemeBootstrapScript(undefined, statusPage.mode)` in the document head
-before paint. In a manual integration, add it to your root layout. For React,
-also set `suppressHydrationWarning` on `<html>`: the script changes `data-mode`
-before hydration.
+before paint. Keep that script and, in React projects, the generated
+`suppressHydrationWarning` on `<html>` when customising the layout: the script
+changes `data-mode` before hydration.
 
 ## Load styles once
 

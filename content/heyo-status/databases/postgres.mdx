@@ -6,18 +6,19 @@ description: Connect Heyo Status to PostgreSQL and run migrations before deploym
 # PostgreSQL
 
 Use PostgreSQL for Vercel or when several app instances need to share status
-history. The generated project includes `pg` and `drizzle-orm`, but its
-`heyo-status.config.ts` points at an example **local** connection string.
+history. Start with a [generated project](https://heyo.sh/heyo-status/quickstart)
+using PostgreSQL; it includes `pg`, `drizzle-orm`, routes and a scheduler.
+Its `heyo-status.config.ts` points at an example **local** connection string.
 Replace that before deploying; Heyo Status does not read `DATABASE_URL`
-implicitly.
+implicitly. This page covers the database, not the full deployment.
 
 ## 1. Configure the connection
 
-For example, read `DATABASE_URL` explicitly and create the pool only when the
-database is first used:
+In the generated `heyo-status.config.ts`, replace the database setup with a
+lazy pool that reads `DATABASE_URL` explicitly. Keep the rest of the generated
+config, including monitors and cron settings:
 
-```ts title="heyo-status.config.ts"
-import { heyoStatus } from "@heyo-sh/heyo-status/config";
+```ts title="heyo-status.config.ts (database setup)"
 import { lazyStatusDatabase } from "@heyo-sh/heyo-status/db/lazy";
 import { postgres } from "@heyo-sh/heyo-status/deployments/vercel";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -29,7 +30,7 @@ export const database = lazyStatusDatabase(() => {
   return postgres(drizzle(new Pool({ connectionString })));
 });
 
-export const statusPage = heyoStatus({ database, title: "Acme Status" });
+// Keep the generated heyoStatus({ database, ... }) config below this setup.
 ```
 
 Set `DATABASE_URL` in the environment that **runs the migration** and in the
@@ -53,11 +54,9 @@ migrations. The adapter records applied IDs in `__heyo_status_migrations`;
 repeat the command after upgrading `@heyo-sh/heyo-status` to apply new ones.
 Already applied IDs are skipped. **Deploy only after migration succeeds.**
 
-For a manually integrated app without that script, install the CLI as
-[documented here](https://heyo.sh/heyo-status/cli) and run
-`heyo-status db migrate` from the directory containing your config. You can
-also call `await database.migrate()` in a one-off release job. Do not run
-migrations from every request handler or every serverless instance.
+The generated project includes this script. You can also call
+`await database.migrate()` in a one-off release job. Do not run migrations
+from every request handler or every serverless instance.
 
 If `psql` is available, you can check the database you just migrated:
 

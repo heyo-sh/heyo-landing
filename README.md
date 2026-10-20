@@ -37,7 +37,7 @@ design system inside the same document. Two files make that safe:
 
 ## Landing page figures
 
-`/` uses Hairline 0.5.0 for its interactive SVG illustrations. The hero uses
+`/` uses Hairline 0.5.1 for its interactive SVG illustrations. The hero uses
 `Settle` (the whole hero panel activates it on hover); the community section
 uses the landing page's original flickering contribution grid. The
 "Open source, always" uses one custom figure, `public/hairline/conduit.js`,

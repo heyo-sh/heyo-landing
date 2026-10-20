@@ -15,12 +15,12 @@ Status version:
 | Cloudflare D1 | `bun run db:migrate` in a generated project (or `bun dev`). | `bunx wrangler d1 migrations apply <database-name> --remote`, then deploy. |
 | PostgreSQL | `bun run db:migrate` once the database is reachable. | Run `bun run db:migrate` with production database credentials, then deploy. |
 
-`bun run db:migrate` is a script in generated projects. For a manual
-integration, follow the [SQLite](https://heyo.sh/heyo-status/databases/sqlite),
+`bun run db:migrate` is a script in generated projects. Follow the
+[SQLite](https://heyo.sh/heyo-status/databases/sqlite),
 [D1](https://heyo.sh/heyo-status/databases/d1) or
-[PostgreSQL](https://heyo.sh/heyo-status/databases/postgres) guide for the
-adapter setup and equivalent command. D1's **local** migration command does
-not touch its **remote** database. Runtime request handlers don't migrate
+[PostgreSQL](https://heyo.sh/heyo-status/databases/postgres) guide to manage
+the generated project's database. D1's **local** migration command does not
+touch its **remote** database. Runtime request handlers don't migrate
 PostgreSQL or D1 for you.
 
 ## What gets created?

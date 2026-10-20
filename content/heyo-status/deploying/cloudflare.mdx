@@ -5,10 +5,11 @@ description: Deploy a Worker with D1, apply remote migrations and schedule check
 
 # Deploy to Cloudflare
 
-The Cloudflare starter serves the page and API from a Worker, stores check
-history in D1 and uses cron triggers for checks, daily summaries and cleanup.
-It supports React Router, Next.js (OpenNext) and Astro. Workers cannot run
-TCP or TLS monitors; use HTTP and DNS checks here.
+These instructions assume a project created with `create-heyo-status` and
+the Cloudflare deployment option. The starter serves the page and API from a
+Worker, stores check history in D1 and uses cron triggers for checks, daily
+summaries and cleanup. It supports React Router, Next.js (OpenNext) and Astro.
+Workers cannot run TCP or TLS monitors; use HTTP and DNS checks here.
 
 ## Create the project and D1 database
 
